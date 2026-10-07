@@ -1,6 +1,6 @@
 # Cerio
 
-A 2D platformer (in the style of Mario / Celeste) with a bot that autonomously completes procedurally generated levels.
+A 2D platformer with a bot that autonomously completes procedurally generated levels.
 
 ## Project goals
 
