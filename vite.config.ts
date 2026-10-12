@@ -2,7 +2,8 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
-const here = (path: string) => fileURLToPath(new URL(path, import.meta.url)); // independent of the working directory
+// Paths relative to this file, so it works from any working directory.
+const here = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
   root: here("./client"),

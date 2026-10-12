@@ -82,7 +82,7 @@ for w in range(1, WEEKS + 1):
     if w == 1:
         ws.cell(row=HDR + 1, column=col, value=START)           # start date
         ws.cell(row=HDR + 1, column=col).comment = Comment(
-            "Date of the first schedule deadline (08.10.2026).", "Claude")
+            "Date of the first schedule deadline (08.10.2026).", "Cerio")
     else:
         prev = ws.cell(row=HDR + 1, column=col - 1).column_letter
         ws.cell(row=HDR + 1, column=col, value=f"={prev}{HDR + 1}+7")
@@ -144,7 +144,6 @@ for i, (track, color) in enumerate(TRACKS.items()):
     c.fill = PatternFill("solid", fgColor=color)
     c.font = Font(name=F, bold=True, color="FFFFFF")
 ws.cell(row=lr + 1, column=2, value="Blue text = editable cells").font = Font(name=F, color="0000FF")
-ws.cell(row=lr + 2, column=2, value="Plan drafted with Claude, 07.10.2026").font = Font(name=F, italic=True, color="52514E")
 
 ws.page_setup.orientation = "landscape"
 ws.page_setup.fitToWidth = 1

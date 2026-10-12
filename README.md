@@ -1,3 +1,10 @@
+# Podział pracy
+
+	
+Proceduralne generowanie poziomów ->	Albert 2tyg
+dodanie  power up mechaniki maria ,dodanie przeciwników, dodanie ich rócuhów mechaniki => 	Kuba Filip Janek i Antoni  2tyg.
+RL i EVO =>	Michał i Igor
+
 # Cerio
 
 A 2D platformer that is simply Mario, running in the browser, with a bot that autonomously completes procedurally generated levels. The bot is trained in two ways, neuroevolution and reinforcement learning, and the two are compared.
