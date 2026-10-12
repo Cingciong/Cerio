@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <title>Cerio</title>
+    <style>
+      body { margin: 0; background: #111; color: #ccc; font: 13px monospace; display: grid; place-items: center; min-height: 100vh; }
+      canvas { width: min(768px, 95vw, 95vh * 256 / 240); aspect-ratio: 256 / 240; image-rendering: pixelated; background: #000; }
+      p { margin: 8px 0 0; }
+    </style>
+  </head>
+  <body>
+    <div>
+      <canvas id="game" width="256" height="240"></canvas>
+      <p>←/→ or A/D move · Z/Space jump · X/Shift run · R restart</p>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

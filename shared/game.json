@@ -1,0 +1,54 @@
+{
+  "units": {
+    "sub": 16,
+    "tile": 16,
+    "fps": 60,
+    "screenW": 256,
+    "screenH": 240
+  },
+
+  "buttons": {
+    "left": 1,
+    "right": 2,
+    "jump": 4,
+    "run": 8,
+    "down": 16,
+    "attack": 32
+  },
+
+  "tiles": {
+    "air": { "id": 0, "char": ".", "solid": false },
+    "block": { "id": 1, "char": "#", "solid": true }
+  },
+
+  "player": {
+    "w": 12,
+    "h": 16,
+    "walkMax": 24,
+    "runMax": 40,
+    "accel": 1,
+    "friction": 1,
+    "skid": 2,
+    "jump": 64,
+    "jumpRunning": 72,
+    "runJumpSpeed": 32,
+    "gravityHold": 2,
+    "gravity": 6,
+    "maxFall": 64,
+    "stompBounce": 48
+  },
+
+  "enemies": {
+    "goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64 }
+  },
+
+  "rules": {
+    "stompTolerancePx": 4
+  },
+
+  "view": {
+    "width": 16,
+    "height": 15,
+    "behind": 5
+  }
+}

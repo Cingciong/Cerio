@@ -1,11 +1,62 @@
-# LaTeX
-*.aux
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors / tools
+.vscode/
+.idea/
+.vs/
+*.swp
+*~
+
+# Nextcloud / Office lock and conflict files
+.~lock.*#
+*conflicted copy*
+
+# Environment / secrets
+.env
+.env.*
+
+# Logs
 *.log
-*.out
-*.toc
-*.synctex.gz
+npm-debug.log*
+
+# Node
+node_modules/
+dist/
+.vite/
+coverage/
+*.tsbuildinfo
 
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 .venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Training outputs (models, runs)
+models/
+runs/
+checkpoints/
+*.pt
+*.pth
+*.onnx
+
+# LaTeX build files
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.lof
+*.lot
+*.nav
+*.snm
