@@ -8,6 +8,8 @@ const COLORS = {
   blockEdge: "#c9894b",
   player: "#e33",
   enemy: "#d9a400",
+  koopa: "#28cc28",
+  koopa_red: "#cc2828",
   text: "#fff",
 };
 
@@ -35,7 +37,16 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     }
   }
 
-  for (const e of state.enemies) if (e.alive) box(ctx, e, cam, COLORS.enemy);
+  for (const e of state.enemies) {
+    if (!e.alive) continue;
+      let color = COLORS.enemy;
+      if(e.type === 'koopa'){
+        color = COLORS.koopa;
+      }else if(e.type === 'koopa_red'){
+        color = COLORS.koopa_red;
+      }
+      box(ctx, e, cam, color);
+  }
   box(ctx, state.player, cam, COLORS.player);
 
   ctx.fillStyle = COLORS.text;

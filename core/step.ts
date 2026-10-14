@@ -17,18 +17,37 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   player.update(buttons, map);
 
   for (const enemy of state.enemies) {
-    enemy.update(enemyButtons[enemy.id] ?? enemy.decide(), map);
+    enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map), map);
   }
 
   // Player vs enemies: landing on top kills the enemy, anything else kills the player.
   for (const enemy of state.enemies) {
+    if (!enemy.alive || enemy.actionState !== 'shell_sliding') continue;
+
+    for(const other of state.enemies){
+      if(enemy !== other && other.alive && enemy.overlaps(other)){
+        other.alive = false;
+      }
+    }
+  }
+
+  for (const enemy of state.enemies) {
     if (!enemy.alive || !player.overlaps(enemy)) continue;
     const fromAbove = player.vy > 0 && prevBottom <= enemy.y + RULES.stompTolerancePx * SUB; // feet were in the top part of the enemy
     if (fromAbove) {
-      enemy.alive = false;
-      player.vy = -PLAYER.stompBounce;
+      const shouldBounce = enemy.onStomp(player.x);
+      if (shouldBounce){
+        player.vy = -PLAYER.stompBounce;
+      }
     } else {
-      player.alive = false;
+      if(enemy.actionState === 'shell_idle'){
+        enemy.onStomp(player.x);
+      }else{
+        const isShellMovingAway = enemy.actionState === 'shell_sliding' && ((player.x <= enemy.x && enemy.dir === 1) || (player.x >= enemy.x && enemy.dir === -1));
+        if(!isShellMovingAway){
+          player.alive = false;
+        }
+      }
     }
   }
 

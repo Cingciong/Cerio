@@ -4,6 +4,7 @@ import { PLAYER } from "./config.ts";
 import { Player } from "./player.ts";
 import { SUB, TILE } from "./constants.ts";
 import type { TileMap } from "./tiles.ts";
+import { createEnemy } from "./enemy.ts";
 
 export type Status = "playing" | "dead" | "won";
 
@@ -23,6 +24,6 @@ export function createState(level: Level): GameState {
     frame: 0,
     status: "playing",
     player: new Player(level.playerStart.x + ((TILE - PLAYER.w) / 2) * SUB, level.playerStart.y), // centred in the tile
-    enemies: level.enemies.map((e, i) => new Enemy(i, e.type, e.x, e.y)),
+    enemies: level.enemies.map((e, i) => createEnemy(i, e.type, e.x, e.y)),
   };
 }

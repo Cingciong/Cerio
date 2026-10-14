@@ -39,7 +39,9 @@
   },
 
   "enemies": {
-    "goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64 }
+    "goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64 },
+    "koopa": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64 },
+    "koopa_red": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64 }
   },
 
   "rules": {
