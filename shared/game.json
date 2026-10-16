@@ -18,8 +18,36 @@
 
   "tiles": {
     "air": { "id": 0, "char": ".", "solid": false },
-    "block": { "id": 1, "char": "#", "solid": true }
+    "block": { "id": 1, "char": "#", "solid": true },
+    "qblock_coin": { 
+      "id": 2, 
+      "char": "?", 
+      "solid": true, 
+      "color": "#FFFF00" 
   },
+
+    "qblock_mushroom": { 
+      "id": 3, 
+      "char": "M", 
+      "solid": true, 
+      "color": "#FFFF00" 
+  },
+
+    "qblock_star": { 
+      "id": 4, 
+      "char": "*", 
+      "solid": true, 
+      "color": "#FFFF00" 
+  },
+
+    "pipe": { 
+      "id": 5, 
+      "char": "P", 
+      "solid": true, 
+      "color": "#00FF00" 
+  }
+},
+
 
   "player": {
     "w": 12,
@@ -29,7 +57,7 @@
     "accel": 1,
     "friction": 1,
     "skid": 2,
-    "jump": 64,
+    "jump": 72,
     "jumpRunning": 72,
     "runJumpSpeed": 32,
     "gravityHold": 2,

@@ -27,10 +27,14 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   const first = Math.floor(cam.x / TILE);
   for (let ty = 0; ty < map.height; ty++) {
     for (let tx = first; tx <= first + SCREEN_W / TILE; tx++) {
-      if (tx >= map.width || map.tiles[ty * map.width + tx] !== Tile.block) continue;
+      if (tx >= map.width) continue; 
+      const tileId = map.tiles[ty * map.width + tx];
+      if (tileId === Tile.air || tileId === undefined) continue;
       const x = tx * TILE - cam.x;
       const y = ty * TILE - cam.y;
-      ctx.fillStyle = COLORS.block;
+      if (tileId === Tile.qblock_coin || tileId === Tile.qblock_mushroom || tileId === Tile.qblock_star) {ctx.fillStyle = "#FFFF00";} 
+      else if (tileId === Tile.pipe) {ctx.fillStyle = "#00FF00";} 
+      else {ctx.fillStyle = COLORS.block;}
       ctx.fillRect(x, y, TILE, TILE);
       ctx.strokeStyle = COLORS.blockEdge;
       ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
