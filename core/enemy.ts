@@ -135,9 +135,91 @@ export class KoopaEnemy extends Enemy {
   }
 }
 
+export class Goomba extends Enemy {
+  constructor(id: number, type: string, x: number, y: number){
+    super(id, type, x, y);
+  }
+
+}
+export class BuzzyBeetle extends KoopaEnemy {
+  constructor(id: number, type: string, x: number, y: number){
+    super(id, type, x, y);
+  }
+}
+export class KoopaParaTroopa extends KoopaEnemy {
+  hasWings = true;
+  vDir = -1; 
+
+  constructor(id: number, type: string, x: number, y: number){
+    super(id, type, x, y);
+  }
+
+  onStomp(playerX: number): boolean {
+    if (this.hasWings) {
+      this.hasWings = false;
+      return true; 
+    } else {
+      return super.onStomp(playerX);
+    }
+  }
+
+  decide(map: TileMap): Buttons {
+    if (this.hasWings) {
+      if (this.type === 'koopa_para_red') {
+        return this.vDir < 0 ? Button.jump : Button.down; 
+      } else {
+        return this.dir < 0 ? Button.left : Button.right;
+      }
+    }
+    return super.decide(map);
+  }
+
+  update(buttons: Buttons, map: TileMap): void {
+    if (!this.alive) return;
+    
+    if (!this.hasWings) {
+      super.update(buttons, map);
+      return;
+    }
+    if (this.type === 'koopa_para_red') {
+      if (has(buttons, Button.jump)) this.vDir = -1;
+      if (has(buttons, Button.down)) this.vDir = 1;
+      
+      this.vx = 0;
+      this.vy = has(buttons, Button.jump | Button.down) ? this.vDir * this.cfg.speed : 0;
+    } else {
+      if (has(buttons, Button.left)) this.dir = -1;
+      if (has(buttons, Button.right)) this.dir = 1;
+      
+      this.vx = has(buttons, Button.left | Button.right) ? this.dir * this.cfg.speed : 0;
+      this.vy = 0; 
+    }
+    const hit = this.move(map);
+
+    if (this.type === 'koopa_para_red') {
+      if (hit.ceiling || hit.ground) {
+         this.vDir = -this.vDir;
+      }
+    } else {
+      if (hit.wall) {
+         this.dir = -this.dir;
+      }
+    }
+
+    if (this.y > (map.height + 1) * TILE_SUB) this.alive = false;
+  }
+}
+
 
 export function createEnemy(id: number, type: string, x: number, y: number): Enemy {
     switch (type){
+      case 'goomba':
+        return new Goomba(id, type, x, y);
+      case 'buzzy_beetle':
+        return new BuzzyBeetle(id, type, x, y);
+      case 'koopa_para':
+      case 'koopa_para_red':
+        return new KoopaParaTroopa(id, type, x, y);
       case 'koopa':
       case 'koopa_red':
         return new KoopaEnemy(id, type, x, y);
