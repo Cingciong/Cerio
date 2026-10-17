@@ -10,6 +10,7 @@ const COLORS = {
   enemy: "#d9a400",
   koopa: "#28cc28",
   koopa_red: "#cc2828",
+  piranha: "#00ac48",
   text: "#fff",
 };
 
@@ -21,6 +22,9 @@ export interface Camera {
 export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera, info: string): void {
   ctx.fillStyle = COLORS.sky;
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+  
+  for (const e of state.enemies) if (e.alive && e.type === "piranha") box(ctx, e, cam, COLORS.piranha);
+
 
   // tiles on screen
   const { map } = state;
@@ -42,7 +46,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   }
 
   for (const e of state.enemies) {
-    if (!e.alive) continue;
+    if (!e.alive || e.type === "piranha") continue;
       let color = COLORS.enemy;
       if(e.type === 'koopa'){
         color = COLORS.koopa;

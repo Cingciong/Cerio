@@ -16,6 +16,8 @@ export type TileName = keyof typeof config.tiles;
 
 export const PLAYER = config.player;
 
+export const PIRANHA = config.piranha;
+
 export const ENEMIES: Record<string, EnemyConfig> = config.enemies;
 export type EnemyConfig = (typeof config.enemies)[keyof typeof config.enemies];
 

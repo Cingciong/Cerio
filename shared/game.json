@@ -69,7 +69,8 @@
   "enemies": {
     "goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64 },
     "koopa": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64 },
-    "koopa_red": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64 }
+    "koopa_red": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64 },
+    "piranha": { "w": 16, "h": 24, "speed": 12, "gravity": 0, "maxFall": 0 }
   },
 
   "rules": {
@@ -80,5 +81,11 @@
     "width": 16,
     "height": 15,
     "behind": 5
-  }
+  },
+
+  "piranha": {
+  "hiddenFrames": 60,
+  "upFrames": 60,
+  "safeRadiusPx": 28
+}
 }

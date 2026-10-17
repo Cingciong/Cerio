@@ -17,7 +17,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   player.update(buttons, map);
 
   for (const enemy of state.enemies) {
-    enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map), map);
+    enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map);
   }
 
   // Player vs enemies: landing on top kills the enemy, anything else kills the player.
@@ -34,7 +34,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   for (const enemy of state.enemies) {
     if (!enemy.alive || !player.overlaps(enemy)) continue;
     const fromAbove = player.vy > 0 && prevBottom <= enemy.y + RULES.stompTolerancePx * SUB; // feet were in the top part of the enemy
-    if (fromAbove) {
+    if (fromAbove && enemy.stompable) {
       const shouldBounce = enemy.onStomp(player.x);
       if (shouldBounce){
         player.vy = -PLAYER.stompBounce;

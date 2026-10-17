@@ -1,9 +1,13 @@
 # Podział pracy
 
-	
-Proceduralne generowanie poziomów ->	Albert, Wojtek 2tyg
-dodanie  power up mechaniki maria ,dodanie przeciwników, dodanie ich rócuhów mechaniki => 	Kuba Filip Janek i Antoni  2tyg.
-RL i EVO =>	Michał i Igor
+Albert, Wojtek 2tyg:	
+* Proceduralne generowanie poziomów 
+
+Kuba Filip Janek i Antoni 2tyg:
+* dodanie  power up mechaniki maria, dodanie przeciwników, dodanie ich ruchów, mechaniki
+
+Michał i Igor:
+* RL i EVO
 
 # Cerio
 

@@ -78,7 +78,7 @@ Checked = done. Unchecked with a "done:" note = partly done.
 - [ ] 9. **SMB1 power-ups** — form state machine, Super Mushroom, Fire Flower + fireball, Super Star
 - [ ] 10. **Pipes** — enter/exit, sub-areas, area switching
 - [ ] 11. **SMB3 power-ups** — Super Leaf, Tanooki (tail, flight), Frog Suit, Hammer Suit, Stopwatch
-- [ ] 12. **Remaining enemies** (list not final) — Buzzy Beetle, Spiny, Piranha Plant, Bullet Bill, Hammer Bro
+- [ ] 12. **Remaining enemies** (list not final) — Buzzy Beetle, Spiny, Bullet Bill, Hammer Bro
 - [ ] 13. **Segment import tool** — original levels → 16-tile segments, tags, joints
 - [ ] 14. **Generator** — seed → level from segments, joint matching, pipe sub-areas, solvability check by hand-picked rules
 - [ ] 15. **Datasets** — tiers, train/val/test seeds, frozen test levels, level metrics script

@@ -5,7 +5,7 @@
 
 import { Body } from "./body.ts";
 import { Button, has, type Buttons } from "./buttons.ts";
-import { ENEMIES, type EnemyConfig } from "./config.ts";
+import { ENEMIES, PIRANHA, type EnemyConfig } from "./config.ts";
 import { TILE_SUB, SUB } from "./constants.ts";
 import { isSolid, toTile, type TileMap } from "./tiles.ts";
 
@@ -19,6 +19,7 @@ export class Enemy extends Body {
   alive = true;
   dir = -1; // -1 left, 1 right
   buttons: Buttons = 0;
+  stompable = true;
 
   actionState: EnemyActionState = 'default';
 
@@ -31,7 +32,7 @@ export class Enemy extends Body {
   }
 
   /** Default controller: walk, turn around at walls. */
-  decide(map: TileMap): Buttons {
+  decide(map: TileMap, player?: Body): Buttons {
     return this.dir < 0 ? Button.left : Button.right;
   }
 
@@ -211,6 +212,80 @@ export class KoopaParaTroopa extends KoopaEnemy {
 }
 
 
+
+export type PiranhaPhase = 'hidden' | 'rising' | 'up' | 'sinking';
+
+export class PiranhaPlant extends Enemy {
+  readonly topY: number;
+  readonly bottomY: number;
+  phase: PiranhaPhase = 'hidden';
+  timer = 0;
+
+  constructor(id: number, type: string, x: number, y: number) {
+    super(id, type, x, y);
+    this.stompable = false;
+    this.topY = y + TILE_SUB - this.h * SUB;
+    this.bottomY = this.topY + this.h * SUB;
+    this.y = this.bottomY;
+  }
+
+  onStomp(playerX: number): boolean {
+    return false;
+  }
+
+  decide(map: TileMap, player?: Body): Buttons {
+    switch (this.phase) {
+      case 'hidden':
+        this.timer++;
+        if (this.timer >= PIRANHA.hiddenFrames && !this.playerNear(player)) {
+          this.phase = 'rising';
+          this.timer = 0;
+        }
+        break;
+      case 'rising':
+        if (this.y <= this.topY) {
+          this.phase = 'up';
+          this.timer = 0;
+        }
+        break;
+      case 'up':
+        this.timer++;
+        if (this.timer >= PIRANHA.upFrames) {
+          this.phase = 'sinking';
+          this.timer = 0;
+        }
+        break;
+      case 'sinking':
+        if (this.y >= this.bottomY) {
+          this.phase = 'hidden';
+          this.timer = 0;
+        }
+        break;
+    }
+    if (this.phase === 'rising') return Button.jump;
+    if (this.phase === 'sinking') return Button.down;
+    return 0;
+  }
+
+  update(buttons: Buttons, map: TileMap): void {
+    if (!this.alive) return;
+    this.buttons = buttons;
+    const before = this.y;
+    const dy = has(buttons, Button.jump) ? -this.cfg.speed : has(buttons, Button.down) ? this.cfg.speed : 0;
+    this.y = Math.max(this.topY, Math.min(this.bottomY, this.y + dy));
+    this.vx = 0;
+    this.vy = this.y - before;
+  }
+
+  private playerNear(player?: Body): boolean {
+    if (!player) return false;
+    const plantCentre = this.x + (this.w * SUB) / 2;
+    const playerCentre = player.x + (player.w * SUB) / 2;
+    return Math.abs(playerCentre - plantCentre) < PIRANHA.safeRadiusPx * SUB;
+  }
+}
+
+
 export function createEnemy(id: number, type: string, x: number, y: number): Enemy {
     switch (type){
       case 'goomba':
@@ -223,6 +298,8 @@ export function createEnemy(id: number, type: string, x: number, y: number): Ene
       case 'koopa':
       case 'koopa_red':
         return new KoopaEnemy(id, type, x, y);
+      case 'piranha':
+        return new PiranhaPlant(id, type, x, y);
       default:
         return new Enemy(id, type, x, y);
     }
