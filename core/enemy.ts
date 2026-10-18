@@ -286,6 +286,155 @@ export class PiranhaPlant extends Enemy {
 }
 
 
+export interface HammerProjectile {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  alive: boolean;
+}
+
+export type HammerBroState = 'idle' | 'moving' | 'jumping' | 'falling' | 'throwing';
+
+export class HammerBro extends Enemy {
+  readonly hammers: HammerProjectile[] = [];
+
+  state: HammerBroState = 'idle';
+
+  private decisionTimer = 0;
+  private currentAction: Buttons = 0;
+  private shouldJump = false;
+  private shouldThrow = false;
+
+  private static readonly JUMP_SPEED = 80;
+  private static readonly DECISION_TIME = 40;
+
+  private static readonly HAMMER_SIZE = 8 * SUB;
+  private static readonly HAMMER_VX = 24;
+  private static readonly HAMMER_VY = -48;
+  private static readonly HAMMER_GRAVITY = 3;
+  private static readonly HAMMER_MAX_FALL = 48;
+
+  constructor(id: number, type: string, x: number, y: number) {
+    super(id, type, x, y);
+  }
+
+  decide(_map: TileMap, _player?: Body): Buttons {
+    if (this.decisionTimer <= 0) {
+      const action = Math.floor(Math.random() * 5);
+
+      switch (action) {
+        case 0:
+          this.currentAction = Button.left;
+          break;
+        case 1:
+          this.currentAction = Button.right;
+          break;
+        case 2:
+          this.currentAction = 0;
+          break;
+        case 3:
+          this.currentAction = 0;
+          this.shouldJump = true;
+          break;
+        case 4:
+          this.currentAction = 0;
+          this.shouldThrow = true;
+          break;
+      }
+
+      this.decisionTimer = HammerBro.DECISION_TIME
+    }
+
+    this.decisionTimer--;
+    return this.currentAction;
+  }
+
+  update(buttons: Buttons, map: TileMap): void {
+    if (!this.alive) return;
+
+    this.buttons = buttons;
+
+    if (has(buttons, Button.left)) this.dir = -1;
+    if (has(buttons, Button.right)) this.dir = 1;
+
+    this.vx = has(buttons, Button.left | Button.right) ? this.dir * this.cfg.speed : 0;
+    this.vy = Math.min(this.vy + this.cfg.gravity, this.cfg.maxFall);
+
+    const hit = this.move(map);
+
+    if (hit.wall) {
+      this.dir = -this.dir;
+    }
+
+    if (this.shouldJump && hit.ground) {
+      this.vy = -HammerBro.JUMP_SPEED;
+      this.shouldJump = false;
+    }
+
+    const throwing = this.shouldThrow;
+
+    if (throwing) {
+      this.throwHammer();
+      this.shouldThrow = false;
+    }
+
+    this.updateHammers(map);
+
+    if (throwing) {
+      this.state = 'throwing';
+    } else if (this.vy < 0) {
+      this.state = 'jumping';
+    } else if (this.vy > 0) {
+      this.state = 'falling';
+    } else if (this.vx !== 0) {
+      this.state = 'moving';
+    } else {
+      this.state = 'idle';
+    }
+
+    if (this.y > (map.height + 1) * TILE_SUB) {
+      this.alive = false;
+    }
+  }
+
+  private throwHammer(): void {
+    const size = HammerBro.HAMMER_SIZE;
+
+    this.hammers.push({
+      x: this.x + (this.dir > 0 ? this.w * SUB : -size),
+      y: this.y + (this.h * SUB) / 4,
+      vx: this.dir * HammerBro.HAMMER_VX,
+      vy: HammerBro.HAMMER_VY,
+      alive: true
+    });
+  }
+
+  private updateHammers(map: TileMap): void {
+    const size = HammerBro.HAMMER_SIZE;
+
+    for (const hammer of this.hammers) {
+      if (!hammer.alive) continue;
+
+      hammer.x += hammer.vx;
+      hammer.y += hammer.vy;
+
+      hammer.vy = Math.min(hammer.vy + HammerBro.HAMMER_GRAVITY, HammerBro.HAMMER_MAX_FALL);
+
+      if (hammer.x + size < 0 || hammer.x > map.width * TILE_SUB || hammer.y > map.height * TILE_SUB) {
+        hammer.alive = false;
+      }
+    }
+
+    for (let i = this.hammers.length - 1; i >= 0; i--) {
+      if (!this.hammers[i].alive) {
+        this.hammers.splice(i, 1);
+      }
+    }
+  }
+}
+
+
 export function createEnemy(id: number, type: string, x: number, y: number): Enemy {
     switch (type){
       case 'goomba':
@@ -300,6 +449,8 @@ export function createEnemy(id: number, type: string, x: number, y: number): Ene
         return new KoopaEnemy(id, type, x, y);
       case 'piranha':
         return new PiranhaPlant(id, type, x, y);
+      case 'hammer_bro':
+        return new HammerBro(id, type, x, y);
       default:
         return new Enemy(id, type, x, y);
     }

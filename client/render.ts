@@ -1,6 +1,6 @@
 // Hitboxes only, no sprites. Reads the state, never changes it.
 
-import { SCREEN_H, SCREEN_W, SUB, TILE, Tile, type Body, type GameState } from "../core/index.ts";
+import { SCREEN_H, SCREEN_W, SUB, TILE, Tile, type Body, type GameState, HammerBro } from "../core/index.ts";
 
 const COLORS = {
   sky: "#000",
@@ -11,6 +11,8 @@ const COLORS = {
   koopa: "#28cc28",
   koopa_red: "#cc2828",
   piranha: "#00ac48",
+  hammer_bro: "#696969",
+  hammer: "#fccbcb",
   text: "#fff",
 };
 
@@ -54,7 +56,17 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
         color = COLORS.koopa_red;
       }
       box(ctx, e, cam, color);
-  }
+
+      if (e instanceof HammerBro) {
+        for (const hammer of e.hammers) {
+          if (!hammer.alive) continue;
+
+          ctx.fillStyle = COLORS.hammer;
+          ctx.fillRect(Math.round(hammer.x / SUB - cam.x), Math.round(hammer.y / SUB - cam.y), 8, 8);
+        }
+      }
+    }
+  
   box(ctx, state.player, cam, COLORS.player);
 
   ctx.fillStyle = COLORS.text;

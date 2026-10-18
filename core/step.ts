@@ -4,6 +4,7 @@ import type { Buttons } from "./buttons.ts";
 import { SUB, TILE_SUB } from "./constants.ts";
 import { PLAYER, RULES } from "./config.ts";
 import type { GameState } from "./state.ts";
+import { HammerBro } from "./enemy.ts";
 
 /** Buttons for enemies by id. Missing id -> the enemy's own decide(). */
 export type EnemyButtons = Record<number, Buttons>;
@@ -28,6 +29,33 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       if(enemy !== other && other.alive && enemy.overlaps(other)){
         other.alive = false;
       }
+    }
+  }
+  
+  // Hammer projectiles vs player.
+  const hammerSize = 8 * SUB;
+
+  if (player.alive) {
+    for (const enemy of state.enemies) {
+      if (!(enemy instanceof HammerBro) || !enemy.alive) continue;
+
+      for (const hammer of enemy.hammers) {
+        if (!hammer.alive) continue;
+
+        const overlaps =
+          hammer.x < player.x + player.w * SUB &&
+          hammer.x + hammerSize > player.x &&
+          hammer.y < player.y + player.h * SUB &&
+          hammer.y + hammerSize > player.y;
+
+        if (overlaps) {
+          hammer.alive = false;
+          player.alive = false;
+          break;
+        }
+      }
+
+      if (!player.alive) break;
     }
   }
 
