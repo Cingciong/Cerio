@@ -45,7 +45,23 @@
       "char": "P", 
       "solid": true, 
       "color": "#00FF00" 
-  }
+  },
+
+  "brick":           { "id": 6,  "char": "B", "solid": true,  "color": "#B5502B", "breakable": true },
+  "hard":            { "id": 7,  "char": "H", "solid": true,  "color": "#C87137" },
+  "used":            { "id": 8,  "char": "u", "solid": true,  "color": "#7A4A22" },
+  "brick_coins":     { "id": 9,  "char": "C", "solid": true,  "color": "#B5502B", "contents": "coins", "becomes": "used" },
+  "brick_star":      { "id": 10, "char": "S", "solid": true,  "color": "#B5502B", "contents": "star",  "becomes": "used" },
+  "brick_vine":      { "id": 11, "char": "V", "solid": true,  "color": "#B5502B", "contents": "vine",  "becomes": "used" },
+  "hidden_1up":      { "id": 12, "char": "U", "solid": false, "color": null,      "contents": "1up",   "becomes": "used", "hidden": true },
+  "hidden_coin":     { "id": 13, "char": "I", "solid": false, "color": null,      "contents": "coin",  "becomes": "used", "hidden": true },
+  "coin":            { "id": 14, "char": "o", "solid": false, "color": "#FFD700", "collect": "coin" },
+  "flagpole":        { "id": 15, "char": "F", "solid": false, "color": "#7CFC00", "goal": true },
+  "treetop":         { "id": 16, "char": "T", "solid": true,  "color": "#5DBB2F" },
+  "bridge":          { "id": 17, "char": "-", "solid": true,  "color": "#D2691E" },
+  "lava":            { "id": 18, "char": "L", "solid": false, "color": "#FF3300", "deadly": true },
+  "bowser_bridge":   { "id": 19, "char": "Z", "solid": true,  "color": "#A0A0A0", "collapses": true },
+  "axe":             { "id": 20, "char": "A", "solid": false, "color": "#FFA500", "goal": true }
 },
 
 
@@ -71,7 +87,15 @@
     "koopa": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64 },
     "koopa_red": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64 },
     "piranha": { "w": 16, "h": 24, "speed": 12, "gravity": 0, "maxFall": 0 },
-    "hammer_bro": {"w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64}
+    "hammer_bro": {"w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64},
+    "paratroopa":     { "w": 16, "h": 24, "speed": 8,  "gravity": 4, "maxFall": 64 },
+    "paratroopa_fly": { "w": 16, "h": 24, "speed": 6,  "gravity": 0, "maxFall": 0 },
+    "cheep_cheep":    { "w": 16, "h": 16, "speed": 12, "gravity": 3, "maxFall": 64 },
+    "podoboo":        { "w": 16, "h": 16, "speed": 0,  "gravity": 4, "maxFall": 64 },
+    "bowser":         { "w": 32, "h": 32, "speed": 4,  "gravity": 6, "maxFall": 64 },
+    "buzzy_beetle":   { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64 },
+    "spiny":          { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64 },
+    "bullet_bill":    { "w": 16, "h": 16, "speed": 24, "gravity": 0, "maxFall": 0 }
   },
 
   "rules": {
