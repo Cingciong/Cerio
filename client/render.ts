@@ -1,20 +1,27 @@
 // Hitboxes only, no sprites. Reads the state, never changes it.
 
-import { SCREEN_H, SCREEN_W, SUB, TILE, Tile, type Body, type GameState, HammerBro } from "../core/index.ts";
+import { SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type GameState, HammerBro } from "../core/index.ts";
 
 const COLORS = {
-  sky: "#000",
+  sky: "#5C94FC",
   block: "#8a5a2b",
   blockEdge: "#c9894b",
   player: "#e33",
   enemy: "#d9a400",
-  koopa: "#28cc28",
-  koopa_red: "#cc2828",
-  piranha: "#00ac48",
-  hammer_bro: "#696969",
   hammer: "#fccbcb",
   text: "#fff",
 };
+
+// Zbudujmy niezawodną mapę ID -> Kolor jako słownik, zamiast jako tablicę, która może tracić indeksy
+const TILE_COLORS: Record<number, string> = {};
+for (const t of Object.values(TILES)) {
+  TILE_COLORS[(t as any).id] = (t as any).color || COLORS.block;
+}
+
+const ENEMY_COLORS: Record<string, string> = {};
+for (const [type, cfg] of Object.entries(ENEMIES)) {
+  ENEMY_COLORS[type] = (cfg as any).color || COLORS.enemy;
+}
 
 export interface Camera {
   x: number; // px, top-left of the screen in the world
@@ -25,8 +32,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   ctx.fillStyle = COLORS.sky;
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
   
-  for (const e of state.enemies) if (e.alive && e.type === "piranha") box(ctx, e, cam, COLORS.piranha);
-
+  for (const e of state.enemies) if (e.alive && e.type === "piranha") box(ctx, e, cam, ENEMY_COLORS[e.type] || COLORS.enemy);
 
   // tiles on screen
   const { map } = state;
@@ -36,11 +42,13 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       if (tx >= map.width) continue; 
       const tileId = map.tiles[ty * map.width + tx];
       if (tileId === Tile.air || tileId === undefined) continue;
+      
       const x = tx * TILE - cam.x;
       const y = ty * TILE - cam.y;
-      if (tileId === Tile.qblock_coin || tileId === Tile.qblock_mushroom || tileId === Tile.qblock_star) {ctx.fillStyle = "#FFFF00";} 
-      else if (tileId === Tile.pipe) {ctx.fillStyle = "#00FF00";} 
-      else {ctx.fillStyle = COLORS.block;}
+      
+      // Pewne odczytywanie koloru ze słownika.
+      ctx.fillStyle = TILE_COLORS[tileId] || COLORS.block;
+      
       ctx.fillRect(x, y, TILE, TILE);
       ctx.strokeStyle = COLORS.blockEdge;
       ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
@@ -49,18 +57,12 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
 
   for (const e of state.enemies) {
     if (!e.alive || e.type === "piranha") continue;
-      let color = COLORS.enemy;
-      if(e.type === 'koopa'){
-        color = COLORS.koopa;
-      }else if(e.type === 'koopa_red'){
-        color = COLORS.koopa_red;
-      }
-      box(ctx, e, cam, color);
+      
+      box(ctx, e, cam, ENEMY_COLORS[e.type] || COLORS.enemy);
 
       if (e instanceof HammerBro) {
         for (const hammer of e.hammers) {
           if (!hammer.alive) continue;
-
           ctx.fillStyle = COLORS.hammer;
           ctx.fillRect(Math.round(hammer.x / SUB - cam.x), Math.round(hammer.y / SUB - cam.y), 8, 8);
         }

@@ -1,5 +1,5 @@
 import { createState, FPS, loadLevel, step, toFrame, type LevelFile } from "../core/index.ts";
-import levelFile from "../levels/level2.json";
+import levelFile from "../levels/seg1-1-3.json";
 import { readButtons, takeRestart } from "./input.ts";
 import { connected, sendFrame } from "./net.ts";
 import { camera, render } from "./render.ts";
