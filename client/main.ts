@@ -1,11 +1,15 @@
+/// <reference types="vite/client" />
 import { createState, FPS, loadLevel, step, toFrame, type LevelFile } from "../core/index.ts";
 import levelFile from "../levels/seg1-1-3.json";
+import { generate, type Segment } from "../core/index.ts";
 import { readButtons, takeRestart } from "./input.ts";
 import { connected, sendFrame } from "./net.ts";
 import { camera, render } from "./render.ts";
 
-const level = loadLevel(levelFile as LevelFile);
-let state = createState(level);
+const files = import.meta.glob("../levels/**/seg*.json", { eager: true, import: "default" });
+const segments = Object.values(files) as Segment[];
+const seed = Number(new URLSearchParams(location.search).get("seed") ?? 1);
+const level = loadLevel(generate(segments, seed, { length: 200, maxDifficulty: 5, themes: ["overworld"] }));let state = createState(level);
 
 const ctx = (document.getElementById("game") as HTMLCanvasElement).getContext("2d")!;
 const FRAME_MS = 1000 / FPS;

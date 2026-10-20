@@ -16,7 +16,7 @@ import { createTileMap, Tile, tileIdOfChar, type TileMap } from "./tiles.ts";
 export interface LevelFile {
   name: string;
   rows: string[];
-  player: { x: number; y: number };
+  player?: { x: number; y: number };
   enemies: { type: string; x: number; y: number }[];
 }
 
@@ -53,6 +53,8 @@ export function loadLevel(file: LevelFile): Level {
     if (!ENEMIES[e.type]) throw new Error(`${file.name}: unknown enemy type '${e.type}'`);
   }
 
+  if (!file.player) throw new Error(`${file.name}: no player start`);
+  
   return {
     name: file.name,
     map,
