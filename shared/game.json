@@ -18,11 +18,7 @@
 
   "tiles": {
     "air": { "id": 0, "char": ".", "solid": false },
-    "block": { "id": 1, "char": "#", "solid": true },
-    "qblock_coin": { "id": 2, "char": "?", "solid": true, "color": "#FFFF00" },
-    "qblock_mushroom": { "id": 3, "char": "M", "solid": true, "color": "#FFFF00" },
-    "qblock_star": { "id": 4, "char": "*", "solid": true, "color": "#FFFF00" },
-    "pipe": { "id": 5, "char": "P", "solid": true, "color": "#00FF00" },
+    "floor": { "id": 1, "char": "#", "solid": true },
     "pipe_left_top": { "id": 6, "char": "<", "solid": true, "color": "#00FF00" },
     "pipe_right_top": { "id": 7, "char": ">", "solid": true, "color": "#00FF00" },
     "pipe_left_body": { "id": 8, "char": "[", "solid": true, "color": "#00FF00" },
