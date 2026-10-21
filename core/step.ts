@@ -5,6 +5,8 @@ import { SUB, TILE_SUB } from "./constants.ts";
 import { PLAYER, RULES } from "./config.ts";
 import type { GameState } from "./state.ts";
 import { HammerBro } from "./enemy.ts";
+import { bumpBlock, collectCoins } from "./coins.ts";
+import { updateRedCoins } from "./redcoins.ts";
 
 /** Buttons for enemies by id. Missing id -> the enemy's own decide(). */
 export type EnemyButtons = Record<number, Buttons>;
@@ -16,6 +18,10 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   const { player, map } = state;
   const prevBottom = player.bottom;
   player.update(buttons, map);
+
+  if(player.lastHit.ceiling) bumpBlock(state, player.lastHit.bumpTx, player.lastHit.bumpTy);
+  collectCoins(state);
+  updateRedCoins(state);
 
   for (const enemy of state.enemies) {
     enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map);

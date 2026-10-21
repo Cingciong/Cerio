@@ -12,3 +12,4 @@ export * from "./frame.ts";
 export * from "./rng.ts";
 export * from "./segment.ts";
 export * from "./generate.ts";
+export * from "./coins.ts"

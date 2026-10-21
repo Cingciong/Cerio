@@ -13,9 +13,10 @@ const COLORS = {
 };
 
 // Zbudujmy niezawodną mapę ID -> Kolor jako słownik, zamiast jako tablicę, która może tracić indeksy
-const TILE_COLORS: Record<number, string> = {};
+const TILE_COLORS: Record<number, string | null> = {};
 for (const t of Object.values(TILES)) {
-  TILE_COLORS[(t as any).id] = (t as any).color || COLORS.block;
+  const color = (t as any).color;
+  TILE_COLORS[(t as any).id] = color === undefined ? COLORS.block: color;
 }
 
 const ENEMY_COLORS: Record<string, string> = {};
@@ -46,12 +47,25 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       const x = tx * TILE - cam.x;
       const y = ty * TILE - cam.y;
       
-      // Pewne odczytywanie koloru ze słownika.
-      ctx.fillStyle = TILE_COLORS[tileId] || COLORS.block;
+      const color = TILE_COLORS[tileId];
+      if(color === null) continue;
+
+      ctx.fillStyle = color ?? COLORS.block;
       
       ctx.fillRect(x, y, TILE, TILE);
       ctx.strokeStyle = COLORS.blockEdge;
       ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
+    }
+  }
+  
+  ctx.fillStyle = ctx.strokeStyle = "#e02020";
+  for (const ring of state.redRings) {
+    if (ring.phase === "waiting") {
+      ctx.strokeRect(ring.x / SUB - cam.x + 3.5, ring.y / SUB - cam.y + 0.5, TILE - 7, 2 * TILE - 1);
+    } else if (ring.phase === "active") {
+      ring.coins.forEach((c, i) => {
+        if (!ring.collected[i]) ctx.fillRect(c.x / SUB - cam.x + 4, c.y / SUB - cam.y + 2, TILE - 8, TILE - 4);
+      });
     }
   }
 

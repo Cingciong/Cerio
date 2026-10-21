@@ -29,7 +29,9 @@ function loop(now: number): void {
     acc -= FRAME_MS;
   }
 
-  const info = `frame ${state.frame}  server ${connected() ? "on" : "off"}`;
+  const ring = state.redRings.find((r) => r.phase === "active");
+  const red = ring ? `red${ring.collected.filter(Boolean).length}/${ring.coins.length} ${Math.ceil(ring.timer/FPS)}s : ""`;
+  const info =  `coins ${state.coins} frame ${state.frame}  server ${connected() ? "on" : "off"}`;
   render(ctx, state, camera(state), info);
   requestAnimationFrame(loop);
 }

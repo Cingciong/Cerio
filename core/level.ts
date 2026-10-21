@@ -13,11 +13,20 @@ import { ENEMIES } from "./config.ts";
 import { TILE_SUB } from "./constants.ts";
 import { createTileMap, Tile, tileIdOfChar, type TileMap } from "./tiles.ts";
 
+export interface ObjectFile{
+  type: string;
+  x: number;
+  y: number;
+  coins?: [number, number][];
+  [key: string]: unknown;
+}
+
 export interface LevelFile {
   name: string;
   rows: string[];
   player?: { x: number; y: number };
   enemies: { type: string; x: number; y: number }[];
+  objects?: ObjectFile[];
 }
 
 export interface Spawn {
@@ -34,6 +43,7 @@ export interface Level {
   map: TileMap;
   playerStart: Spawn;
   enemies: EnemySpawn[];
+  redRings: {x: number; y: number; coins:{x:number;y:number}[]}[];
 }
 
 export function loadLevel(file: LevelFile): Level {
@@ -60,5 +70,6 @@ export function loadLevel(file: LevelFile): Level {
     map,
     playerStart: { x: file.player.x * TILE_SUB, y: file.player.y * TILE_SUB },
     enemies: file.enemies.map((e) => ({ type: e.type, x: e.x * TILE_SUB, y: e.y * TILE_SUB })),
+    redRings: (file.objects ?? []).filter((o) => o.type === "red_ring").map((o) =>({x: o.x*TILE_SUB, y: o.y*TILE_SUB, coins:(o.coins ?? []).map(([x,y]) => ({x:x*TILE_SUB, y: y*TILE_SUB})),})),
   };
 }

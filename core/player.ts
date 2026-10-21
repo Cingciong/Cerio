@@ -1,6 +1,6 @@
 // Mario movement. Physics values: shared/game.json "player" (subpixels and frames).
 
-import { Body } from "./body.ts";
+import { Body, Collision } from "./body.ts";
 import { Button, has, type Buttons } from "./buttons.ts";
 import { PLAYER } from "./config.ts";
 import type { TileMap } from "./tiles.ts";
@@ -9,7 +9,7 @@ export class Player extends Body {
   buttons: Buttons = 0; // pressed this frame
   prevButtons: Buttons = 0;
   alive = true;
-
+  lastHit: Collision = {wall: false, ceiling: false, ground: false, bumpTx: -1, bumpTy: 1};
   constructor(x: number, y: number) {
     super(x, y, PLAYER.w, PLAYER.h);
   }
@@ -24,7 +24,7 @@ export class Player extends Body {
     const rising = this.vy < 0 && has(buttons, Button.jump);
     this.vy = Math.min(this.vy + (rising ? PLAYER.gravityHold : PLAYER.gravity), PLAYER.maxFall);
 
-    this.move(map);
+    this.lastHit = this.move(map);
   }
 
   private horizontal(buttons: Buttons): void {

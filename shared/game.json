@@ -79,7 +79,8 @@
   },
 
   "rules": {
-    "stompTolerancePx": 4
+    "stompTolerancePx": 4,
+    "redCoins":{"timeFrames": 480}
   },
 
   "view": {

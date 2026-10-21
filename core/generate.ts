@@ -1,6 +1,6 @@
 // Level generator: seed + params -> LevelFile. Same seed and segments -> same level.
 
-import type { LevelFile } from "./level.ts";
+import type { LevelFile, ObjectFile } from "./level.ts";
 import { Rng } from "./rng.ts";
 import { canFollow, joint, type Segment } from "./segment.ts";
 
@@ -52,11 +52,16 @@ function join(parts: Segment[], name: string): LevelFile {
   const rows: string[] = Array.from({ length: H }, () => "");
   const enemies: LevelFile["enemies"] = [];
   let x0 = 0;
+  const objects: ObjectFile[] = [];
   for (const s of parts) {
     const w = Math.max(...s.rows.map((r) => r.length));
     s.rows.forEach((r, y) => (rows[y] += r.padEnd(w, ".")));
     for (const e of s.enemies) enemies.push({ ...e, x: e.x + x0 });
     x0 += w;
+    for(const o of s.objects ?? [])
+    {
+      objects.push({ ...o, x: o.x + x0, coins: o.coins?.map(([x,y]) => [x+ x0, y] as [number, number])});
+    }
   }
-  return { name, rows, enemies, player: { x: 1, y: H - 3 } };
+  return { name, rows, enemies, objects, player: { x: 1, y: H - 3 } };
 }

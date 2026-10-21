@@ -7,6 +7,8 @@ export interface Collision {
   wall: boolean; // hit something while moving horizontally
   ceiling: boolean;
   ground: boolean; // standing on something after this move
+  bumpTx: number;
+  bumpTy: number;
 }
 
 export class Body {
@@ -39,7 +41,7 @@ export class Body {
 
   /** Move by (vx, vy): first X, then Y. Speeds stay below one tile per frame, so no tunnelling. */
   move(map: TileMap): Collision {
-    const hit: Collision = { wall: false, ceiling: false, ground: false };
+    const hit: Collision = { wall: false, ceiling: false, ground: false, bumpTx: -1, bumpTy: -1 };
 
     // X
     this.x += this.vx;
@@ -62,6 +64,12 @@ export class Body {
         } else {
           this.y = (ty + 1) * TILE_SUB;
           hit.ceiling = true;
+
+          const mid = toTile(this.x + (this.w * SUB)/2);
+          hit.bumpTx = isSolid(map, mid, ty) ? mid:
+          isSolid(map, toTile(this.x), ty) ? toTile(this.x):
+          toTile(this.right -1);
+          hit.bumpTy = ty;
         }
         this.vy = 0;
       }
