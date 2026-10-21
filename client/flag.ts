@@ -35,7 +35,7 @@ export async function flagCurrentSegment(state: GameState, paths: Record<string,
   releaseKeys();
   const text = await ask(seg.name);
   releaseKeys();
-  if (text === null) return "anulowano";
+  if (text === null) return "cancelled";
 
   const res = await fetch("/debug/flag-segment", {
     method: "POST",
