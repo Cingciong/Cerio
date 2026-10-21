@@ -8,6 +8,7 @@ export * from "./sim/pipes.ts";
 export * from "./entities/body.ts";
 export * from "./entities/player.ts";
 export * from "./entities/enemy.ts";
+export * from "./entities/platform.ts";
 export * from "./sim/state.ts";
 export * from "./sim/step.ts";
 export * from "./net/frame.ts";

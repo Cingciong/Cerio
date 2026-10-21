@@ -1,6 +1,6 @@
 // Canvas rendering only. Reads the state, never changes it.
 
-import { SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, HammerBro, KoopaEnemy, PiranhaPlant } from "../core/index.ts";
+import { SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, HammerBro, KoopaEnemy, PiranhaPlant, type Platform } from "../core/index.ts";
 import {
   COIN_FRAMES,
   GOOMBA_WALK,
@@ -73,6 +73,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       
       drawTile(ctx, tileId, x, y, state.frame, map, tx, ty);
     }
+  }
+
+  for (const p of state.platforms) {
+    drawPlatform(ctx, p, cam);
   }
 
   for (const e of state.enemies) {
@@ -353,4 +357,30 @@ export function camera(state: GameState): Camera {
   const x = Math.max(0, Math.min(Math.round(player.x / SUB - SCREEN_W * 0.4), maxX));
   const y = Math.min(Math.round(player.y / SUB - SCREEN_H * 0.3), maxY);
   return { x, y };
+}
+
+
+function drawPlatform(ctx: CanvasRenderingContext2D, platform: Platform, cam: Camera): void {
+  const x = Math.round(platform.x / SUB - cam.x);
+  const y = Math.round(platform.y / SUB - cam.y);
+  const w = platform.w;
+  const h = platform.h;
+
+  if (x + w < 0 || x > SCREEN_W || y + h < 0 || y > SCREEN_H) return;
+
+  // Platform top surface (highlight)
+  ctx.fillStyle = "#FFA044";
+  ctx.fillRect(x, y, w, 2);
+
+  // Platform body
+  ctx.fillStyle = "#D85000";
+  ctx.fillRect(x, y + 2, w, Math.max(0, h - 4));
+
+  // Platform bottom (shadow)
+  ctx.fillStyle = "#8C2800";
+  ctx.fillRect(x, y + Math.max(2, h - 2), w, 2);
+
+  // Outline
+  ctx.strokeStyle = "#000000";
+  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
 }
