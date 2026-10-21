@@ -23,12 +23,12 @@
     "pipe_right_top": { "id": 7, "char": ">", "solid": true, "color": "#00FF00" },
     "pipe_left_body": { "id": 8, "char": "[", "solid": true, "color": "#00FF00" },
     "pipe_right_body": { "id": 9, "char": "]", "solid": true, "color": "#00FF00" },
-    "brick":           { "id": 10, "char": "B", "solid": true,  "color": "#8a5a2b", "breakable": true },
-    "hard":            { "id": 11, "char": "H", "solid": true,  "color": "#C87137" },
-    "used":            { "id": 12, "char": "u", "solid": true,  "color": "#7A4A22" },
-    "brick_coins":     { "id": 13, "char": "C", "solid": true,  "color": "#B5502B", "contents": "coins", "becomes": "used" },
-    "brick_star":      { "id": 14, "char": "S", "solid": true,  "color": "#B5502B", "contents": "star",  "becomes": "used" },
-    "brick_vine":      { "id": 15, "char": "V", "solid": true,  "color": "#B5502B", "contents": "vine",  "becomes": "used" },
+    "brick":           { "id": 10, "char": "B", "solid": true,  "color": "#8a5a2b", "hit": "break" },
+    "hard":            { "id": 11, "char": "H", "solid": true,  "color": "#C87137", "hit": "bump" },
+    "used":            { "id": 12, "char": "u", "solid": true,  "color": "#7A4A22", "hit": "bump" },
+    "brick_coins":     { "id": 13, "char": "C", "solid": true,  "color": "#B5502B", "contents": "coins", "becomes": "used", "hit": "bump" },
+    "brick_star":      { "id": 14, "char": "S", "solid": true,  "color": "#B5502B", "contents": "star",  "becomes": "used", "hit": "bump" },
+    "brick_vine":      { "id": 15, "char": "V", "solid": true,  "color": "#B5502B", "contents": "vine",  "becomes": "used", "hit": "bump" },
     "hidden_1up":      { "id": 16, "char": "U", "solid": false, "color": null,      "contents": "1up",   "becomes": "used", "hidden": true },
     "hidden_coin":     { "id": 17, "char": "I", "solid": false, "color": null,      "contents": "coin",  "becomes": "used", "hidden": true },
     "coin":            { "id": 18, "char": "o", "solid": false, "color": "#FFD700", "collect": "coin" },
@@ -37,7 +37,8 @@
     "bridge":          { "id": 21, "char": "-", "solid": true,  "color": "#D2691E" },
     "lava":            { "id": 22, "char": "L", "solid": false, "color": "#FF3300", "deadly": true },
     "bowser_bridge":   { "id": 23, "char": "Z", "solid": true,  "color": "#A0A0A0", "collapses": true },
-    "axe":             { "id": 24, "char": "A", "solid": false, "color": "#FFA500", "goal": true }
+    "axe":             { "id": 24, "char": "A", "solid": false, "color": "#FFA500", "goal": true },
+    "question":        { "id": 25, "char": "?", "solid": true, "color": "#FFD700", "contents": "powerup", "becomes": "used" }
   },
 
 
@@ -55,7 +56,8 @@
     "gravityHold": 2,
     "gravity": 6,
     "maxFall": 64,
-    "stompBounce": 48
+    "stompBounce": 48,
+    "invulnerableFrames": 120
   },
 
   "enemies": {
@@ -72,6 +74,20 @@
     "buzzy_beetle": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#fcfc00" },
     "spiny": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#ff0000" },
     "bullet_bill": { "w": 16, "h": 16, "speed": 24, "gravity": 0, "maxFall": 0, "color": "#000000" }
+  },
+
+  "items": {
+    "mushroom": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 },
+    "star":     { "w": 16, "h": 16, "speed": 16, "gravity": 6, "maxFall": 64 }
+  },
+
+  "blocks": {
+    "bumpFrames": 12,
+    "bumpPx": 8,
+    "debrisGravity": 4,
+    "debrisJump": 64,
+    "debrisSpeed": 16,
+    "debrisPx": 8
   },
 
   "rules": {

@@ -19,10 +19,28 @@
     "##############################"
   ],
   "enemies": [
-    { "type": "piranha", "x": 2.5, "y": 9 },
-    { "type": "koopa",   "x": 11,  "y": 12 }
+    {
+      "type": "piranha",
+      "x": 2.5,
+      "y": 9
+    },
+    {
+      "type": "koopa",
+      "x": 11,
+      "y": 12
+    }
   ],
   "objects": [
-    { "type": "spring", "x": 14, "y": 11 }
-  ]
+    {
+      "type": "spring",
+      "x": 14,
+      "y": 11
+    }
+  ],
+  "fix": {
+    "from": "normal",
+    "comment": "nie da się rpzekoczyć walla dodatkwo jest blck na kjtóry nie mgoe wskoczyć",
+    "level": "gen-normal-992153576",
+    "date": "2026-10-21T19:07:50.656Z"
+  }
 }

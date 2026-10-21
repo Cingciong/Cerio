@@ -1,6 +1,6 @@
 import { Button, type ButtonName, type Buttons } from "../core/index.ts";
 
-// Keyboard -> button names (shared/game.json "buttons").
+
 const KEYS: Record<string, ButtonName> = {
   ArrowLeft: "left",
   KeyA: "left",
@@ -18,9 +18,12 @@ const KEYS: Record<string, ButtonName> = {
 
 const held = new Set<string>();
 let restart = false;
+let flag = false;
 
 window.addEventListener("keydown", (e) => {
+  if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) return; // typing, not playing
   if (e.code === "KeyR") restart = true;
+  if (e.code === "KeyF") flag = true;
   if (e.code in KEYS) e.preventDefault();
   held.add(e.code);
 });
@@ -37,4 +40,14 @@ export function takeRestart(): boolean {
   const r = restart;
   restart = false;
   return r;
+}
+
+export function takeFlag(): boolean {
+  const f = flag;
+  flag = false;
+  return f;
+}
+
+export function releaseKeys(): void {
+  held.clear();
 }

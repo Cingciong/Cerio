@@ -1,9 +1,11 @@
 // Mario movement. Physics values: shared/game.json "player" (subpixels and frames).
 
-import { Body } from "./body.ts";
+import { Body, type Collision } from "./body.ts";
 import { Button, has, type Buttons } from "../config/buttons.ts";
 import { PLAYER } from "../config/config.ts";
 import type { TileMap } from "../world/tiles.ts";
+
+export type PowerState = 'small' | 'big' | 'fire' | 'star';
 
 export class Player extends Body {
   buttons: Buttons = 0; // pressed this frame
@@ -11,13 +13,28 @@ export class Player extends Body {
   alive = true;
   facing: -1 | 1 = 1;
 
+  powerState: PowerState = 'small';
+  invulnerableTimer = 0;
+
   constructor(x: number, y: number) {
     super(x, y, PLAYER.w, PLAYER.h);
   }
 
-  update(buttons: Buttons, map: TileMap): void {
+  update(buttons: Buttons, map: TileMap): Collision {
     this.prevButtons = this.buttons;
     this.buttons = buttons;
+
+    if (this.invulnerableTimer > 0){
+      this.invulnerableTimer--;
+    }
+
+    const targetHeight = (this.powerState === 'small') ? PLAYER.h : 32;
+
+    if(this.h !== targetHeight){
+      const diff = targetHeight - this.h;
+      this.h = targetHeight;
+      this.y -= diff * 16;
+    }
 
     this.horizontal(buttons);
     this.jump(buttons);
@@ -25,7 +42,23 @@ export class Player extends Body {
     const rising = this.vy < 0 && has(buttons, Button.jump);
     this.vy = Math.min(this.vy + (rising ? PLAYER.gravityHold : PLAYER.gravity), PLAYER.maxFall);
 
-    this.move(map);
+    return this.move(map);
+  }
+
+  takeDamage(): void{
+    if(this.invulnerableTimer > 0) return;
+    if(this.powerState === 'star'){
+      return;
+    }
+    if(this.powerState === 'small'){
+      this.alive = false;
+    }else if(this.powerState === 'fire'){
+      this.powerState = 'big';
+      this.invulnerableTimer = PLAYER.invulnerableFrames;
+    }else if(this.powerState === 'big'){
+      this.powerState = 'small';
+      this.invulnerableTimer = PLAYER.invulnerableFrames;
+    }
   }
 
   private horizontal(buttons: Buttons): void {
