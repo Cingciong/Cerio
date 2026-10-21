@@ -1,6 +1,31 @@
-// Hitboxes only, no sprites. Reads the state, never changes it.
+// Canvas rendering only. Reads the state, never changes it.
 
-import { SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type GameState, HammerBro } from "../core/index.ts";
+import { SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, HammerBro, KoopaEnemy, PiranhaPlant } from "../core/index.ts";
+import {
+  COIN_FRAMES,
+  GOOMBA_WALK,
+  HAMMER_BRO_FRAMES,
+  HAMMER_PROJECTILE,
+  KOOPA_SHELL,
+  KOOPA_WALK,
+  MARIO_IDLE,
+  MARIO_JUMP,
+  MARIO_WALK,
+  PIRANHA_PLANT_FRAMES,
+  TILE_SPRITES,
+  type SpriteFrame,
+} from "./spriteFrames.ts";
+
+function loadSpriteSheet(path: string): HTMLImageElement {
+  const image = new Image();
+  image.src = new URL(path, import.meta.url).href;
+  return image;
+}
+
+const marioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Mario.png");
+const enemySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Enemies.png");
+const itemSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Items.png");
+const overworldSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/OverWorld.png");
 
 const COLORS = {
   sky: "#5C94FC",
@@ -29,11 +54,9 @@ export interface Camera {
 }
 
 export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera, info: string): void {
+  ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = COLORS.sky;
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-  
-  for (const e of state.enemies) if (e.alive && e.type === "piranha") box(ctx, e, cam, ENEMY_COLORS[e.type] || COLORS.enemy);
-
 
   // tiles on screen
   const { map } = state;
@@ -46,29 +69,60 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       const x = tx * TILE - cam.x;
       const y = ty * TILE - cam.y;
       
-      ctx.fillStyle = TILE_COLORS[tileId] || COLORS.block;
-      ctx.fillRect(x, y, TILE, TILE);
-      ctx.strokeStyle = COLORS.blockEdge;
-      ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
+      drawTile(ctx, tileId, x, y, state.frame, map, tx, ty);
     }
   }
 
   for (const e of state.enemies) {
-    if (!e.alive || e.type === "piranha") continue;
-      
-      box(ctx, e, cam, ENEMY_COLORS[e.type] || COLORS.enemy);
+    if (!e.alive) continue;
 
-      if (e instanceof HammerBro) {
-        for (const hammer of e.hammers) {
-          if (!hammer.alive) continue;
+    if (e instanceof PiranhaPlant) {
+      if (e.phase === "hidden") continue;
+      if (isSpriteReady(enemySpriteSheet)) {
+        const frame = PIRANHA_PLANT_FRAMES[Math.floor(state.frame / 8) % PIRANHA_PLANT_FRAMES.length];
+        drawSpriteFrame(ctx, enemySpriteSheet, e, cam, frame, false);
+      } else {
+        box(ctx, e, cam, ENEMY_COLORS[e.type] || COLORS.enemy);
+      }
+      continue;
+    }
 
+    drawEnemy(ctx, e, cam, state.frame);
+
+    if (e instanceof HammerBro) {
+      for (const hammer of e.hammers) {
+        if (!hammer.alive) continue;
+
+        const x = Math.round(hammer.x / SUB - cam.x);
+        const y = Math.round(hammer.y / SUB - cam.y);
+        if (isSpriteReady(enemySpriteSheet)) {
+          ctx.drawImage(
+            enemySpriteSheet,
+            HAMMER_PROJECTILE.x,
+            HAMMER_PROJECTILE.y,
+            HAMMER_PROJECTILE.width,
+            HAMMER_PROJECTILE.height,
+            x,
+            y,
+            HammerBro.HAMMER_WIDTH / SUB,
+            HammerBro.HAMMER_HEIGHT / SUB,
+          );
+        } else {
           ctx.fillStyle = COLORS.hammer;
-          ctx.fillRect(Math.round(hammer.x / SUB - cam.x), Math.round(hammer.y / SUB - cam.y), 8, 8);
+          ctx.fillRect(
+            x,
+            y,
+            HammerBro.HAMMER_WIDTH / SUB,
+            HammerBro.HAMMER_HEIGHT / SUB,
+          );
         }
       }
     }
+  }
+
+  drawPipesInFront(ctx, map, cam);
   
-  box(ctx, state.player, cam, COLORS.player);
+  drawPlayer(ctx, state, cam);
   const seg = segmentDebug(ctx, state, cam);
 
   ctx.fillStyle = COLORS.text;
@@ -101,6 +155,187 @@ function segmentDebug(ctx: CanvasRenderingContext2D, state: GameState, cam: Came
 function box(ctx: CanvasRenderingContext2D, b: Body, cam: Camera, color: string): void {
   ctx.fillStyle = color;
   ctx.fillRect(Math.round(b.x / SUB - cam.x), Math.round(b.y / SUB - cam.y), b.w, b.h);
+}
+
+function drawTile(
+  ctx: CanvasRenderingContext2D,
+  tileId: number,
+  x: number,
+  y: number,
+  frameNumber: number,
+  map: GameState["map"],
+  tx: number,
+  ty: number,
+): void {
+  if (tileId === Tile.coin && isSpriteReady(itemSpriteSheet)) {
+    const frame = COIN_FRAMES[Math.floor(frameNumber / 8) % COIN_FRAMES.length];
+    ctx.drawImage(itemSpriteSheet, frame.x, frame.y, frame.width, frame.height, x, y, TILE, TILE);
+    return;
+  }
+
+  const frame = pipeSprite(map, tx, ty, tileId) ?? TILE_SPRITES[tileId];
+  if (frame && isSpriteReady(overworldSpriteSheet)) {
+    ctx.drawImage(overworldSpriteSheet, frame.x, frame.y, frame.width, frame.height, x, y, TILE, TILE);
+    return;
+  }
+
+  ctx.fillStyle = TILE_COLORS[tileId] || COLORS.block;
+  ctx.fillRect(x, y, TILE, TILE);
+  ctx.strokeStyle = COLORS.blockEdge;
+  ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
+}
+
+function pipeSprite(map: GameState["map"], tx: number, ty: number, tileId: number): SpriteFrame | undefined {
+  if (!isPipeTile(tileId)) return undefined;
+
+  const rightHalf = isPipeAt(map, tx - 1, ty);
+  const hasPipeAbove = isPipeAt(map, tx, ty - 1);
+
+  if (hasPipeAbove) {
+    return rightHalf ? TILE_SPRITES[Tile.pipe_right_body] : TILE_SPRITES[Tile.pipe_left_body];
+  }
+  return rightHalf ? TILE_SPRITES[Tile.pipe_right_top] : TILE_SPRITES[Tile.pipe_left_top];
+}
+
+function drawPipesInFront(ctx: CanvasRenderingContext2D, map: GameState["map"], cam: Camera): void {
+  if (!isSpriteReady(overworldSpriteSheet)) return;
+
+  const first = Math.floor(cam.x / TILE);
+  for (let ty = 0; ty < map.height; ty++) {
+    for (let tx = first; tx <= first + SCREEN_W / TILE; tx++) {
+      if (tx >= map.width) continue;
+      const tileId = map.tiles[ty * map.width + tx];
+      if (!isPipeTile(tileId)) continue;
+
+      const frame = pipeSprite(map, tx, ty, tileId) ?? TILE_SPRITES[tileId];
+      if (!frame) continue;
+      ctx.drawImage(
+        overworldSpriteSheet,
+        frame.x,
+        frame.y,
+        frame.width,
+        frame.height,
+        tx * TILE - cam.x,
+        ty * TILE - cam.y,
+        TILE,
+        TILE,
+      );
+    }
+  }
+}
+
+function isPipeTile(tileId: number): boolean {
+  return tileId === Tile.pipe_left_top || tileId === Tile.pipe_right_top ||
+    tileId === Tile.pipe_left_body || tileId === Tile.pipe_right_body;
+}
+
+function isPipeAt(map: GameState["map"], tx: number, ty: number): boolean {
+  if (tx < 0 || tx >= map.width || ty < 0 || ty >= map.height) return false;
+  return isPipeTile(map.tiles[ty * map.width + tx]);
+}
+
+function isSpriteReady(image: HTMLImageElement): boolean {
+  return image.complete && image.naturalWidth > 0;
+}
+
+function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, frameNumber: number): void {
+  const frameIndex = Math.floor(frameNumber / 8);
+  const moving = enemy.onGround && enemy.vx !== 0;
+
+  if (enemy instanceof HammerBro && isSpriteReady(enemySpriteSheet)) {
+    const frame = enemy.state === "throwing"
+      ? HAMMER_BRO_FRAMES[3]
+      : enemy.state === "moving"
+        ? HAMMER_BRO_FRAMES[frameIndex % 2]
+        : HAMMER_BRO_FRAMES[0];
+    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir > 0, 1.1);
+    return;
+  }
+
+  if (enemy.type === "goomba" && isSpriteReady(enemySpriteSheet)) {
+    const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
+    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir < 0);
+    return;
+  }
+
+  if (
+    enemy instanceof KoopaEnemy &&
+    (enemy.type === "koopa" || enemy.type === "koopa_red") &&
+    isSpriteReady(enemySpriteSheet)
+  ) {
+    const shell = enemy.actionState !== "default";
+    const frame = shell
+      ? KOOPA_SHELL[enemy.actionState === "shell_sliding" ? frameIndex % KOOPA_SHELL.length : 0]
+      : KOOPA_WALK[moving ? frameIndex % KOOPA_WALK.length : 0];
+    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    return;
+  }
+
+  box(ctx, enemy, cam, ENEMY_COLORS[enemy.type] || COLORS.enemy);
+}
+
+function drawSpriteFrame(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  enemy: Body,
+  cam: Camera,
+  frame: SpriteFrame,
+  flip: boolean,
+  scale = 1,
+): void {
+  const drawW = enemy.w * scale;
+  const drawH = enemy.h * scale;
+  const x = Math.round(enemy.x / SUB - cam.x - (drawW - enemy.w) / 2);
+  const y = Math.round(enemy.y / SUB - cam.y - (drawH - enemy.h) / 2);
+
+  ctx.save();
+  if (flip) {
+    ctx.translate(x + drawW, y);
+    ctx.scale(-1, 1);
+  } else {
+    ctx.translate(x, y);
+  }
+  ctx.drawImage(image, frame.x, frame.y, frame.width, frame.height, 0, 0, drawW, drawH);
+  ctx.restore();
+}
+
+function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): void {
+  const { player } = state;
+  const x = Math.round(player.x / SUB - cam.x - (TILE - player.w) / 2);
+  const y = Math.round(player.y / SUB - cam.y);
+
+  if (!isSpriteReady(marioSpriteSheet)) {
+    box(ctx, player, cam, COLORS.player);
+    return;
+  }
+
+  const walking = player.onGround && player.vx !== 0;
+  const frame = !player.onGround
+    ? MARIO_JUMP
+    : walking
+      ? MARIO_WALK[Math.floor(state.frame / 7) % MARIO_WALK.length]
+      : MARIO_IDLE;
+  const drawX = Math.floor((TILE - player.w) / 2);
+
+  ctx.save();
+  if (player.facing < 0) {
+    ctx.translate(x + TILE, y);
+    ctx.scale(-1, 1);
+  } else {
+    ctx.translate(x, y);
+  }
+  ctx.drawImage(
+    marioSpriteSheet,
+    frame.x,
+    frame.y,
+    frame.width,
+    frame.height,
+    drawX,
+    0,
+    TILE,
+    TILE,
+  );
+  ctx.restore();
 }
 
 /**
