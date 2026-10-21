@@ -455,7 +455,8 @@ export class HammerBro extends Enemy {
   private static readonly JUMP_SPEED = 80;
   private static readonly DECISION_TIME = 40;
 
-  private static readonly HAMMER_SIZE = 8 * SUB;
+  static readonly HAMMER_WIDTH = 12 * SUB;
+  static readonly HAMMER_HEIGHT = 16 * SUB;
   private static readonly HAMMER_VX = 24;
   private static readonly HAMMER_VY = -48;
   private static readonly HAMMER_GRAVITY = 3;
@@ -545,10 +546,8 @@ export class HammerBro extends Enemy {
   }
 
   private throwHammer(): void {
-    const size = HammerBro.HAMMER_SIZE;
-
     this.hammers.push({
-      x: this.x + (this.dir > 0 ? this.w * SUB : -size),
+      x: this.x + (this.dir > 0 ? this.w * SUB : -HammerBro.HAMMER_WIDTH),
       y: this.y + (this.h * SUB) / 4,
       vx: this.dir * HammerBro.HAMMER_VX,
       vy: HammerBro.HAMMER_VY,
@@ -557,8 +556,6 @@ export class HammerBro extends Enemy {
   }
 
   private updateHammers(map: TileMap): void {
-    const size = HammerBro.HAMMER_SIZE;
-
     for (const hammer of this.hammers) {
       if (!hammer.alive) continue;
 
@@ -567,7 +564,11 @@ export class HammerBro extends Enemy {
 
       hammer.vy = Math.min(hammer.vy + HammerBro.HAMMER_GRAVITY, HammerBro.HAMMER_MAX_FALL);
 
-      if (hammer.x + size < 0 || hammer.x > map.width * TILE_SUB || hammer.y > map.height * TILE_SUB) {
+      if (
+        hammer.x + HammerBro.HAMMER_WIDTH < 0 ||
+        hammer.x > map.width * TILE_SUB ||
+        hammer.y > map.height * TILE_SUB
+      ) {
         hammer.alive = false;
       }
     }
