@@ -78,6 +78,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       player.y = platform.y - player.h * SUB;
       player.vy = 0;
       player.onGround = true;
+      player.hit.ground = true;
       state.standingPlatform = platform;
       break;
     }

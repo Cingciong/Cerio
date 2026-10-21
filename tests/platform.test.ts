@@ -49,6 +49,7 @@ test("player lands on a vertical moving platform and stays grounded", () => {
 
   const p = state.platforms[0];
   expect(state.player.onGround).toBe(true);
+  expect(state.player.hit.ground).toBe(true);
   expect(state.player.y).toBe(p.y - state.player.h * SUB);
   expect(state.standingPlatform).toBe(p);
 });
@@ -120,6 +121,7 @@ test("player can jump off a moving platform", () => {
   step(state, Button.jump);
   expect(state.player.vy).toBeLessThan(0);
   expect(state.player.onGround).toBe(false);
+  expect(state.player.hit.ground).toBe(false);
   expect(state.standingPlatform).toBeNull();
 });
 
