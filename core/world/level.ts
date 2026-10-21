@@ -3,7 +3,7 @@ import { TILE_SUB } from "../config/constants.ts";
 import type { PipeLink } from "./pipes.ts";
 import { createTileMap, Tile, tileIdOfChar, type TileMap } from "./tiles.ts";
 
-/** Contents of one area: what a segment or a hand-made level has. */
+
 export interface AreaFile {
   rows: string[];
   enemies: { type: string; x: number; y: number }[];
