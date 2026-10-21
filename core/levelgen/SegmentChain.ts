@@ -1,5 +1,5 @@
 import { joint, type Joint } from "./segment.ts";
-import type { LevelFile } from "../world/level.ts";
+import type { AreaFile, LevelFile } from "../world/level.ts";
 import type { Segment } from "./types.ts";
 
 const H = 15;
@@ -28,22 +28,20 @@ export class SegmentChain {
   }
 
   /** Glue rows side by side and shift everything positioned in x by the segment's offset. */
-  join(name: string): LevelFile {
-    const rows: string[] = Array.from({ length: H }, () => "");
-    const file: Required<Pick<LevelFile, "enemies" | "objects" | "spawners">> = { enemies: [], objects: [], spawners: [] };
-    const segments: LevelFile["segments"] = [];
+  join(): { area: AreaFile; player?: LevelFile["player"] } {
+    const area: Required<AreaFile> = { rows: Array.from({ length: H }, () => ""), enemies: [], objects: [], spawners: [], segments: [] };
     let player: LevelFile["player"];
     let x0 = 0;
     for (const s of this.parts) {
       const w = widthOf(s);
-      s.rows.forEach((r, y) => (rows[y] += r.padEnd(w, ".")));
-      for (const e of s.enemies ?? []) file.enemies.push({ ...e, x: e.x + x0 });
-      for (const o of s.objects ?? []) file.objects.push({ ...o, x: o.x + x0 });
-      for (const sp of s.spawners ?? []) file.spawners.push({ ...sp, from: sp.from + x0, to: sp.to + x0 });
-      segments.push({ name: s.name, x: x0, w });
+      s.rows.forEach((r, y) => (area.rows[y] += r.padEnd(w, ".")));
+      for (const e of s.enemies ?? []) area.enemies.push({ ...e, x: e.x + x0 });
+      for (const o of s.objects ?? []) area.objects.push({ ...o, x: o.x + x0 });
+      for (const sp of s.spawners ?? []) area.spawners.push({ ...sp, from: sp.from + x0, to: sp.to + x0 });
+      area.segments.push({ name: s.name, x: x0, w });
       if (!player && s.player) player = { x: s.player.x + x0, y: s.player.y };
       x0 += w;
     }
-    return { name, rows, player, segments, ...file };
+    return { area, player };
   }
 }

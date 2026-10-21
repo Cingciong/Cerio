@@ -11,7 +11,7 @@ test("same seed gives the same level", () => {
 
 test("length stays within tolerance", () => {
   for (let seed = 1; seed <= 30; seed++) {
-    const w = gen.generate(seed, { length: 200, tolerance: 0.1, type: "normal" }).rows[0].length;
+    const w = gen.generate(seed, { length: 200, tolerance: 0.1, type: "normal" }).overworld.rows[0].length;
     expect(w).toBeGreaterThanOrEqual(180);
     expect(w).toBeLessThanOrEqual(220);
   }
@@ -21,7 +21,7 @@ test("starts and ends with enclosures", () => {
   const level = gen.generate(7, { length: 200, type: "normal" });
   const start = lib.enclosure("normal", "start").rows;
   const end = lib.enclosure("normal", "end").rows;
-  level.rows.forEach((r, y) => {
+  level.overworld.rows.forEach((r, y) => {
     expect(r.startsWith(start[y])).toBe(true);
     expect(r.endsWith(end[y])).toBe(true);
   });
@@ -36,5 +36,5 @@ test("start/end tagged segments never land in the middle", () => {
 
 test("sequence gives different levels", () => {
   const seq = new LevelSequence(gen, 1, { length: 200, type: "normal" });
-  expect(seq.next().rows).not.toEqual(seq.next().rows);
+  expect(seq.next().overworld.rows).not.toEqual(seq.next().overworld.rows);
 });

@@ -5,6 +5,7 @@ import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
 import { HammerBro } from "../entities/enemy.ts";
+import { stepPipe, tryEnterPipe } from "./pipes.ts";
 
 /** Buttons for enemies by id. Missing id -> the enemy's own decide(). */
 export type EnemyButtons = Record<number, Buttons>;
@@ -12,10 +13,12 @@ export type EnemyButtons = Record<number, Buttons>;
 export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButtons = {}): void {
   if (state.status !== "playing") return;
   state.frame++;
+  if (state.pipe) return stepPipe(state);
 
   const { player, map } = state;
   const prevBottom = player.bottom;
   player.update(buttons, map);
+  if (tryEnterPipe(state, buttons)) return;
 
   for (const enemy of state.enemies) {
     enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map, player);
@@ -81,5 +84,5 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
   if (player.y > map.height * TILE_SUB) player.alive = false; // fell into a pit
   if (!player.alive) state.status = "dead";
-  if (player.right >= map.width * TILE_SUB) state.status = "won"; // touched the right edge of the map (until there is a flagpole)
+  if (state.area === "overworld" && player.right >= map.width * TILE_SUB) state.status = "won"; // touched the right edge of the map (until there is a flagpole)
 }

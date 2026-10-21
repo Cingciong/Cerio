@@ -1,19 +1,35 @@
 import { ENEMIES } from "../config/config.ts";
 import { TILE_SUB } from "../config/constants.ts";
+import type { PipeLink } from "./pipes.ts";
 import { createTileMap, Tile, tileIdOfChar, type TileMap } from "./tiles.ts";
 
-export interface LevelFile {
-  name: string;
+/** Contents of one area: what a segment or a hand-made level has. */
+export interface AreaFile {
   rows: string[];
-  player?: { x: number; y: number };
-  type?: string;
   enemies: { type: string; x: number; y: number }[];
   objects?: { type: string; x: number; y: number }[];
   spawners?: { type: string; from: number; to: number }[];
   segments?: SegmentSpan[];
 }
 
-/** Where each generated segment sits in the level, in tiles. Debug only. */
+/** Single-area level or segment. */
+export interface LevelFile extends AreaFile {
+  name: string;
+  player?: { x: number; y: number };
+  type?: string;
+}
+
+/** Generated level: overworld, optional cave and the pipes between them. */
+export interface AreasFile {
+  name: string;
+  type?: string;
+  player: { x: number; y: number };
+  overworld: AreaFile;
+  cave?: AreaFile;
+  pipes: PipeLink[];
+}
+
+/** Where each generated segment sits in the area, in tiles. Debug only. */
 export interface SegmentSpan {
   name: string;
   x: number;
@@ -29,16 +45,39 @@ export interface EnemySpawn extends Spawn {
   type: string;
 }
 
-export interface Level {
-  name: string;
-  type: string;
-  segments: SegmentSpan[];
+export interface Area {
   map: TileMap;
-  playerStart: Spawn;
   enemies: EnemySpawn[];
+  segments: SegmentSpan[];
 }
 
-export function loadLevel(file: LevelFile): Level {
+export interface Level extends Area {
+  name: string;
+  type: string;
+  areas: Record<string, Area>; // "overworld" (same as map/enemies/segments above) and optionally "cave"
+  pipes: PipeLink[];
+  playerStart: Spawn;
+}
+
+export function loadLevel(file: LevelFile | AreasFile): Level {
+  const f: Partial<AreasFile> = "overworld" in file ? file : { ...file, overworld: file, pipes: [] };
+  if (!f.player) throw new Error(`${file.name}: no player start`);
+
+  const overworld = loadArea(f.overworld!, file.name);
+  const areas: Record<string, Area> = { overworld };
+  if (f.cave) areas.cave = loadArea(f.cave, `${file.name}/cave`);
+
+  return {
+    name: file.name,
+    type: file.type ?? "normal",
+    ...overworld,
+    areas,
+    pipes: f.pipes ?? [],
+    playerStart: { x: f.player.x * TILE_SUB, y: f.player.y * TILE_SUB },
+  };
+}
+
+function loadArea(file: AreaFile, name: string): Area {
   const width = Math.max(...file.rows.map((r) => r.length));
   const map = createTileMap(width, file.rows.length);
 
@@ -46,23 +85,18 @@ export function loadLevel(file: LevelFile): Level {
     for (let tx = 0; tx < width; tx++) {
       const ch = row[tx];
       const id = ch === undefined ? Tile.air : tileIdOfChar(ch); // short rows are padded with air
-      if (id === undefined) throw new Error(`${file.name}: unknown tile '${ch}' at ${tx},${ty}`);
+      if (id === undefined) throw new Error(`${name}: unknown tile '${ch}' at ${tx},${ty}`);
       map.tiles[ty * width + tx] = id;
     }
   });
 
   for (const e of file.enemies ?? []) {
-    if (!ENEMIES[e.type]) throw new Error(`${file.name}: unknown enemy type '${e.type}'`);
+    if (!ENEMIES[e.type]) throw new Error(`${name}: unknown enemy type '${e.type}'`);
   }
 
-  if (!file.player) throw new Error(`${file.name}: no player start`);
-  
   return {
-    name: file.name,
-    type: file.type ?? "normal",
-    segments: file.segments ?? [],
     map,
-    playerStart: { x: file.player.x * TILE_SUB, y: file.player.y * TILE_SUB },
     enemies: (file.enemies ?? []).map((e) => ({ type: e.type, x: e.x * TILE_SUB, y: e.y * TILE_SUB })),
+    segments: file.segments ?? [],
   };
 }

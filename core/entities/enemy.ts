@@ -379,6 +379,14 @@ export class PiranhaPlant extends Enemy {
     return false;
   }
 
+  /** Back into the pipe at once, e.g. when the player comes out of it. */
+  hide(): void {
+    this.phase = 'hidden';
+    this.timer = 0;
+    this.y = this.bottomY;
+    this.vy = 0;
+  }
+
   decide(map: TileMap, player?: Body): Buttons {
     switch (this.phase) {
       case 'hidden':

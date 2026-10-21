@@ -35,6 +35,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   for (const e of state.enemies) if (e.alive && e.type === "piranha") box(ctx, e, cam, ENEMY_COLORS[e.type] || COLORS.enemy);
 
 
+  if (state.pipe) box(ctx, state.player, cam, COLORS.player); // behind the pipe while sliding
+
   // tiles on screen
   const { map } = state;
   const first = Math.floor(cam.x / TILE);
@@ -68,20 +70,21 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       }
     }
   
-  box(ctx, state.player, cam, COLORS.player);
+  if (!state.pipe) box(ctx, state.player, cam, COLORS.player);
   const seg = segmentDebug(ctx, state, cam);
 
   ctx.fillStyle = COLORS.text;
   ctx.font = "8px monospace";
   ctx.fillText(info, 4, 10);
   if (seg) ctx.fillText(seg, 4, 20);
+  ctx.fillText(`cave ${state.level.areas.cave ? "yes" : "no"}  area ${state.area}`, 4, 30);
   if (state.status === "dead") ctx.fillText("DEAD - R to restart", 80, 120);
   if (state.status === "won") ctx.fillText("LEVEL DONE - R to restart", 64, 120);
 }
 
 /** Dashed line at each segment start; returns "seg i/n name" for the player's segment. */
 function segmentDebug(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): string {
-  const segs = state.level.segments;
+  const segs = state.level.areas[state.area].segments;
   ctx.strokeStyle = COLORS.segment;
   ctx.setLineDash([4, 4]);
   for (const s of segs) {
