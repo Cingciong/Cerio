@@ -36,8 +36,6 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   }
   
   // Hammer projectiles vs player.
-  const hammerSize = 8 * SUB;
-
   if (player.alive) {
     for (const enemy of state.enemies) {
       if (!(enemy instanceof HammerBro) || !enemy.alive) continue;
@@ -47,9 +45,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
         const overlaps =
           hammer.x < player.x + player.w * SUB &&
-          hammer.x + hammerSize > player.x &&
+          hammer.x + HammerBro.HAMMER_WIDTH > player.x &&
           hammer.y < player.y + player.h * SUB &&
-          hammer.y + hammerSize > player.y;
+          hammer.y + HammerBro.HAMMER_HEIGHT > player.y;
 
         if (overlaps) {
           hammer.alive = false;
