@@ -36,11 +36,11 @@
 - pipe (plain, enterable, exit), flagpole, coin
 
 **Enemies** (not final, still being decided; as needed by the imported segments)
-- Goomba, Koopa Troopa (green, red) + shell, Buzzy Beetle, Spiny
-- Piranha Plant, Bullet Bill, Hammer Bro
+- Goomba, Koopa Troopa  + shell, Buzzy Beetle, Spiny
+- Piranha Plant, Bullet Bill, Hammer Bro, goomby stackują 
 
 **Projectiles**
-- fireball, thrown hammer, enemy hammer, kicked shell
+- fireball, thrown hammer, enemy hammer, kicked shell, 
 
 **Items**
 - Super Mushroom, Fire Flower, Super Star, Stopwatch

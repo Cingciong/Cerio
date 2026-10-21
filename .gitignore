@@ -60,3 +60,6 @@ checkpoints/
 *.lot
 *.nav
 *.snm
+
+# Generated levels
+levels/generated/

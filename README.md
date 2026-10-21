@@ -60,3 +60,4 @@ server/.venv/Scripts/python -m uvicorn main:app --port 8000 --app-dir server   #
 | `docs/report/documentation.tex` | Project documentation (LaTeX, PDF version alongside) |
 | `docs/report/gantt.py` | Generates the schedule (`gantt-chart.png`, `gantt-chart.xlsx`) |
 | `docs/presentations/` | Checkpoint presentations |
+
