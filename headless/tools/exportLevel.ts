@@ -11,5 +11,6 @@ const level = new LevelGenerator(loadLibrary()).generate(Number(seed), { length:
 const dir = join(import.meta.dirname, "..", "..", "levels", "generated");
 mkdirSync(dir, { recursive: true });
 writeFileSync(join(dir, `${level.name}.json`), JSON.stringify(level, null, 2));
-console.log(`${level.name}: ${level.rows[0].length} tiles`);
-console.log(level.rows.join("\n"));
+console.log(`${level.name}: ${level.overworld.rows[0].length} tiles`);
+console.log(level.overworld.rows.join("\n"));
+if (level.cave) console.log(`\ncave: ${level.cave.rows[0].length} tiles\n${level.cave.rows.join("\n")}`);

@@ -11,6 +11,7 @@ export class Player extends Body {
   buttons: Buttons = 0; // pressed this frame
   prevButtons: Buttons = 0;
   alive = true;
+  facing: -1 | 1 = 1;
 
   powerState: PowerState = 'small';
   invulnerableTimer = 0;
@@ -62,6 +63,7 @@ export class Player extends Body {
 
   private horizontal(buttons: Buttons): void {
     const dir = (has(buttons, Button.right) ? 1 : 0) - (has(buttons, Button.left) ? 1 : 0);
+    if (dir !== 0) this.facing = dir < 0 ? -1 : 1;
     const max = has(buttons, Button.run) ? PLAYER.runMax : PLAYER.walkMax;
 
     if (dir === 0) {

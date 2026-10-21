@@ -7,6 +7,7 @@ import type { GameState } from "./state.ts";
 import { HammerBro } from "../entities/enemy.ts";
 import { Tile, tileAt, toTile } from "../world/tiles.ts"
 import { Item } from "../entities/powerup.ts"
+import { stepPipe, tryEnterPipe } from "./pipes.ts";
 
 /** Buttons for enemies by id. Missing id -> the enemy's own decide(). */
 export type EnemyButtons = Record<number, Buttons>;
@@ -14,11 +15,13 @@ export type EnemyButtons = Record<number, Buttons>;
 export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButtons = {}): void {
   if (state.status !== "playing") return;
   state.frame++;
+  if (state.pipe) return stepPipe(state);
 
   const { player, map } = state;
   const prevBottom = player.bottom;
   const prevVy = player.vy;
   player.update(buttons, map);
+  if (tryEnterPipe(state, buttons)) return;
 
   if(prevVy < 0 && player.vy >=0){
     const txCenter = toTile(player.x + (player.w/2)*SUB);
@@ -68,8 +71,6 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   }
   
   // Hammer projectiles vs player.
-  const hammerSize = 8 * SUB;
-
   if (player.alive) {
     for (const enemy of state.enemies) {
       if (!(enemy instanceof HammerBro) || !enemy.alive) continue;
@@ -79,9 +80,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
         const overlaps =
           hammer.x < player.x + player.w * SUB &&
-          hammer.x + hammerSize > player.x &&
+          hammer.x + HammerBro.HAMMER_WIDTH > player.x &&
           hammer.y < player.y + player.h * SUB &&
-          hammer.y + hammerSize > player.y;
+          hammer.y + HammerBro.HAMMER_HEIGHT > player.y;
 
         if (overlaps) {
           if(player.powerState === 'star'){
@@ -124,5 +125,5 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
   if (player.y > map.height * TILE_SUB) player.alive = false; // fell into a pit
   if (!player.alive) state.status = "dead";
-  if (player.right >= map.width * TILE_SUB) state.status = "won"; // touched the right edge of the map (until there is a flagpole)
+  if (state.area === "overworld" && player.right >= map.width * TILE_SUB) state.status = "won"; // touched the right edge of the map (until there is a flagpole)
 }

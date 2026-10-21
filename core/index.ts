@@ -3,6 +3,8 @@ export * from "./config/constants.ts";
 export * from "./config/buttons.ts";
 export * from "./world/tiles.ts";
 export * from "./world/level.ts";
+export * from "./world/pipes.ts";
+export * from "./sim/pipes.ts";
 export * from "./entities/body.ts";
 export * from "./entities/player.ts";
 export * from "./entities/enemy.ts";

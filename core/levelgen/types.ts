@@ -1,4 +1,4 @@
-import type { LevelFile } from "../world/level.ts";
+import type { AreasFile, LevelFile } from "../world/level.ts";
 
 export type LevelType = "normal" | "castle" | "caves";
 
@@ -8,7 +8,7 @@ export interface Segment extends LevelFile {
   difficulty?: number;
 }
 
-export interface GeneratedLevel extends LevelFile {
+export interface GeneratedLevel extends AreasFile {
   type: LevelType;
   seed: number;
 }
