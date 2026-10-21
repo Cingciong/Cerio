@@ -18,7 +18,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   player.update(buttons, map);
 
   for (const enemy of state.enemies) {
-    enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map);
+    enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map, player);
   }
 
   // Player vs enemies: landing on top kills the enemy, anything else kills the player.
