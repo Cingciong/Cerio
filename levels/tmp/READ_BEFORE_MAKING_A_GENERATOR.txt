@@ -1,0 +1,3 @@
+For new generator use levels, in folders normal,caves,castle.
+Levels in world-1 and world-2 are meant to be removed after creating new level generator.
+All levels in folders normal,caves and castle are normalized and SHOULD work

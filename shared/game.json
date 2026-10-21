@@ -18,11 +18,7 @@
 
   "tiles": {
     "air": { "id": 0, "char": ".", "solid": false },
-    "block": { "id": 1, "char": "#", "solid": true },
-    "qblock_coin": { "id": 2, "char": "?", "solid": true, "color": "#FFFF00" },
-    "qblock_mushroom": { "id": 3, "char": "M", "solid": true, "color": "#FFFF00" },
-    "qblock_star": { "id": 4, "char": "*", "solid": true, "color": "#FFFF00" },
-    "pipe": { "id": 5, "char": "P", "solid": true, "color": "#00FF00" },
+    "floor": { "id": 1, "char": "#", "solid": true },
     "pipe_left_top": { "id": 6, "char": "<", "solid": true, "color": "#00FF00" },
     "pipe_right_top": { "id": 7, "char": ">", "solid": true, "color": "#00FF00" },
     "pipe_left_body": { "id": 8, "char": "[", "solid": true, "color": "#00FF00" },
@@ -73,7 +69,7 @@
     "cheep_cheep": { "w": 16, "h": 16, "speed": 12, "gravity": 3, "maxFall": 64, "color": "#ff0000" },
     "podoboo": { "w": 16, "h": 16, "speed": 0,  "gravity": 4, "maxFall": 64, "color": "#ff4500" },
     "bowser": { "w": 32, "h": 32, "speed": 4,  "gravity": 6, "maxFall": 64, "color": "#006400" },
-    "buzzy_beetle": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#000000" },
+    "buzzy_beetle": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#fcfc00" },
     "spiny": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#ff0000" },
     "bullet_bill": { "w": 16, "h": 16, "speed": 24, "gravity": 0, "maxFall": 0, "color": "#000000" }
   },
