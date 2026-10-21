@@ -10,7 +10,7 @@ import { TILE_SUB, SUB } from "./constants.ts";
 import { isSolid, toTile, type TileMap } from "./tiles.ts";
 
 
-export type EnemyActionState = 'default' | 'shell_idle' | 'shell_sliding';
+export type EnemyActionState = 'default' | 'shell_idle' | 'shell_sliding' | 'falling';
 
 export class Enemy extends Body {
   readonly id: number;
@@ -41,7 +41,7 @@ export class Enemy extends Body {
     return true;
   }
 
-  update(buttons: Buttons, map: TileMap): void {
+  update(buttons: Buttons, map: TileMap, player?: Body): void {
     if (!this.alive) return;
     this.buttons = buttons;
 
@@ -142,11 +142,157 @@ export class Goomba extends Enemy {
   }
 
 }
+
 export class BuzzyBeetle extends KoopaEnemy {
+  private static readonly SHELL_DURATION_FRAMES = 300;
+  private shellTimer = 0;
+  private ceilingChecked = false;
+  private droppingFromCeiling = false;
+  onCeiling = false;
+
   constructor(id: number, type: string, x: number, y: number){
     super(id, type, x, y);
   }
+
+  onStomp(playerX: number): boolean {
+    const previousState = this.actionState;
+    const shouldBounce = super.onStomp(playerX);
+
+    if (this.actionState === 'shell_idle' && previousState !== 'shell_idle') {
+      this.shellTimer = BuzzyBeetle.SHELL_DURATION_FRAMES;
+    } else if (this.actionState === 'shell_sliding') {
+      this.shellTimer = 0;
+    }
+    return shouldBounce;
+  }
+
+  update(buttons: Buttons, map: TileMap, player?: Body): void {
+    if (!this.alive) return;
+
+    if (!this.ceilingChecked) {
+      this.ceilingChecked = true;
+      const ceilingRow = toTile(this.y - 1);
+      const centerTile = toTile(this.x + (this.w * SUB) / 2);
+      if (isSolid(map, centerTile, ceilingRow)) {
+        this.y = (ceilingRow + 1) * TILE_SUB;
+        this.onCeiling = true;
+      }
+    }
+
+    if (this.actionState === 'shell_idle' && this.shellTimer > 0) {
+      this.shellTimer--;
+      if (this.shellTimer === 0) {
+        this.actionState = 'default';
+        this.y -= (this.defaultHeight - this.h) * SUB;
+        this.h = this.defaultHeight;
+      }
+    }
+
+    if (this.onCeiling && player && player.y >= this.bottom && player.x < this.right && this.x < player.right) {
+      this.onCeiling = false;
+      this.droppingFromCeiling = true;
+      this.actionState = 'falling';
+    }
+
+    if (this.onCeiling) {
+      if (has(buttons, Button.left)) this.dir = -1;
+      if (has(buttons, Button.right)) this.dir = 1;
+
+      if (this.actionState === 'shell_idle') {
+        this.vx = 0;
+      } else {
+        const speed = this.actionState === 'shell_sliding' ? this.cfg.speed * 3 : this.cfg.speed;
+        const nextEdge = this.dir > 0 ? this.right + speed - 1 : this.x - speed;
+        const ceilingRow = toTile(this.y - 1);
+        if (!isSolid(map, toTile(nextEdge), ceilingRow)) this.dir = -this.dir;
+        this.vx = this.dir * speed;
+      }
+
+      this.vy = 0;
+      const hit = this.move(map);
+      if (hit.wall) this.dir = -this.dir;
+      return;
+    }
+
+    if (this.droppingFromCeiling) {
+      this.vx = 0;
+      this.vy = Math.min(this.vy + this.cfg.gravity, this.cfg.maxFall);
+      const hit = this.move(map);
+      if (hit.ground) {
+        this.droppingFromCeiling = false;
+        this.actionState = 'default';
+      }
+      if (this.y > (map.height + 1) * TILE_SUB) this.alive = false;
+      return;
+    }
+
+    super.update(buttons, map);
+  }
 }
+
+export class Spiny extends KoopaEnemy {
+  private ceilingChecked = false;
+  private onCeiling = false;
+
+  constructor(id: number, type: string, x: number, y: number) {
+    super(id, type, x, y);
+    this.stompable = false;
+  }
+
+  onStomp(playerX: number): boolean {
+    if (!this.stompable) return false;
+    return super.onStomp(playerX);
+  }
+
+  update(buttons: Buttons, map: TileMap, player?: Body): void {
+    if (!this.alive) return;
+
+    if (!this.ceilingChecked) {
+      this.ceilingChecked = true;
+      const ceilingRow = toTile(this.y - 1);
+      const centerTile = toTile(this.x + (this.w * SUB) / 2);
+      if (isSolid(map, centerTile, ceilingRow)) {
+        this.y = (ceilingRow + 1) * TILE_SUB;
+        this.onCeiling = true;
+      }
+    }
+
+    if (this.onCeiling && player && player.y >= this.bottom && player.x < this.right && this.x < player.right) {
+      this.onCeiling = false;
+      this.actionState = 'falling';
+    }
+
+    if (this.onCeiling) {
+      if (has(buttons, Button.left)) this.dir = -1;
+      if (has(buttons, Button.right)) this.dir = 1;
+
+      const nextEdge = this.dir > 0 ? this.right + this.cfg.speed - 1 : this.x - this.cfg.speed;
+      const ceilingRow = toTile(this.y - 1);
+      if (!isSolid(map, toTile(nextEdge), ceilingRow)) this.dir = -this.dir;
+
+      this.vx = this.dir * this.cfg.speed;
+      this.vy = 0;
+      const hit = this.move(map);
+      if (hit.wall) this.dir = -this.dir;
+      return;
+    }
+
+    if (this.actionState === 'falling') {
+      this.vx = 0;
+      this.vy = Math.min(this.vy + this.cfg.gravity, this.cfg.maxFall);
+      const hit = this.move(map);
+      if (hit.ground) {
+        this.actionState = 'shell_sliding';
+        this.stompable = true;
+      }
+      if (this.y > (map.height + 1) * TILE_SUB) this.alive = false;
+      return;
+    }
+
+    super.update(buttons, map);
+  }
+}
+
 export class KoopaParaTroopa extends KoopaEnemy {
   hasWings = true;
   vDir = -1; 
@@ -441,6 +587,8 @@ export function createEnemy(id: number, type: string, x: number, y: number): Ene
         return new Goomba(id, type, x, y);
       case 'buzzy_beetle':
         return new BuzzyBeetle(id, type, x, y);
+      case 'spiny':
+        return new Spiny(id, type, x, y);
       case 'koopa_para':
       case 'koopa_para_red':
         return new KoopaParaTroopa(id, type, x, y);
