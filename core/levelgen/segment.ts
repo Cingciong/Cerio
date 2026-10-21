@@ -1,12 +1,5 @@
 
-import { TILES } from "./config.ts";
-import type { LevelFile } from "./level.ts";
-
-export interface Segment extends LevelFile {
-  theme?: string;
-  tags?: string[];
-  difficulty?: number; 
-}
+import { TILES } from "../config/config.ts";
 
 export interface Joint {
   ground: number;

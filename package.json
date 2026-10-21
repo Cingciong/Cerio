@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "headless": "node headless/run.ts",
+    "export-level": "node headless/tools/exportLevel.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

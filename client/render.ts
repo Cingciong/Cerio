@@ -9,6 +9,7 @@ const COLORS = {
   player: "#e33",
   enemy: "#d9a400",
   hammer: "#fccbcb",
+  segment: "rgba(255,255,255,0.5)",
   text: "#fff",
 };
 
@@ -68,12 +69,33 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     }
   
   box(ctx, state.player, cam, COLORS.player);
+  const seg = segmentDebug(ctx, state, cam);
 
   ctx.fillStyle = COLORS.text;
   ctx.font = "8px monospace";
   ctx.fillText(info, 4, 10);
+  if (seg) ctx.fillText(seg, 4, 20);
   if (state.status === "dead") ctx.fillText("DEAD - R to restart", 80, 120);
   if (state.status === "won") ctx.fillText("LEVEL DONE - R to restart", 64, 120);
+}
+
+/** Dashed line at each segment start; returns "seg i/n name" for the player's segment. */
+function segmentDebug(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): string {
+  const segs = state.level.segments;
+  ctx.strokeStyle = COLORS.segment;
+  ctx.setLineDash([4, 4]);
+  for (const s of segs) {
+    const x = s.x * TILE - cam.x + 0.5;
+    if (x < 0 || x > SCREEN_W) continue;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, SCREEN_H);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  const px = (state.player.x + state.player.w * SUB / 2) / (TILE * SUB);
+  const i = segs.findIndex((s) => px >= s.x && px < s.x + s.w);
+  return i < 0 ? "" : `seg ${i + 1}/${segs.length} ${segs[i].name}`;
 }
 
 function box(ctx: CanvasRenderingContext2D, b: Body, cam: Camera, color: string): void {

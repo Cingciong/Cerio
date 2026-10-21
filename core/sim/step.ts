@@ -1,10 +1,10 @@
 // One frame of the game. Mutates the state.
 
-import type { Buttons } from "./buttons.ts";
-import { SUB, TILE_SUB } from "./constants.ts";
-import { PLAYER, RULES } from "./config.ts";
+import type { Buttons } from "../config/buttons.ts";
+import { SUB, TILE_SUB } from "../config/constants.ts";
+import { PLAYER, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
-import { HammerBro } from "./enemy.ts";
+import { HammerBro } from "../entities/enemy.ts";
 
 /** Buttons for enemies by id. Missing id -> the enemy's own decide(). */
 export type EnemyButtons = Record<number, Buttons>;

@@ -1,7 +1,7 @@
 // Axis-aligned hitbox moving through the tile map. Base class for the player and enemies.
 
-import { SUB, TILE_SUB } from "./constants.ts";
-import { isSolid, toTile, type TileMap } from "./tiles.ts";
+import { SUB, TILE_SUB } from "../config/constants.ts";
+import { isSolid, toTile, type TileMap } from "../world/tiles.ts";
 
 export interface Collision {
   wall: boolean; // hit something while moving horizontally

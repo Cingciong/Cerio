@@ -61,17 +61,3 @@ server/.venv/Scripts/python -m uvicorn main:app --port 8000 --app-dir server   #
 | `docs/report/gantt.py` | Generates the schedule (`gantt-chart.png`, `gantt-chart.xlsx`) |
 | `docs/presentations/` | Checkpoint presentations |
 
-
-
-# todo 
-
-do mapy:
-- question block - dodać wsyzstkie powet up i endpoint do powerupów -
-- łaczenie mapy prceduralnie - Igor
-- sprit'y
-- wszystkie power up 
-- przeciwnicy też wszyszcy 
-- mehcanoka coinów/ score
-- pipe - Igor 
-
-deadline: czwatek 20

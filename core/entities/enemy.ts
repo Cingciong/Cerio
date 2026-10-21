@@ -4,10 +4,10 @@
 // Size and physics per type: shared/game.json "enemies".
 
 import { Body } from "./body.ts";
-import { Button, has, type Buttons } from "./buttons.ts";
-import { ENEMIES, PIRANHA, type EnemyConfig } from "./config.ts";
-import { TILE_SUB, SUB } from "./constants.ts";
-import { isSolid, toTile, type TileMap } from "./tiles.ts";
+import { Button, has, type Buttons } from "../config/buttons.ts";
+import { ENEMIES, PIRANHA, type EnemyConfig } from "../config/config.ts";
+import { TILE_SUB, SUB } from "../config/constants.ts";
+import { isSolid, toTile, type TileMap } from "../world/tiles.ts";
 
 
 export type EnemyActionState = 'default' | 'shell_idle' | 'shell_sliding' | 'falling';

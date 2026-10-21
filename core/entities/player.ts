@@ -1,9 +1,9 @@
 // Mario movement. Physics values: shared/game.json "player" (subpixels and frames).
 
 import { Body } from "./body.ts";
-import { Button, has, type Buttons } from "./buttons.ts";
-import { PLAYER } from "./config.ts";
-import type { TileMap } from "./tiles.ts";
+import { Button, has, type Buttons } from "../config/buttons.ts";
+import { PLAYER } from "../config/config.ts";
+import type { TileMap } from "../world/tiles.ts";
 
 export class Player extends Body {
   buttons: Buttons = 0; // pressed this frame

@@ -4,7 +4,7 @@
 // Units in the JSON: speeds/accelerations in subpixels per frame, sizes in px.
 // Buttons are bit masks (next one = next power of 2). Tile ids must stay stable (saved levels use them).
 
-import config from "../shared/game.json" with { type: "json" };
+import config from "../../shared/game.json" with { type: "json" };
 
 export const CONFIG = config;
 

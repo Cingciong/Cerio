@@ -4,12 +4,12 @@
 // Units in messages: px and px/frame (floats), tiles as ids (tiles.ts).
 // View size: shared/game.json "view". Python mirror: server/frame.py
 
-import type { Buttons } from "./buttons.ts";
-import { VIEW } from "./config.ts";
-import { SUB } from "./constants.ts";
-import type { Body } from "./body.ts";
-import type { GameState, Status } from "./state.ts";
-import { tileWindow, toTile } from "./tiles.ts";
+import type { Buttons } from "../config/buttons.ts";
+import { VIEW } from "../config/config.ts";
+import { SUB } from "../config/constants.ts";
+import type { Body } from "../entities/body.ts";
+import type { GameState, Status } from "../sim/state.ts";
+import { tileWindow, toTile } from "../world/tiles.ts";
 
 export interface BodyFrame {
   x: number; // px, top-left

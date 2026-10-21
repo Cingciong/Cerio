@@ -1,10 +1,10 @@
-import { Enemy } from "./enemy.ts";
-import type { Level } from "./level.ts";
-import { PLAYER } from "./config.ts";
-import { Player } from "./player.ts";
-import { SUB, TILE } from "./constants.ts";
-import type { TileMap } from "./tiles.ts";
-import { createEnemy } from "./enemy.ts";
+import { Enemy } from "../entities/enemy.ts";
+import type { Level } from "../world/level.ts";
+import { PLAYER } from "../config/config.ts";
+import { Player } from "../entities/player.ts";
+import { SUB, TILE } from "../config/constants.ts";
+import type { TileMap } from "../world/tiles.ts";
+import { createEnemy } from "../entities/enemy.ts";
 
 export type Status = "playing" | "dead" | "won";
 
