@@ -44,7 +44,13 @@ export class SegmentChain {
       s.rows.forEach((r, y) => (area.rows[y] += r.padEnd(w, ".")));
       for (const e of s.enemies ?? []) area.enemies.push({ ...e, x: e.x + x0 });
       for (const p of s.platforms ?? []) area.platforms.push({ ...p, x: p.x + x0 });
-      for (const o of s.objects ?? []) area.objects.push({ ...o, x: o.x + x0 });
+      for (const o of s.objects ?? []) {
+        if (o.type === "lift") {
+          area.platforms.push({ type: "vertical", x: o.x + x0, y: o.y, w: 2, h: 0.5, range: 3.5 });
+        } else {
+          area.objects.push({ ...o, x: o.x + x0 });
+        }
+      }
       for (const sp of s.spawners ?? []) area.spawners.push({ ...sp, from: sp.from + x0, to: sp.to + x0 });
       area.segments.push({ name: s.name, x: x0, w });
       if (!player && s.player) player = { x: s.player.x + x0, y: s.player.y };

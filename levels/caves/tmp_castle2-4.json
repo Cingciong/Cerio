@@ -26,12 +26,10 @@
       "y": 8
     }
   ],
+  "platforms": [
+    { "type": "vertical", "x": 20.6, "y": 6, "w": 2.5, "h": 0.5, "range": 3, "speed": 1, "dir": 1 }
+  ],
   "objects": [
-    {
-      "type": "lift",
-      "x": 20.6,
-      "y": 6
-    },
     {
       "type": "toad",
       "x": 38,

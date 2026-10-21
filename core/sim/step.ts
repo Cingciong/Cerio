@@ -18,7 +18,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
   const { player, map, platforms } = state;
 
-  // 1. Move platforms and carry player if standing on one
+  // 1. Aktualizacja pozycji platform oraz przemieszczenie stojącego gracza
   for (const platform of platforms) {
     const oldX = platform.x;
     const oldY = platform.y;
@@ -28,7 +28,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       const dx = platform.x - oldX;
       const dy = platform.y - oldY;
 
-      // Przemieszczenie gracza w osi X z zabezpieczeniem przed wejściem w ścianę
+      // Przemieszczenie gracza w osi X z blokowaniem na ścianach
       player.x += dx;
       if (dx !== 0) {
         const tx = dx > 0 ? toTile(player.right - 1) : toTile(player.x);
@@ -41,6 +41,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         }
         if (hitWall) {
           player.x = dx > 0 ? tx * TILE_SUB - player.w * SUB : (tx + 1) * TILE_SUB;
+          player.hit.wall = true;
         }
       }
 
@@ -49,6 +50,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       for (let tx = toTile(player.x); tx <= toTile(player.right - 1); tx++) {
         if (isSolid(map, tx, toTile(player.y))) {
           player.y = (toTile(player.y) + 1) * TILE_SUB;
+          player.hit.ceiling = true;
           if (player.bottom > platform.y) {
             player.alive = false; // zmiażdżenie między platformą a sufitem
           }
@@ -59,11 +61,11 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
   const prevBottom = player.bottom;
 
-  // 2. Player movement (input, gravity, tile collisions)
+  // 2. Ruch gracza (sterowanie, grawitacja, kolizje z kafelkami)
   player.update(buttons, map);
   if (tryEnterPipe(state, buttons)) return;
 
-  // 3. Platform collision detection (one-way semi-solid landing)
+  // 3. Detekcja kolizji i lądowania na ruchomej platformie
   state.standingPlatform = null;
   for (const platform of platforms) {
     const overlapsX = player.right > platform.x && player.x < platform.right;

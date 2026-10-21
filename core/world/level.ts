@@ -117,21 +117,35 @@ function loadArea(file: AreaFile, name: string): Area {
   return {
     map,
     enemies: (file.enemies ?? []).map((e) => ({ type: e.type, x: e.x * TILE_SUB, y: e.y * TILE_SUB })),
-    platforms: (file.platforms ?? []).map((p) => {
-      const w = p.w !== undefined ? (p.w <= 16 ? p.w * TILE : p.w) : 3 * TILE;
-      const h = p.h !== undefined ? (p.h <= 2 ? p.h * TILE : p.h) : 8;
-      const range = p.range !== undefined ? (p.range <= 16 ? p.range * TILE : p.range) : 4 * TILE;
-      return {
-        type: p.type,
-        x: p.x * TILE_SUB,
-        y: p.y * TILE_SUB,
-        w,
-        h,
-        range,
-        speed: p.speed,
-        dir: p.dir,
-      };
-    }),
+    platforms: [
+      ...(file.platforms ?? []).map((p) => {
+        const w = p.w !== undefined ? (p.w <= 16 ? p.w * TILE : p.w) : 3 * TILE;
+        const h = p.h !== undefined ? (p.h <= 2 ? p.h * TILE : p.h) : 8;
+        const range = p.range !== undefined ? (p.range <= 16 ? p.range * TILE : p.range) : 4 * TILE;
+        return {
+          type: p.type,
+          x: p.x * TILE_SUB,
+          y: p.y * TILE_SUB,
+          w,
+          h,
+          range,
+          speed: p.speed,
+          dir: p.dir,
+        };
+      }),
+      ...(file.objects ?? [])
+        .filter((o) => o.type === "lift")
+        .map((o) => ({
+          type: "vertical" as const,
+          x: o.x * TILE_SUB,
+          y: o.y * TILE_SUB,
+          w: 2 * TILE,
+          h: 8,
+          range: 3.5 * TILE,
+          speed: 1,
+          dir: 1 as const,
+        })),
+    ],
     segments: file.segments ?? [],
   };
 }
