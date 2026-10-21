@@ -1,6 +1,5 @@
-// Canvas rendering only. Reads the state, never changes it.
 
-import { SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, HammerBro, KoopaEnemy, PiranhaPlant } from "../core/index.ts";
+import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, HammerBro, KoopaEnemy, PiranhaPlant } from "../core/index.ts";
 import {
   COIN_FRAMES,
   GOOMBA_WALK,
@@ -60,7 +59,7 @@ const ITEM_COLORS: Record<string, string> = {
 };
 
 export interface Camera {
-  x: number; // px, top-left of the screen in the world
+  x: number; 
   y: number;
 }
 
@@ -69,9 +68,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   ctx.fillStyle = COLORS.sky;
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
-  if (state.pipe) drawPlayer(ctx, state, cam); // behind the pipe while sliding
+  if (state.pipe) drawPlayer(ctx, state, cam); 
 
-  // tiles on screen
   const { map } = state;
   const first = Math.floor(cam.x / TILE);
   for (let ty = 0; ty < map.height; ty++) {
@@ -80,7 +78,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       const tileId = map.tiles[ty * map.width + tx];
       if (tileId === Tile.air || tileId === undefined) continue;
       const x = tx * TILE - cam.x;
-      const y = ty * TILE - cam.y;
+      const y = ty * TILE - cam.y - bumpOffset(state, tx, ty);
       
       drawTile(ctx, tileId, x, y, state.frame, map, tx, ty);
     }
@@ -134,6 +132,9 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   }
 
   drawPipesInFront(ctx, map, cam);
+
+  ctx.fillStyle = TILE_COLORS[Tile.brick];
+  for (const d of state.debris) ctx.fillRect(Math.round(d.x / SUB - cam.x), Math.round(d.y / SUB - cam.y), BLOCKS.debrisPx, BLOCKS.debrisPx);
   
   if(state.items){
     for(const item of state.items){
@@ -180,9 +181,14 @@ function segmentDebug(ctx: CanvasRenderingContext2D, state: GameState, cam: Came
     ctx.stroke();
   }
   ctx.setLineDash([]);
-  const px = (state.player.x + state.player.w * SUB / 2) / (TILE * SUB);
-  const i = segs.findIndex((s) => px >= s.x && px < s.x + s.w);
-  return i < 0 ? "" : `seg ${i + 1}/${segs.length} ${segs[i].name}`;
+  const seg = currentSegment(state);
+  return seg ? `seg ${segs.indexOf(seg) + 1}/${segs.length} ${seg.name}` : "";
+}
+
+/** Segment the player's centre is in. */
+export function currentSegment(state: GameState): SegmentSpan | undefined {
+  const px = (state.player.x + (state.player.w * SUB) / 2) / (TILE * SUB);
+  return state.level.areas[state.area].segments.find((s) => px >= s.x && px < s.x + s.w);
 }
 
 function box(ctx: CanvasRenderingContext2D, b: Body, cam: Camera, color: string): void {

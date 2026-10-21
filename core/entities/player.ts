@@ -1,6 +1,6 @@
 // Mario movement. Physics values: shared/game.json "player" (subpixels and frames).
 
-import { Body } from "./body.ts";
+import { Body, type Collision } from "./body.ts";
 import { Button, has, type Buttons } from "../config/buttons.ts";
 import { PLAYER } from "../config/config.ts";
 import type { TileMap } from "../world/tiles.ts";
@@ -20,7 +20,7 @@ export class Player extends Body {
     super(x, y, PLAYER.w, PLAYER.h);
   }
 
-  update(buttons: Buttons, map: TileMap): void {
+  update(buttons: Buttons, map: TileMap): Collision {
     this.prevButtons = this.buttons;
     this.buttons = buttons;
 
@@ -42,7 +42,7 @@ export class Player extends Body {
     const rising = this.vy < 0 && has(buttons, Button.jump);
     this.vy = Math.min(this.vy + (rising ? PLAYER.gravityHold : PLAYER.gravity), PLAYER.maxFall);
 
-    this.move(map);
+    return this.move(map);
   }
 
   takeDamage(): void{

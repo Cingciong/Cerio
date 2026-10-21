@@ -6,44 +6,57 @@ import { SUB, TILE } from "../config/constants.ts";
 import type { TileMap } from "../world/tiles.ts";
 import { createEnemy } from "../entities/enemy.ts";
 import { Item } from "../entities/powerup.ts";
+import type { Bump, Debris, GameEvent } from "./blocks.ts";
 import type { PipeTravel } from "./pipes.ts";
 
 export type Status = "playing" | "dead" | "won";
 
 export interface GameState {
   level: Level;
-  area: string; // "overworld" or "cave"
-  map: TileMap; // map of the current area
+  area: string; 
+  map: TileMap; 
+  maps: Record<string, TileMap>; 
   frame: number;
   status: Status;
   player: Player;
-  enemies: Enemy[];
   items: Item[];
-  areaEnemies: Record<string, Enemy[]>; // enemies of other areas stay paused
-  pipe?: PipeTravel; // set while sliding through a pipe
+  enemies: Enemy[]; 
+  areaEnemies: Record<string, Enemy[]>; 
+  pipe?: PipeTravel;
+  bumps: Bump[];
+  debris: Debris[];
+  events: GameEvent[]; 
 }
 
 export function createState(level: Level): GameState {
   let id = 0;
   const areaEnemies: Record<string, Enemy[]> = {};
+  const maps: Record<string, TileMap> = {};
   for (const [name, area] of Object.entries(level.areas)) {
     areaEnemies[name] = area.enemies.map((e) => createEnemy(id++, e.type, e.x, e.y));
+    maps[name] = { ...area.map, tiles: area.map.tiles.slice() };
   }
   return {
     level,
     area: "overworld",
-    map: level.map,
+    map: maps.overworld,
+    maps,
     frame: 0,
     status: "playing",
     player: new Player(level.playerStart.x + ((TILE - PLAYER.w) / 2) * SUB, level.playerStart.y), // centred in the tile
     items: [],
     enemies: areaEnemies.overworld,
     areaEnemies,
+    bumps: [],
+    debris: [],
+    events: [],
   };
 }
 
 export function setArea(state: GameState, area: string): void {
   state.area = area;
-  state.map = state.level.areas[area].map;
+  state.map = state.maps[area];
   state.enemies = state.areaEnemies[area];
+  state.bumps = [];
+  state.debris = [];
 }

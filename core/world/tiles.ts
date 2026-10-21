@@ -32,6 +32,10 @@ export function tileAt(map: TileMap, tx: number, ty: number): number {
   return map.tiles[ty * map.width + tx];
 }
 
+export function setTile(map: TileMap, tx: number, ty: number, id: number): void {
+  if (tx >= 0 && tx < map.width && ty >= 0 && ty < map.height) map.tiles[ty * map.width + tx] = id;
+}
+
 export function isSolid(map: TileMap, tx: number, ty: number): boolean {
   return SOLID[tileAt(map, tx, ty)] ?? false;
 }

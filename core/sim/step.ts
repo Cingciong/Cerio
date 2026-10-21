@@ -7,23 +7,26 @@ import type { GameState } from "./state.ts";
 import { HammerBro } from "../entities/enemy.ts";
 import { Tile, tileAt, toTile } from "../world/tiles.ts"
 import { Item } from "../entities/powerup.ts"
+import { hitBlockAbove, stepBlocks } from "./blocks.ts";
 import { stepPipe, tryEnterPipe } from "./pipes.ts";
 
-/** Buttons for enemies by id. Missing id -> the enemy's own decide(). */
+
 export type EnemyButtons = Record<number, Buttons>;
 
 export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButtons = {}): void {
   if (state.status !== "playing") return;
   state.frame++;
+  state.events = [];
   if (state.pipe) return stepPipe(state);
+  stepBlocks(state);
 
   const { player, map } = state;
   const prevBottom = player.bottom;
-  const prevVy = player.vy;
-  player.update(buttons, map);
+  const hit = player.update(buttons, map);
+
   if (tryEnterPipe(state, buttons)) return;
 
-  if(prevVy < 0 && player.vy >=0){
+  if(hit.ceiling){
     const txCenter = toTile(player.x + (player.w/2)*SUB);
     const tyAbove = toTile(player.y)-1;
     const tileId = tileAt(map, txCenter, tyAbove);
@@ -35,6 +38,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       const itemY = tyAbove*16*SUB;
       state.items.push(new Item(newItemId, 'mushroom', itemX, itemY));
     }
+    hitBlockAbove(state);
   }
 
   for(const item of state.items){
@@ -59,7 +63,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map, player);
   }
 
-  // Player vs enemies: landing on top kills the enemy, anything else kills the player.
+  
   for (const enemy of state.enemies) {
     if (!enemy.alive || enemy.actionState !== 'shell_sliding') continue;
 
@@ -70,7 +74,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     }
   }
   
-  // Hammer projectiles vs player.
+
   if (player.alive) {
     for (const enemy of state.enemies) {
       if (!(enemy instanceof HammerBro) || !enemy.alive) continue;
@@ -123,7 +127,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     }
   }
 
-  if (player.y > map.height * TILE_SUB) player.alive = false; // fell into a pit
+  if (player.y > map.height * TILE_SUB) player.alive = false; 
   if (!player.alive) state.status = "dead";
   if (state.area === "overworld" && player.right >= map.width * TILE_SUB) state.status = "won"; // touched the right edge of the map (until there is a flagpole)
 }

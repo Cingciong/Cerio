@@ -7,13 +7,24 @@
       body { margin: 0; background: #111; color: #ccc; font: 13px monospace; display: grid; place-items: center; min-height: 100vh; }
       canvas { width: min(768px, 95vw, 95vh * 256 / 240); aspect-ratio: 256 / 240; image-rendering: pixelated; background: #000; }
       p { margin: 8px 0 0; }
+      dialog { background: #222; color: #ccc; border: 1px solid #555; font: inherit; }
+      dialog textarea { display: block; width: 360px; margin-top: 8px; background: #111; color: #eee; font: inherit; }
     </style>
   </head>
   <body>
     <div>
       <canvas id="game" width="256" height="240"></canvas>
       <p>←/→ or A/D move · Z/Space jump · X/Shift run · R restart</p>
+      <p><button id="flag" hidden>Flag segment (F)</button> <span id="flag-status"></span></p>
     </div>
+    <dialog id="flag-dialog">
+      <form method="dialog">
+        <p>Zgłosić segment <b id="flag-name"></b> do poprawki?</p>
+        <p>Trafi do levels/to_fix/ i zniknie z generatora.</p>
+        <textarea id="flag-comment" rows="5" placeholder="Co dokładnie nie działa? (gdzie, co się dzieje)"></textarea>
+        <p><button value="cancel">Anuluj</button> <button id="flag-confirm" value="ok" disabled>Zgłoś</button></p>
+      </form>
+    </dialog>
     <script type="module" src="./main.ts"></script>
   </body>
 </html>
