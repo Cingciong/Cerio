@@ -149,6 +149,13 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     }
   }
 
+  ctx.fillStyle = "#FF6A00";
+  for (const p of state.projectiles) {
+    ctx.beginPath();
+    ctx.arc(Math.round(p.x / SUB - cam.x) + p.w / 2, Math.round(p.y / SUB - cam.y) + p.h / 2, p.w / 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   if (!state.pipe) {
     const isBlinking = state.player.invulnerableTimer > 0 && Math.floor(state.frame / 4) % 2 === 0;
     

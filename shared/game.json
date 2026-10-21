@@ -78,7 +78,17 @@
 
   "items": {
     "mushroom": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 },
-    "star":     { "w": 16, "h": 16, "speed": 16, "gravity": 6, "maxFall": 64 }
+    "star":     { "w": 16, "h": 16, "speed": 16, "gravity": 6, "maxFall": 64 },
+    "flower":   { "w": 16, "h": 16, "speed": 0,  "gravity": 0, "maxFall": 0 }
+  },
+
+  "projectiles": {
+    "fireball": {
+      "w": 8, "h": 8,
+      "speed": 48, "gravity": 4, "bounce": 40, "maxFall": 64,
+      "lifeFrames": 180, "maxAlive": 2,
+      "immune": ["buzzy_beetle", "bowser"]
+    }
   },
 
   "blocks": {

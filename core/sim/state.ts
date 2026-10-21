@@ -6,6 +6,7 @@ import { SUB, TILE } from "../config/constants.ts";
 import type { TileMap } from "../world/tiles.ts";
 import { createEnemy } from "../entities/enemy.ts";
 import { Item } from "../entities/powerup.ts";
+import type { Projectile } from "../entities/projectile.ts";
 import type { Bump, Debris, GameEvent } from "./blocks.ts";
 import type { PipeTravel } from "./pipes.ts";
 
@@ -20,6 +21,7 @@ export interface GameState {
   status: Status;
   player: Player;
   items: Item[];
+  projectiles: Projectile[];
   enemies: Enemy[]; 
   areaEnemies: Record<string, Enemy[]>; 
   pipe?: PipeTravel;
@@ -45,6 +47,7 @@ export function createState(level: Level): GameState {
     status: "playing",
     player: new Player(level.playerStart.x + ((TILE - PLAYER.w) / 2) * SUB, level.playerStart.y), // centred in the tile
     items: [],
+    projectiles: [],
     enemies: areaEnemies.overworld,
     areaEnemies,
     bumps: [],
@@ -59,4 +62,5 @@ export function setArea(state: GameState, area: string): void {
   state.enemies = state.areaEnemies[area];
   state.bumps = [];
   state.debris = [];
+  state.projectiles = [];
 }

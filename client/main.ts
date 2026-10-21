@@ -6,6 +6,8 @@ import { connected, sendFrame } from "./net.ts";
 import { camera, render } from "./render.ts";
 import { playSounds } from "./sound.ts";
 
+
+
 const segments = import.meta.glob("../levels/{normal,castle,caves}/*.json", { eager: true, import: "default" });
 const enclosures = import.meta.glob("../levels/enclosure/*.json", { eager: true, import: "default" });
 const named = (files: Record<string, unknown>) =>

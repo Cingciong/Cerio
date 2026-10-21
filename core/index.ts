@@ -8,6 +8,8 @@ export * from "./sim/pipes.ts";
 export * from "./sim/blocks.ts";
 export * from "./entities/body.ts";
 export * from "./entities/player.ts";
+export * from "./entities/powerup.ts";
+export * from "./entities/projectile.ts";
 export * from "./entities/enemy.ts";
 export * from "./sim/state.ts";
 export * from "./sim/step.ts";
