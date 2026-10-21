@@ -15,6 +15,7 @@ export class Player extends Body {
 
   powerState: PowerState = 'small';
   invulnerableTimer = 0;
+  wantsShoot = false; 
 
   constructor(x: number, y: number) {
     super(x, y, PLAYER.w, PLAYER.h);
@@ -23,6 +24,9 @@ export class Player extends Body {
   update(buttons: Buttons, map: TileMap): Collision {
     this.prevButtons = this.buttons;
     this.buttons = buttons;
+
+    const attackPressed = has(buttons, Button.attack) && !has(this.prevButtons, Button.attack); 
+    this.wantsShoot = attackPressed && this.powerState === 'fire';
 
     if (this.invulnerableTimer > 0){
       this.invulnerableTimer--;
