@@ -6,7 +6,7 @@ import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
 import { HammerBro } from "../entities/enemy.ts";
 import { Tile, tileAt, toTile } from "../world/tiles.ts"
-import { Item } from "../entities/powerup.ts"
+import { Item, type ItemType } from "../entities/powerup.ts"
 import { Projectile } from "../entities/projectile.ts"
 import { hitBlockAbove, stepBlocks } from "./blocks.ts";
 import { stepPipe, tryEnterPipe } from "./pipes.ts";
@@ -39,8 +39,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       const newItemId = state.items.length;
       const itemX = txCenter*16*SUB;
       const itemY = tyAbove*16*SUB;
-      state.items.push(new Item(newItemId, 'flower', itemX, itemY));
-      //state.items.push(new Item(newItemId, player.powerState === 'small' ? 'mushroom' : 'flower', itemX, itemY));
+      
+      const kind = RULES.questionItem === 'auto' ? (player.powerState === 'hammer_suit') : RULES.questionItem as ItemType;
+      state.items.push(new Item(newItemId, kind, itemX, itemY));
     }
     hitBlockAbove(state);
   }
@@ -56,6 +57,8 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         }
       }else if(item.type === 'flower'){
         player.powerState = 'fire';
+      }else if(item.type === 'hammer_suit'){
+        player.powerState = 'hammer_suit';
       }else if(item.type === 'star'){
         player.powerState = 'star';
         player.invulnerableTimer = 600;
@@ -67,19 +70,25 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map, player);
   }
 
-  if (player.wantsShoot && state.projectiles.filter((p) => p.alive).length < PROJECTILES.fireball.maxAlive) {
-    const fw = PROJECTILES.fireball.w * SUB;
-    const x = player.facing > 0 ? player.right : player.x - fw;
-    state.projectiles.push(new Projectile('fireball', x, player.y + 8 * SUB, player.facing));
+  if (player.wantsShoot) {
+    const type = player.powerState === 'hammer_suit' ? 'hammer' : 'fireball';
+    const cfg = PROJECTILES[type];
+    if (state.projectiles.filter((p) => p.alive && p.type === type).length < cfg.maxAlive) {
+      const x = player.facing > 0 ? player.right : player.x - cfg.w * SUB;
+      state.projectiles.push(new Projectile(type, x, player.y + 8 * SUB, player.facing));
+    }
   }
   for (const p of state.projectiles) {
     p.update(map);
     if (!p.alive) continue;
+    const cfg = PROJECTILES[p.type];
     for (const enemy of state.enemies) {
       if (!enemy.alive || !p.overlaps(enemy)) continue;
-      p.alive = false;
-      if (!PROJECTILES[p.type].immune.includes(enemy.type)) enemy.alive = false;
-      break;
+      if (!cfg.immune.includes(enemy.type)) enemy.alive = false;
+      if (!cfg.pierce) {
+        p.alive = false;
+        break;
+      }
     }
   }
   state.projectiles = state.projectiles.filter((p) => p.alive);

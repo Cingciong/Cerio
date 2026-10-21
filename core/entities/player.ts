@@ -5,7 +5,7 @@ import { Button, has, type Buttons } from "../config/buttons.ts";
 import { PLAYER } from "../config/config.ts";
 import type { TileMap } from "../world/tiles.ts";
 
-export type PowerState = 'small' | 'big' | 'fire' | 'star';
+export type PowerState = 'small' | 'big' | 'fire' | 'hammer_suit' | 'star';
 
 export class Player extends Body {
   buttons: Buttons = 0; // pressed this frame
@@ -26,7 +26,7 @@ export class Player extends Body {
     this.buttons = buttons;
 
     const attackPressed = has(buttons, Button.attack) && !has(this.prevButtons, Button.attack); 
-    this.wantsShoot = attackPressed && this.powerState === 'fire';
+    this.wantsShoot = attackPressed && (this.powerState === 'fire' || this.powerState === 'hammer_suit');
 
     if (this.invulnerableTimer > 0){
       this.invulnerableTimer--;
@@ -56,7 +56,7 @@ export class Player extends Body {
     }
     if(this.powerState === 'small'){
       this.alive = false;
-    }else if(this.powerState === 'fire'){
+    }else if(this.powerState === 'fire' || this.powerState === 'hammer_suit'){
       this.powerState = 'big';
       this.invulnerableTimer = PLAYER.invulnerableFrames;
     }else if(this.powerState === 'big'){

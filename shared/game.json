@@ -79,15 +79,24 @@
   "items": {
     "mushroom": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 },
     "star":     { "w": 16, "h": 16, "speed": 16, "gravity": 6, "maxFall": 64 },
-    "flower":   { "w": 16, "h": 16, "speed": 0,  "gravity": 0, "maxFall": 0 }
+    "flower":   { "w": 16, "h": 16, "speed": 0,  "gravity": 0, "maxFall": 0 },
+    "hammer_suit": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 }
   },
 
   "projectiles": {
     "fireball": {
       "w": 8, "h": 8,
-      "speed": 48, "gravity": 4, "bounce": 40, "maxFall": 64,
+      "speed": 48, "gravity": 4, "bounce": 40, "maxFall": 64, "throwVy": 0,
+      "hitsTiles": true, "pierce": false,
       "lifeFrames": 180, "maxAlive": 2,
       "immune": ["buzzy_beetle", "bowser"]
+    },
+    "hammer": {
+      "w": 12, "h": 12,
+      "speed": 24, "gravity": 5, "bounce": 0, "maxFall": 64, "throwVy": 80,
+      "hitsTiles": false, "pierce": true,
+      "lifeFrames": 120, "maxAlive": 2,
+      "immune": ["bowser"]
     }
   },
 
@@ -101,7 +110,8 @@
   },
 
   "rules": {
-    "stompTolerancePx": 4
+    "stompTolerancePx": 4,
+    "questionItem": "hammer_suit"
   },
 
   "redCoins":{"timeFrames": 480},

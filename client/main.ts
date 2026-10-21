@@ -18,6 +18,8 @@ const seed = Number(new URLSearchParams(location.search).get("seed") ?? 1);
 const levels = new LevelSequence(new LevelGenerator(lib), seed, { length: 200, types: ["normal"] });
 
 let level = loadLevel(levels.next());
+
+
 let state = createState(level);
 
 const ctx = (document.getElementById("game") as HTMLCanvasElement).getContext("2d")!;

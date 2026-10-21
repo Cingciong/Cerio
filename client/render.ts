@@ -171,11 +171,27 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     }
   }
 
-  ctx.fillStyle = "#FF6A00";
   for (const p of state.projectiles) {
-    ctx.beginPath();
-    ctx.arc(Math.round(p.x / SUB - cam.x) + p.w / 2, Math.round(p.y / SUB - cam.y) + p.h / 2, p.w / 2, 0, Math.PI * 2);
-    ctx.fill();
+    const cx = Math.round(p.x / SUB - cam.x) + p.w / 2;
+    const cy = Math.round(p.y / SUB - cam.y) + p.h / 2;
+    if (p.type === "hammer") {
+      const f = HAMMER_PROJECTILE;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(state.frame * 0.4 * p.dir); // spinning
+      if (isSpriteReady(enemySpriteSheet)) {
+        ctx.drawImage(enemySpriteSheet, f.x, f.y, f.width, f.height, -f.width / 2, -f.height / 2, f.width, f.height);
+      } else {
+        ctx.fillStyle = "#696969";
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+    } else {
+      ctx.fillStyle = "#FF6A00";
+      ctx.beginPath();
+      ctx.arc(cx, cy, p.w / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   if (!state.pipe) {
