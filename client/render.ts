@@ -23,6 +23,17 @@ for (const [type, cfg] of Object.entries(ENEMIES)) {
   ENEMY_COLORS[type] = (cfg as any).color || COLORS.enemy;
 }
 
+const ITEM_COLORS: Record<string, string> = {
+  mushroom: "#FF4500",
+  flower: "#FF8C00",
+  star: "#FFD700",
+  leaf: "#8B4513",
+  stopwatch: "#00CED1",
+  frog: "#32CD32",
+  hammer_suit: "#696969",
+  tanooki: "#D2B48C"
+};
+
 export interface Camera {
   x: number; // px, top-left of the screen in the world
   y: number;
@@ -68,7 +79,28 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       }
     }
   
-  box(ctx, state.player, cam, COLORS.player);
+  if(state.items){
+    for(const item of state.items){
+      if(!item.alive) continue;
+
+      if(item.type === 'star' && Math.floor(state.frame/4)%2===0){
+        ctx.fillStyle = "#FFFFFF";
+      }else{
+        ctx.fillStyle = ITEM_COLORS[item.type] || "#FFFFFF";
+      }
+      ctx.fillRect(Math.round(item.x / SUB -cam.x), Math.round(item.y/SUB - cam.y), item.w, item.h);
+    }
+  }
+
+  if(state.player.invulnerableTimer > 0 && Math.floor(state.frame/4)%2===0){
+
+  }else{
+    let playerColor = COLORS.player;
+    if(state.player.powerState === 'fire') playerColor = "#FFF";
+    if(state.player.powerState === 'star') playerColor = (Math.floor(state.frame/4)%2===0) ? "#FFD700" : "#FFF";
+    box(ctx, state.player, cam, playerColor);
+  }
+
   const seg = segmentDebug(ctx, state, cam);
 
   ctx.fillStyle = COLORS.text;

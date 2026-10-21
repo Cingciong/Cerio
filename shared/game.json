@@ -37,7 +37,8 @@
     "bridge":          { "id": 21, "char": "-", "solid": true,  "color": "#D2691E" },
     "lava":            { "id": 22, "char": "L", "solid": false, "color": "#FF3300", "deadly": true },
     "bowser_bridge":   { "id": 23, "char": "Z", "solid": true,  "color": "#A0A0A0", "collapses": true },
-    "axe":             { "id": 24, "char": "A", "solid": false, "color": "#FFA500", "goal": true }
+    "axe":             { "id": 24, "char": "A", "solid": false, "color": "#FFA500", "goal": true },
+    "question":        { "id": 25, "char": "?", "solid": true, "color": "#FFD700", "contents": "powerup", "becomes": "used" }
   },
 
 
@@ -55,7 +56,8 @@
     "gravityHold": 2,
     "gravity": 6,
     "maxFall": 64,
-    "stompBounce": 48
+    "stompBounce": 48,
+    "invulnerableFrames": 120
   },
 
   "enemies": {
@@ -72,6 +74,11 @@
     "buzzy_beetle": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#fcfc00" },
     "spiny": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#ff0000" },
     "bullet_bill": { "w": 16, "h": 16, "speed": 24, "gravity": 0, "maxFall": 0, "color": "#000000" }
+  },
+
+  "items": {
+    "mushroom": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 },
+    "star":     { "w": 16, "h": 16, "speed": 16, "gravity": 6, "maxFall": 64 }
   },
 
   "rules": {
