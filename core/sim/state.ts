@@ -20,6 +20,7 @@ export interface GameState {
   map: TileMap; 
   maps: Record<string, TileMap>; 
   frame: number;
+  nextEnemyId: number;
   status: Status;
   player: Player;
   items: Item[];
@@ -59,6 +60,7 @@ export function createState(level: Level): GameState {
     map: maps.overworld,
     maps,
     frame: 0,
+    nextEnemyId: id,
     status: "playing",
     player: new Player(level.playerStart.x + ((TILE - PLAYER.w) / 2) * SUB, level.playerStart.y), // centred in the tile
     items: [],

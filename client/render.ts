@@ -1,5 +1,5 @@
 
-import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, Goomba, HammerBro, KoopaEnemy, PiranhaPlant, type Platform } from "../core/index.ts";
+import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, Goomba, HammerBro, KoopaEnemy, PiranhaPlant, type Platform } from "../core/index.ts";
 import {
   COIN_FRAMES,
   BRICK_DEBRIS_FRAMES,
@@ -391,6 +391,16 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   const frameIndex = Math.floor(frameNumber / 8);
   const moving = enemy.onGround && enemy.vx !== 0;
 
+  if (enemy instanceof BulletBillCannon) {
+    drawBulletBillCannon(ctx, enemy, cam);
+    return;
+  }
+
+  if (enemy instanceof BulletBill) {
+    drawBulletBill(ctx, enemy, cam);
+    return;
+  }
+
   if (enemy instanceof HammerBro && isSpriteReady(enemySpriteSheet)) {
     const frame = enemy.state === "throwing"
       ? HAMMER_BRO_FRAMES[3]
@@ -430,6 +440,20 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   box(ctx, enemy, cam, ENEMY_COLORS[enemy.type] || COLORS.enemy);
+}
+
+function drawBulletBill(ctx: CanvasRenderingContext2D, bill: BulletBill, cam: Camera): void {
+  const x = Math.round(bill.x / SUB - cam.x);
+  const y = Math.round(bill.y / SUB - cam.y);
+  ctx.fillStyle = "#111";
+  ctx.fillRect(x, y, bill.w, bill.h);
+}
+
+function drawBulletBillCannon(ctx: CanvasRenderingContext2D, cannon: BulletBillCannon, cam: Camera): void {
+  const x = Math.round(cannon.x / SUB - cam.x);
+  const y = Math.round(cannon.y / SUB - cam.y);
+  ctx.fillStyle = "#444";
+  ctx.fillRect(x, y, cannon.w, cannon.h);
 }
 
 function drawSpriteFrame(
