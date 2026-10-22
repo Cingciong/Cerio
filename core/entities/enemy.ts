@@ -137,8 +137,27 @@ export class KoopaEnemy extends Enemy {
 }
 
 export class Goomba extends Enemy {
-  constructor(id: number, type: string, x: number, y: number){
+  stackCount: number;
+
+  constructor(id: number, type: string, x: number, y: number, stackCount = 1) {
     super(id, type, x, y);
+    if (!Number.isInteger(stackCount) || stackCount < 1) {
+      throw new Error("Goomba stack count must be a positive integer");
+    }
+    this.stackCount = stackCount;
+    this.y -= (stackCount - 1) * this.cfg.h * SUB;
+    this.h = stackCount * this.cfg.h;
+  }
+
+  onStomp(playerX: number): boolean {
+    if (this.stackCount > 1) {
+      this.stackCount--;
+      this.y += this.cfg.h * SUB;
+      this.h -= this.cfg.h;
+    } else {
+      this.alive = false;
+    }
+    return true;
   }
 
 }
@@ -590,10 +609,10 @@ export class HammerBro extends Enemy {
 }
 
 
-export function createEnemy(id: number, type: string, x: number, y: number): Enemy {
+export function createEnemy(id: number, type: string, x: number, y: number, count = 1): Enemy {
     switch (type){
       case 'goomba':
-        return new Goomba(id, type, x, y);
+        return new Goomba(id, type, x, y, count);
       case 'buzzy_beetle':
         return new BuzzyBeetle(id, type, x, y);
       case 'spiny':

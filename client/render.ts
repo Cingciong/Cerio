@@ -1,5 +1,5 @@
 
-import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, HammerBro, KoopaEnemy, PiranhaPlant } from "../core/index.ts";
+import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, Goomba, HammerBro, KoopaEnemy, PiranhaPlant } from "../core/index.ts";
 import {
   COIN_FRAMES,
   GOOMBA_WALK,
@@ -291,9 +291,18 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
     return;
   }
 
-  if (enemy.type === "goomba" && isSpriteReady(enemySpriteSheet)) {
+  if (enemy instanceof Goomba && isSpriteReady(enemySpriteSheet)) {
     const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
-    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir < 0);
+    for (let i = 0; i < enemy.stackCount; i++) {
+      drawSpriteFrame(
+        ctx,
+        enemySpriteSheet,
+        { x: enemy.x, y: enemy.y + i * enemy.cfg.h * SUB, w: enemy.w, h: enemy.cfg.h },
+        cam,
+        frame,
+        enemy.dir < 0,
+      );
+    }
     return;
   }
 
@@ -316,7 +325,7 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
 function drawSpriteFrame(
   ctx: CanvasRenderingContext2D,
   image: HTMLImageElement,
-  enemy: Body,
+  enemy: Pick<Body, "x" | "y" | "w" | "h">,
   cam: Camera,
   frame: SpriteFrame,
   flip: boolean,

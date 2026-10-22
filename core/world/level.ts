@@ -6,7 +6,7 @@ import { createTileMap, Tile, tileIdOfChar, type TileMap } from "./tiles.ts";
 
 export interface AreaFile {
   rows: string[];
-  enemies: { type: string; x: number; y: number }[];
+  enemies: { type: string; x: number; y: number; count?: number }[];
   objects?: { type: string; x: number; y: number }[];
   spawners?: { type: string; from: number; to: number }[];
   segments?: SegmentSpan[];
@@ -43,6 +43,7 @@ export interface Spawn {
 
 export interface EnemySpawn extends Spawn {
   type: string;
+  count?: number;
 }
 
 export interface Area {
@@ -92,11 +93,19 @@ function loadArea(file: AreaFile, name: string): Area {
 
   for (const e of file.enemies ?? []) {
     if (!ENEMIES[e.type]) throw new Error(`${name}: unknown enemy type '${e.type}'`);
+    if (e.count !== undefined && (e.type !== "goomba" || !Number.isInteger(e.count) || e.count < 1)) {
+      throw new Error(`${name}: count must be a positive integer and is only supported for goombas`);
+    }
   }
 
   return {
     map,
-    enemies: (file.enemies ?? []).map((e) => ({ type: e.type, x: e.x * TILE_SUB, y: e.y * TILE_SUB })),
+    enemies: (file.enemies ?? []).map((e) => ({
+      type: e.type,
+      x: e.x * TILE_SUB,
+      y: e.y * TILE_SUB,
+      ...(e.count === undefined ? {} : { count: e.count }),
+    })),
     segments: file.segments ?? [],
   };
 }

@@ -33,7 +33,7 @@ export function createState(level: Level): GameState {
   const areaEnemies: Record<string, Enemy[]> = {};
   const maps: Record<string, TileMap> = {};
   for (const [name, area] of Object.entries(level.areas)) {
-    areaEnemies[name] = area.enemies.map((e) => createEnemy(id++, e.type, e.x, e.y));
+    areaEnemies[name] = area.enemies.map((e) => createEnemy(id++, e.type, e.x, e.y, e.count));
     maps[name] = { ...area.map, tiles: area.map.tiles.slice() };
   }
   return {
