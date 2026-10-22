@@ -1,4 +1,3 @@
-// One frame of the game. Mutates the state.
 
 import type { Buttons } from "../config/buttons.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
@@ -13,6 +12,13 @@ import { stepPipe, tryEnterPipe } from "./pipes.ts";
 import { updateRedCoins } from "./redcoins.ts";
 import { collectCoins } from "./coins.ts";
 
+
+export function questionItem(state: GameState): ItemType {
+  if (RULES.questionItem !== 'auto') return RULES.questionItem as ItemType;
+  if (state.player.powerState === 'small') return 'mushroom';
+  return state.rng.pick(RULES.questionPool as ItemType[]);
+}
+
 export type EnemyButtons = Record<number, Buttons>;
 
 export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButtons = {}): void {
@@ -24,7 +30,6 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
   const { player, map, platforms } = state;
 
-  // 1. Aktualizacja pozycji platform oraz przemieszczenie stojącego gracza
   for (const platform of platforms) {
     const oldX = platform.x;
     const oldY = platform.y;
@@ -34,7 +39,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       const dx = platform.x - oldX;
       const dy = platform.y - oldY;
 
-      // Przemieszczenie gracza w osi X z blokowaniem na ścianach
+
       player.x += dx;
       if (dx !== 0) {
         const tx = dx > 0 ? toTile(player.right - 1) : toTile(player.x);
@@ -51,14 +56,14 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         }
       }
 
-      // Przemieszczenie gracza w osi Y z zabezpieczeniem przed wejściem w sufit
+
       player.y += dy;
       for (let tx = toTile(player.x); tx <= toTile(player.right - 1); tx++) {
         if (isSolid(map, tx, toTile(player.y))) {
           player.y = (toTile(player.y) + 1) * TILE_SUB;
           player.hit.ceiling = true;
           if (player.bottom > platform.y) {
-            player.alive = false; // zmiażdżenie między platformą a sufitem
+            player.alive = false; 
           }
         }
       }
@@ -69,7 +74,6 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   const prevX = player.x;
   const prevY = player.y;
 
-  // 2. Ruch gracza (sterowanie, grawitacja, kolizje z kafelkami)
   const hit = player.update(buttons, map);
   for (const cannon of state.enemies) {
     if (!(cannon instanceof BulletBillCannon) || !cannon.alive || !player.overlaps(cannon)) continue;
@@ -142,7 +146,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       const itemX = txCenter * 16 * SUB;
       const itemY = tyAbove * 16 * SUB;
 
-      const kind: ItemType = RULES.questionItem === 'auto' ? (player.powerState === 'small' ? 'mushroom' : 'flower') : RULES.questionItem as ItemType;
+      const kind = questionItem(state);
       state.items.push(new Item(newItemId, kind, itemX, itemY));
     }
     hitBlockAbove(state);
@@ -177,7 +181,6 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     }
   }
 
-  // 3. Detekcja kolizji i lądowania na ruchomej platformie
   state.standingPlatform = null;
   for (const platform of platforms) {
     const overlapsX = player.right > platform.x && player.x < platform.right;

@@ -117,7 +117,8 @@
 
   "rules": {
     "stompTolerancePx": 4,
-    "questionItem": "star"
+    "questionItem": "auto",
+    "questionPool": ["flower", "leaf", "tanooki", "frog", "hammer_suit", "stopwatch"]
   },
 
   "redCoins":{"timeFrames": 480},

@@ -11,6 +11,7 @@ import type { Bump, Debris, GameEvent } from "./blocks.ts";
 import type { PipeTravel } from "./pipes.ts";
 import { Platform } from "../entities/platform.ts";
 import type { RedRing } from "./redcoins.ts";
+import { Rng } from "./rng.ts";
 
 export type Status = "playing" | "dead" | "won";
 
@@ -39,9 +40,11 @@ export interface GameState {
   multiCoins: Record<string, number>;
   redRings: RedRing[];
   redRingsCleared: number;
+  rng: Rng; // seeded, used for gameplay randomness (e.g. which power-up a ? block gives)
 }
 
-export function createState(level: Level): GameState {
+/** Same level + same seed + same inputs = same game. Default seed comes from the level name. */
+export function createState(level: Level, seed: number = hashName(level.name)): GameState {
   let id = 0;
   let platformId = 0;
   const areaEnemies: Record<string, Enemy[]> = {};
@@ -80,7 +83,14 @@ export function createState(level: Level): GameState {
       (a.redRings ?? []).map((r) => ({ ...r, area: name, phase: "waiting" as const, timer: 0, collected: r.coins.map(() => false) })),
     ),
     redRingsCleared: 0,
+    rng: new Rng(seed),
   };
+}
+
+function hashName(name: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < name.length; i++) h = Math.imul(h ^ name.charCodeAt(i), 16777619);
+  return h >>> 0;
 }
 
 export function setArea(state: GameState, area: string): void {
