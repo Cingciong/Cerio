@@ -24,7 +24,7 @@ const specificSegment = mapParam ? allSegments.find((s) => s.name === mapParam) 
 const levels = new LevelSequence(new LevelGenerator(lib), seed, { length: 200, types: [typeParam] });
 
 let level = specificSegment
-  ? loadLevel({ player: { x: 2, y: 10 }, ...specificSegment })
+  ? loadLevel({ player: { x: 2, y: 10 }, ...specificSegment, type: specificSegment.theme })
   : loadLevel(levels.next());
 let state = createState(level);
 
