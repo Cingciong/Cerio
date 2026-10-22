@@ -9,7 +9,7 @@ import { ENEMIES, PIRANHA, type EnemyConfig } from "../config/config.ts";
 import { TILE_SUB, SUB } from "../config/constants.ts";
 import { isSolid, toTile, type TileMap } from "../world/tiles.ts";
 
-
+export type EnemyController = (enemy: Enemy, map: TileMap, player?: Body) => Buttons | undefined;
 export type EnemyActionState = 'default' | 'shell_idle' | 'shell_sliding' | 'falling';
 
 export class Enemy extends Body {
@@ -23,6 +23,8 @@ export class Enemy extends Body {
 
   actionState: EnemyActionState = 'default';
 
+  protected externalController?: EnemyController;
+
   constructor(id: number, type: string, x: number, y: number) {
     const cfg = ENEMIES[type];
     super(x, y, cfg.w, cfg.h);
@@ -31,8 +33,16 @@ export class Enemy extends Body {
     this.type = type;
   }
 
+  setController(controller: EnemyController): void {
+    this.externalController = controller;
+  }
+
   /** Default controller: walk, turn around at walls. */
   decide(map: TileMap, player?: Body): Buttons {
+    if (this.externalController) {
+      const extButtons = this.externalController(this, map, player);
+      if (extButtons !== undefined) return extButtons;
+    }
     return this.dir < 0 ? Button.left : Button.right;
   }
 
@@ -88,6 +98,11 @@ export class KoopaEnemy extends Enemy {
   }
 
   decide(map: TileMap): Buttons {
+    if (this.externalController) {
+      const extButtons = this.externalController(this, map, undefined);
+      if (extButtons !== undefined) return extButtons;
+    }
+
     if (this.actionState === 'shell_idle'){
       return 0;
     }
@@ -330,6 +345,10 @@ export class KoopaParaTroopa extends KoopaEnemy {
   }
 
   decide(map: TileMap): Buttons {
+    if (this.externalController) {
+      const extButtons = this.externalController(this, map, undefined);
+      if (extButtons !== undefined) return extButtons;
+    }
     if (this.hasWings) {
       if (this.type === 'koopa_para_red') {
         return this.vDir < 0 ? Button.jump : Button.down; 
@@ -407,6 +426,10 @@ export class PiranhaPlant extends Enemy {
   }
 
   decide(map: TileMap, player?: Body): Buttons {
+    if (this.externalController) {
+      const extButtons = this.externalController(this, map, player);
+      if (extButtons !== undefined) return extButtons;
+    }
     switch (this.phase) {
       case 'hidden':
         this.timer++;
@@ -494,6 +517,10 @@ export class HammerBro extends Enemy {
   }
 
   decide(_map: TileMap, _player?: Body): Buttons {
+    if (this.externalController) {
+      const extButtons = this.externalController(this, _map, _player);
+      if (extButtons !== undefined) return extButtons;
+    }
     if (this.decisionTimer <= 0) {
       const action = Math.floor(Math.random() * 5);
 

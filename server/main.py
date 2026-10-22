@@ -10,6 +10,7 @@ Run: python -m uvicorn main:app --port 8000   (from server/)
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from frame import GameFrame, ServerReply
+from rl import RLTrainer
 
 app = FastAPI()
 
@@ -28,6 +29,8 @@ def decide(frame: GameFrame) -> ServerReply:
 async def ws(socket: WebSocket) -> None:
     await socket.accept()
     print("client connected", flush=True)
+
+    trainer = RLTrainer()
     try:
         while True:
             frame = GameFrame.from_dict(await socket.receive_json())
@@ -35,6 +38,7 @@ async def ws(socket: WebSocket) -> None:
                 p = frame.player
                 alive = sum(e.alive for e in frame.enemies)
                 print(f"frame {frame.frame}: player ({p.x:.1f}, {p.y:.1f}) v=({p.vx:.2f}, {p.vy:.2f}) {p.pressed}, enemies alive {alive}", flush=True)
-            await socket.send_json(decide(frame).to_dict())
+            reply = trainer.decide(frame)
+            await socket.send_json(reply.to_dict())
     except WebSocketDisconnect:
         print("client disconnected", flush=True)
