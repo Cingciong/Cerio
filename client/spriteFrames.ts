@@ -65,6 +65,10 @@ export const SUPER_MUSHROOM: SpriteFrame = { x: 0, y: 0, width: 16, height: 16 }
 export const ONE_UP_MUSHROOM: SpriteFrame = { x: 16, y: 0, width: 16, height: 16 };
 export const FIRE_FLOWER: SpriteFrame = { x: 32, y: 0, width: 16, height: 16 };
 export const SUPER_STAR: SpriteFrame = { x: 48, y: 0, width: 16, height: 16 };
+export const BRICK_DEBRIS_FRAMES: SpriteFrame[] = [
+  { x: 5, y: 20, width: 8, height: 8 },
+  { x: 20, y: 20, width: 8, height: 8 },
+];
 export const COIN_FRAMES: SpriteFrame[] = [0, 16, 32, 48].map((x) => ({
   x,
   y: 16,
@@ -74,6 +78,7 @@ export const COIN_FRAMES: SpriteFrame[] = [0, 16, 32, 48].map((x) => ({
 
 export const TILE_SPRITES: Partial<Record<number, SpriteFrame>> = {
   [Tile.floor]: { x: 0, y: 0, width: 16, height: 16 },
+  [Tile.question]: { x: 64, y: 0, width: 16, height: 16 },
   [Tile.pipe_left_top]: { x: 96, y: 0, width: 16, height: 16 },
   [Tile.pipe_right_top]: { x: 112, y: 0, width: 16, height: 16 },
   [Tile.pipe_left_body]: { x: 96, y: 16, width: 16, height: 16 },

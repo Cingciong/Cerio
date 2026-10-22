@@ -2,6 +2,7 @@
 import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, Goomba, HammerBro, KoopaEnemy, PiranhaPlant, type Platform } from "../core/index.ts";
 import {
   COIN_FRAMES,
+  BRICK_DEBRIS_FRAMES,
   GOOMBA_WALK,
   HAMMER_BRO_FRAMES,
   HAMMER_PROJECTILE,
@@ -25,9 +26,11 @@ const marioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Mario.png"
 const enemySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Enemies.png");
 const itemSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Items.png");
 const overworldSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/OverWorld.png");
+const tintedTileCache = new Map<string, HTMLCanvasElement>();
 
 const COLORS = {
   sky: "#5C94FC",
+  caveBackground: "#17131F",
   block: "#8a5a2b",
   blockEdge: "#ca9662",
   player: "#e33",
@@ -65,7 +68,8 @@ export interface Camera {
 
 export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera, info: string): void {
   ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = COLORS.sky;
+  const caveTheme = state.area === "cave" || state.level.type === "caves";
+  ctx.fillStyle = caveTheme ? COLORS.caveBackground : COLORS.sky;
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
   if (state.pipe) drawPlayer(ctx, state, cam); 
@@ -80,21 +84,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       const x = tx * TILE - cam.x;
       const y = ty * TILE - cam.y - bumpOffset(state, tx, ty);
       
-      drawTile(ctx, tileId, x, y, state.frame, map, tx, ty);
+      drawTile(ctx, tileId, x, y, state.frame, map, tx, ty, caveTheme);
     }
   }
   
-  ctx.fillStyle = ctx.strokeStyle = "#e02020";
-  for (const ring of state.redRings) {
-    if (ring.phase === "waiting") {
-      ctx.strokeRect(ring.x / SUB - cam.x + 3.5, ring.y / SUB - cam.y + 0.5, TILE - 7, 2 * TILE - 1);
-    } else if (ring.phase === "active") {
-      ring.coins.forEach((c, i) => {
-        if (!ring.collected[i]) ctx.fillRect(c.x / SUB - cam.x + 4, c.y / SUB - cam.y + 2, TILE - 8, TILE - 4);
-      });
-    }
-  }
-
   for (const p of state.platforms) {
     drawPlatform(ctx, p, cam);
   }
@@ -149,7 +142,17 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   drawPipesInFront(ctx, map, cam);
 
   ctx.fillStyle = TILE_COLORS[Tile.brick];
-  for (const d of state.debris) ctx.fillRect(Math.round(d.x / SUB - cam.x), Math.round(d.y / SUB - cam.y), BLOCKS.debrisPx, BLOCKS.debrisPx);
+  for (const d of state.debris) {
+    const frame = BRICK_DEBRIS_FRAMES[d.vx < 0 ? 0 : 1];
+    const x = Math.round(d.x / SUB - cam.x);
+    const y = Math.round(d.y / SUB - cam.y);
+    if (isSpriteReady(overworldSpriteSheet)) {
+      drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, BLOCKS.debrisPx, BLOCKS.debrisPx, caveTheme);
+    } else {
+      ctx.fillRect(x, y, BLOCKS.debrisPx, BLOCKS.debrisPx);
+      tintCaveTile(ctx, x, y, caveTheme, BLOCKS.debrisPx);
+    }
+  }
   
   ctx.fillStyle = ctx.strokeStyle = "#e02020";
   for (const ring of state.redRings) {
@@ -158,7 +161,18 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       ctx.strokeRect(ring.x / SUB - cam.x + 3.5, ring.y / SUB - cam.y + 0.5, TILE - 7, 2 * TILE - 1);
     } else if (ring.phase === "active") {
       ring.coins.forEach((c, i) => {
-        if (!ring.collected[i]) ctx.fillRect(c.x / SUB - cam.x + 4, c.y / SUB - cam.y + 2, TILE - 8, TILE - 4);
+        if (ring.collected[i]) return;
+        const x = Math.round(c.x / SUB - cam.x);
+        const y = Math.round(c.y / SUB - cam.y);
+        if (isSpriteReady(itemSpriteSheet)) {
+          const frame = COIN_FRAMES[Math.floor(state.frame / 8) % COIN_FRAMES.length];
+          drawSpriteSheetFrame(ctx, itemSpriteSheet, frame, x, y, TILE, TILE, "rgba(220, 0, 0, 0.82)");
+        } else {
+          ctx.fillStyle = "#dc0000";
+          ctx.beginPath();
+          ctx.ellipse(x + TILE / 2, y + TILE / 2, TILE / 4, TILE / 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
       });
     }
   }
@@ -254,16 +268,27 @@ function drawTile(
   map: GameState["map"],
   tx: number,
   ty: number,
+  caveTint: boolean,
 ): void {
+  const tint = caveTint && !isPipeTile(tileId);
+
   if (tileId === Tile.coin && isSpriteReady(itemSpriteSheet)) {
     const frame = COIN_FRAMES[Math.floor(frameNumber / 8) % COIN_FRAMES.length];
     ctx.drawImage(itemSpriteSheet, frame.x, frame.y, frame.width, frame.height, x, y, TILE, TILE);
     return;
   }
 
+  if (tileId === Tile.lava && isSpriteReady(overworldSpriteSheet)) {
+    const frame = TILE_SPRITES[Tile.floor];
+    if (frame) {
+      drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, "rgba(255, 84, 0, 0.82)");
+      return;
+    }
+  }
+
   const frame = pipeSprite(map, tx, ty, tileId) ?? TILE_SPRITES[tileId];
   if (frame && isSpriteReady(overworldSpriteSheet)) {
-    ctx.drawImage(overworldSpriteSheet, frame.x, frame.y, frame.width, frame.height, x, y, TILE, TILE);
+    drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, tint);
     return;
   }
 
@@ -271,6 +296,7 @@ function drawTile(
   ctx.fillRect(x, y, TILE, TILE);
   ctx.strokeStyle = COLORS.blockEdge;
   ctx.strokeRect(x + 0.5, y + 0.5, TILE - 1, TILE - 1);
+  tintCaveTile(ctx, x, y, tint);
 }
 
 function pipeSprite(map: GameState["map"], tx: number, ty: number, tileId: number): SpriteFrame | undefined {
@@ -297,19 +323,54 @@ function drawPipesInFront(ctx: CanvasRenderingContext2D, map: GameState["map"], 
 
       const frame = pipeSprite(map, tx, ty, tileId) ?? TILE_SPRITES[tileId];
       if (!frame) continue;
-      ctx.drawImage(
-        overworldSpriteSheet,
-        frame.x,
-        frame.y,
-        frame.width,
-        frame.height,
-        tx * TILE - cam.x,
-        ty * TILE - cam.y,
-        TILE,
-        TILE,
-      );
+      const x = tx * TILE - cam.x;
+      const y = ty * TILE - cam.y;
+      drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, false);
     }
   }
+}
+
+function drawSpriteSheetFrame(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  frame: SpriteFrame,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  caveTint: boolean | string,
+): void {
+  if (!caveTint) {
+    ctx.drawImage(image, frame.x, frame.y, frame.width, frame.height, x, y, width, height);
+    return;
+  }
+
+  const tintColor = typeof caveTint === "string" ? caveTint : "rgba(35, 90, 210, 0.38)";
+  const key = `${image.src},${frame.x},${frame.y},${frame.width},${frame.height},${width},${height},${tintColor}`;
+  let tinted = tintedTileCache.get(key);
+  if (!tinted) {
+    tinted = document.createElement("canvas");
+    tinted.width = width;
+    tinted.height = height;
+    const tintedContext = tinted.getContext("2d");
+    if (!tintedContext) {
+      ctx.drawImage(image, frame.x, frame.y, frame.width, frame.height, x, y, width, height);
+      return;
+    }
+    tintedContext.imageSmoothingEnabled = false;
+    tintedContext.drawImage(image, frame.x, frame.y, frame.width, frame.height, 0, 0, width, height);
+    tintedContext.globalCompositeOperation = "source-atop";
+    tintedContext.fillStyle = tintColor;
+    tintedContext.fillRect(0, 0, width, height);
+    tintedTileCache.set(key, tinted);
+  }
+  ctx.drawImage(tinted, x, y);
+}
+
+function tintCaveTile(ctx: CanvasRenderingContext2D, x: number, y: number, caveTint: boolean, size = TILE): void {
+  if (!caveTint) return;
+  ctx.fillStyle = "rgba(35, 90, 210, 0.38)";
+  ctx.fillRect(x, y, size, size);
 }
 
 function isPipeTile(tileId: number): boolean {
