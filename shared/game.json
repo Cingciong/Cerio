@@ -74,7 +74,8 @@
     "bowser": { "w": 32, "h": 32, "speed": 4,  "gravity": 6, "maxFall": 64, "color": "#006400" },
     "buzzy_beetle": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#fcfc00" },
     "spiny": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#ff0000" },
-    "bullet_bill": { "w": 16, "h": 16, "speed": 24, "gravity": 0, "maxFall": 0, "color": "#000000" }
+    "bullet_bill": { "w": 16, "h": 16, "speed": 24, "gravity": 0, "maxFall": 0, "color": "#000000" },
+    "bullet_bill_cannon": { "w": 16, "h": 16, "speed": 0, "gravity": 0, "maxFall": 0, "color": "#333333" }
   },
 
   "items": {
@@ -116,7 +117,8 @@
 
   "rules": {
     "stompTolerancePx": 4,
-    "questionItem": "star"
+    "questionItem": "auto",
+    "questionPool": ["flower", "leaf", "tanooki", "frog", "hammer_suit", "stopwatch"]
   },
 
   "redCoins":{"timeFrames": 480},

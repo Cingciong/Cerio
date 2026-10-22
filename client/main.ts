@@ -6,7 +6,10 @@ import { connected, sendFrame, latestReply } from "./net.ts";
 import { camera, render } from "./render.ts";
 import { playSounds } from "./sound.ts";
 
+
+
 const segments = import.meta.glob("../levels/{normal,castle,caves}/*.json", { eager: true, import: "default" });
+
 const enclosures = import.meta.glob("../levels/enclosure/*.json", { eager: true, import: "default" });
 const named = (files: Record<string, unknown>) =>
   Object.entries(files).map(([path, s]) => ({ ...(s as Segment), name: path.split("/").pop()!.replace(".json", "") }));
@@ -24,7 +27,7 @@ const specificSegment = mapParam ? allSegments.find((s) => s.name === mapParam) 
 const levels = new LevelSequence(new LevelGenerator(lib), seed, { length: 200, types: [typeParam] });
 
 let level = specificSegment
-  ? loadLevel({ player: { x: 2, y: 10 }, ...specificSegment })
+  ? loadLevel({ player: { x: 2, y: 10 }, ...specificSegment, type: specificSegment.theme })
   : loadLevel(levels.next());
 let state = createState(level);
 

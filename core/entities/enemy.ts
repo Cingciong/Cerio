@@ -177,6 +177,46 @@ export class Goomba extends Enemy {
 
 }
 
+export class BulletBill extends Enemy {
+  constructor(id: number, x: number, y: number) {
+    super(id, "bullet_bill", x, y);
+    this.dir = -1;
+  }
+
+  update(_buttons: Buttons, map: TileMap): void {
+    if (!this.alive) return;
+    this.vx = this.dir * this.cfg.speed;
+    this.x += this.vx;
+    if (this.right < 0 || this.x > map.width * TILE_SUB) this.alive = false;
+  }
+}
+
+export class BulletBillCannon extends Enemy {
+  private static readonly SHOT_INTERVAL_FRAMES = 180;
+  private shotTimer = BulletBillCannon.SHOT_INTERVAL_FRAMES;
+  private shotReady = false;
+
+  constructor(id: number, x: number, y: number) {
+    super(id, "bullet_bill_cannon", x, y);
+    this.stompable = false;
+  }
+
+  update(): void {
+    if (!this.alive) return;
+    if (this.shotTimer > 0) this.shotTimer--;
+    if (this.shotTimer === 0) {
+      this.shotReady = true;
+      this.shotTimer = BulletBillCannon.SHOT_INTERVAL_FRAMES;
+    }
+  }
+
+  takeShot(id: number): BulletBill | undefined {
+    if (!this.shotReady || !this.alive) return undefined;
+    this.shotReady = false;
+    return new BulletBill(id, this.x - ENEMIES.bullet_bill.w * SUB, this.y);
+  }
+}
+
 export class BuzzyBeetle extends KoopaEnemy {
   private static readonly SHELL_DURATION_FRAMES = 300;
   private shellTimer = 0;
@@ -640,6 +680,10 @@ export function createEnemy(id: number, type: string, x: number, y: number, coun
     switch (type){
       case 'goomba':
         return new Goomba(id, type, x, y, count);
+      case 'bullet_bill':
+        return new BulletBill(id, x, y);
+      case 'bullet_bill_cannon':
+        return new BulletBillCannon(id, x, y);
       case 'buzzy_beetle':
         return new BuzzyBeetle(id, type, x, y);
       case 'spiny':
