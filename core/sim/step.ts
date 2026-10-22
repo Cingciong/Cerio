@@ -4,7 +4,7 @@ import type { Buttons } from "../config/buttons.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
-import { HammerBro } from "../entities/enemy.ts";
+import { BulletBillCannon, HammerBro } from "../entities/enemy.ts";
 import { isSolid, Tile, tileAt, toTile } from "../world/tiles.ts";
 import { Item, type ItemType } from "../entities/powerup.ts";
 import { Projectile } from "../entities/projectile.ts";
@@ -66,9 +66,68 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   }
 
   const prevBottom = player.bottom;
+  const prevX = player.x;
+  const prevY = player.y;
 
   // 2. Ruch gracza (sterowanie, grawitacja, kolizje z kafelkami)
   const hit = player.update(buttons, map);
+  for (const cannon of state.enemies) {
+    if (!(cannon instanceof BulletBillCannon) || !cannon.alive || !player.overlaps(cannon)) continue;
+
+    const prevRight = prevX + player.w * SUB;
+    const prevBottomAtCannon = prevY + player.h * SUB;
+    const wasVerticallyAligned = prevY < cannon.bottom && prevBottomAtCannon > cannon.y;
+
+    if (wasVerticallyAligned && prevRight <= cannon.x && player.right > cannon.x) {
+      player.x = cannon.x - player.w * SUB;
+      player.vx = 0;
+      player.hit.wall = true;
+    } else if (wasVerticallyAligned && prevX >= cannon.right && player.x < cannon.right) {
+      player.x = cannon.right;
+      player.vx = 0;
+      player.hit.wall = true;
+    } else if (prevBottom <= cannon.y && player.bottom > cannon.y && player.vy >= 0) {
+      player.y = cannon.y - player.h * SUB;
+      player.vy = 0;
+      player.onGround = true;
+      player.hit.ground = true;
+      hit.ground = true;
+    } else if (prevY >= cannon.bottom && player.y < cannon.bottom && player.vy < 0) {
+      player.y = cannon.bottom;
+      player.vy = 0;
+      player.hit.ceiling = true;
+      hit.ceiling = true;
+    } else {
+      const overlapLeft = player.right - cannon.x;
+      const overlapRight = cannon.right - player.x;
+      const overlapTop = player.bottom - cannon.y;
+      const overlapBottom = cannon.bottom - player.y;
+      const horizontalOverlap = Math.min(overlapLeft, overlapRight);
+      const verticalOverlap = Math.min(overlapTop, overlapBottom);
+
+      if (verticalOverlap < horizontalOverlap) {
+        if (overlapTop < overlapBottom) {
+          player.y = cannon.y - player.h * SUB;
+          player.onGround = true;
+          player.hit.ground = true;
+          hit.ground = true;
+        } else {
+          player.y = cannon.bottom;
+          player.hit.ceiling = true;
+          hit.ceiling = true;
+        }
+        player.vy = 0;
+      } else if (overlapLeft < overlapRight) {
+        player.x = cannon.x - player.w * SUB;
+        player.hit.wall = true;
+        player.vx = 0;
+      } else {
+        player.x = cannon.right;
+        player.hit.wall = true;
+        player.vx = 0;
+      }
+    }
+  }
   if (tryEnterPipe(state, buttons)) return;
   collectCoins(state);
   updateRedCoins(state);
@@ -149,6 +208,16 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map, player);
     }
   }
+  if (state.freezeTimer === 0) {
+    for (const cannon of state.enemies) {
+      if (!(cannon instanceof BulletBillCannon)) continue;
+      const bill = cannon.takeShot(state.nextEnemyId);
+      if (bill) {
+        state.nextEnemyId++;
+        state.enemies.push(bill);
+      }
+    }
+  }
 
   if (player.wantsShoot) {
     if(player.powerState === 'leaf' || player.powerState === 'tanooki'){
@@ -226,7 +295,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   }
 
   for (const enemy of state.enemies) {
-    if (!enemy.alive || !player.overlaps(enemy)) continue;
+    if (!enemy.alive || enemy instanceof BulletBillCannon || !player.overlaps(enemy)) continue;
     const fromAbove = player.vy > 0 && prevBottom <= enemy.y + RULES.stompTolerancePx * SUB; // feet were in the top part of the enemy
     if (fromAbove && enemy.stompable) {
       const shouldBounce = enemy.onStomp(player.x);
