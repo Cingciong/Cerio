@@ -29,14 +29,32 @@ export class SegmentChain {
 
   /** Glue rows side by side and shift everything positioned in x by the segment's offset. */
   join(): { area: AreaFile; player?: LevelFile["player"] } {
-    const area: Required<AreaFile> = { rows: Array.from({ length: H }, () => ""), enemies: [], objects: [], spawners: [], segments: [] };
+    const area: Required<AreaFile> = {
+      rows: Array.from({ length: H }, () => ""),
+      enemies: [],
+      platforms: [],
+      objects: [],
+      spawners: [],
+      segments: [],
+    };
     let player: LevelFile["player"];
     let x0 = 0;
     for (const s of this.parts) {
       const w = widthOf(s);
       s.rows.forEach((r, y) => (area.rows[y] += r.padEnd(w, ".")));
       for (const e of s.enemies ?? []) area.enemies.push({ ...e, x: e.x + x0 });
-      for (const o of s.objects ?? []) area.objects.push({ ...o, x: o.x + x0 });
+      for (const p of s.platforms ?? []) area.platforms.push({ ...p, x: p.x + x0 });
+      for (const o of s.objects ?? []) {
+        if (o.type === "lift") {
+          area.platforms.push({ type: "vertical", x: o.x + x0, y: o.y, w: 2, h: 0.5, range: 3.5 });
+        } else {
+          area.objects.push({
+            ...o,
+            x: o.x + x0,
+            coins: o.coins?.map(([x, y]) => [x + x0, y] as [number, number]),
+          });
+        }
+      }
       for (const sp of s.spawners ?? []) area.spawners.push({ ...sp, from: sp.from + x0, to: sp.to + x0 });
       area.segments.push({ name: s.name, x: x0, w });
       if (!player && s.player) player = { x: s.player.x + x0, y: s.player.y };

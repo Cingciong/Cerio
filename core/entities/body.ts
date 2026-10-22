@@ -17,6 +17,7 @@ export class Body {
   w: number; // px
   h: number;
   onGround = false;
+  hit: Collision = { wall: false, ceiling: false, ground: false };
 
   constructor(x: number, y: number, w: number, h: number) {
     this.x = x;
@@ -69,6 +70,7 @@ export class Body {
 
     hit.ground = this.rowSolid(map, toTile(this.bottom)); // tile row just below the feet
     this.onGround = hit.ground && this.vy >= 0;
+    this.hit = hit;
     return hit;
   }
 

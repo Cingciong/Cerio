@@ -2,7 +2,7 @@ import { Body } from "./body.ts";
 import { TILE_SUB, SUB } from "../config/constants.ts";
 import type { TileMap } from "../world/tiles.ts";
 
-export type ItemType = 'mushroom' | 'star' | 'flower' | 'leaf';
+export type ItemType = 'mushroom' | 'star' | 'flower' | 'leaf' | 'hammer_suit' | 'tanooki' | 'frog' | 'stopwatch';
 
 export class Item extends Body {
   readonly id: number;
@@ -32,12 +32,17 @@ export class Item extends Body {
       return;
     }
 
-    if (this.type === 'flower' || this.type === 'leaf') {
+    if (['flower', 'hammer_suit', 'tanooki', 'frog', 'stopwatch'].includes(this.type)) {
       return;
     }
 
-    this.vy = Math.min(this.vy + 6, 64);
-    this.vx = this.dir * (this.type === 'star' ? 16 : 10); 
+    if(this.type === 'leaf'){
+      this.vy = Math.min(this.vy + 2, 32);
+      this.vx = Math.sin(this.y / 20) * 16; 
+    }else{
+      this.vy = Math.min(this.vy + 6, 64);
+      this.vx = this.dir * (this.type === 'star' ? 16 : 10); 
+    }
 
     const hit = this.move(map);
     if (hit.wall) {

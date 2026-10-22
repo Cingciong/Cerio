@@ -1,5 +1,5 @@
 
-import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, Goomba, HammerBro, KoopaEnemy, PiranhaPlant } from "../core/index.ts";
+import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, Goomba, HammerBro, KoopaEnemy, PiranhaPlant, type Platform } from "../core/index.ts";
 import {
   COIN_FRAMES,
   GOOMBA_WALK,
@@ -83,6 +83,21 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       drawTile(ctx, tileId, x, y, state.frame, map, tx, ty);
     }
   }
+  
+  ctx.fillStyle = ctx.strokeStyle = "#e02020";
+  for (const ring of state.redRings) {
+    if (ring.phase === "waiting") {
+      ctx.strokeRect(ring.x / SUB - cam.x + 3.5, ring.y / SUB - cam.y + 0.5, TILE - 7, 2 * TILE - 1);
+    } else if (ring.phase === "active") {
+      ring.coins.forEach((c, i) => {
+        if (!ring.collected[i]) ctx.fillRect(c.x / SUB - cam.x + 4, c.y / SUB - cam.y + 2, TILE - 8, TILE - 4);
+      });
+    }
+  }
+
+  for (const p of state.platforms) {
+    drawPlatform(ctx, p, cam);
+  }
 
   for (const e of state.enemies) {
     if (!e.alive) continue;
@@ -136,6 +151,17 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   ctx.fillStyle = TILE_COLORS[Tile.brick];
   for (const d of state.debris) ctx.fillRect(Math.round(d.x / SUB - cam.x), Math.round(d.y / SUB - cam.y), BLOCKS.debrisPx, BLOCKS.debrisPx);
   
+  ctx.fillStyle = ctx.strokeStyle = "#e02020";
+  for (const ring of state.redRings) {
+    if (ring.area !== state.area) continue;
+    if (ring.phase === "waiting") {
+      ctx.strokeRect(ring.x / SUB - cam.x + 3.5, ring.y / SUB - cam.y + 0.5, TILE - 7, 2 * TILE - 1);
+    } else if (ring.phase === "active") {
+      ring.coins.forEach((c, i) => {
+        if (!ring.collected[i]) ctx.fillRect(c.x / SUB - cam.x + 4, c.y / SUB - cam.y + 2, TILE - 8, TILE - 4);
+      });
+    }
+  }
   if(state.items){
     for(const item of state.items){
       if(!item.alive) continue;
@@ -146,6 +172,29 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
         ctx.fillStyle = ITEM_COLORS[item.type] || "#FFFFFF";
       }
       ctx.fillRect(Math.round(item.x / SUB -cam.x), Math.round(item.y/SUB - cam.y), item.w, item.h);
+    }
+  }
+
+  for (const p of state.projectiles) {
+    const cx = Math.round(p.x / SUB - cam.x) + p.w / 2;
+    const cy = Math.round(p.y / SUB - cam.y) + p.h / 2;
+    if (p.type === "hammer") {
+      const f = HAMMER_PROJECTILE;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(state.frame * 0.4 * p.dir); // spinning
+      if (isSpriteReady(enemySpriteSheet)) {
+        ctx.drawImage(enemySpriteSheet, f.x, f.y, f.width, f.height, -f.width / 2, -f.height / 2, f.width, f.height);
+      } else {
+        ctx.fillStyle = "#696969";
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+    } else {
+      ctx.fillStyle = "#FF6A00";
+      ctx.beginPath();
+      ctx.arc(cx, cy, p.w / 2, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 
@@ -398,4 +447,30 @@ export function camera(state: GameState): Camera {
   const x = Math.max(0, Math.min(Math.round(player.x / SUB - SCREEN_W * 0.4), maxX));
   const y = Math.min(Math.round(player.y / SUB - SCREEN_H * 0.3), maxY);
   return { x, y };
+}
+
+
+function drawPlatform(ctx: CanvasRenderingContext2D, platform: Platform, cam: Camera): void {
+  const x = Math.round(platform.x / SUB - cam.x);
+  const y = Math.round(platform.y / SUB - cam.y);
+  const w = platform.w;
+  const h = platform.h;
+
+  if (x + w < 0 || x > SCREEN_W || y + h < 0 || y > SCREEN_H) return;
+
+  // Platform top surface (highlight)
+  ctx.fillStyle = "#FFA044";
+  ctx.fillRect(x, y, w, 2);
+
+  // Platform body
+  ctx.fillStyle = "#D85000";
+  ctx.fillRect(x, y + 2, w, Math.max(0, h - 4));
+
+  // Platform bottom (shadow)
+  ctx.fillStyle = "#8C2800";
+  ctx.fillRect(x, y + Math.max(2, h - 2), w, 2);
+
+  // Outline
+  ctx.strokeStyle = "#000000";
+  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
 }

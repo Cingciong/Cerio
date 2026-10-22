@@ -1,7 +1,7 @@
 {
-  "name": "tmp_castle2-1",
-  "description": "tmp_in_cave: temporary copy of castle/castle2-1.json until real cave segments exist",
-  "theme": "caves",
+  "name": "seg2-4-01",
+  "theme": "castle",
+  "tags": ["start"],
   "rows": [
     "#######....................................",
     "..#####....................................",
@@ -19,16 +19,9 @@
     "####################LLLLLLLLLLLLLLLL#######",
     "####################LLLLLLLLLLLLLLLL#######"
   ],
+  "player": { "x": 1, "y": 6 },
   "enemies": [
-    {
-      "type": "podoboo",
-      "x": 16,
-      "y": 13
-    },
-    {
-      "type": "podoboo",
-      "x": 30,
-      "y": 13
-    }
+    { "type": "podoboo", "x": 16, "y": 13 },
+    { "type": "podoboo", "x": 30, "y": 13 }
   ]
 }

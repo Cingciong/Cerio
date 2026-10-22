@@ -5,7 +5,7 @@ import { Button, has, type Buttons } from "../config/buttons.ts";
 import { PLAYER } from "../config/config.ts";
 import type { TileMap } from "../world/tiles.ts";
 
-export type PowerState = 'small' | 'big' | 'fire' | 'star';
+export type PowerState = 'small' | 'big' | 'fire' | 'hammer_suit' | 'star' | 'leaf' | 'tanooki' | 'frog';
 
 export class Player extends Body {
   buttons: Buttons = 0; // pressed this frame
@@ -15,6 +15,7 @@ export class Player extends Body {
 
   powerState: PowerState = 'small';
   invulnerableTimer = 0;
+  wantsShoot = false; 
 
   constructor(x: number, y: number) {
     super(x, y, PLAYER.w, PLAYER.h);
@@ -23,6 +24,9 @@ export class Player extends Body {
   update(buttons: Buttons, map: TileMap): Collision {
     this.prevButtons = this.buttons;
     this.buttons = buttons;
+
+    const attackPressed = has(buttons, Button.attack) && !has(this.prevButtons, Button.attack); 
+    this.wantsShoot = attackPressed && ['fire', 'hammer_suit', 'leaf', 'tanooki'].includes(this.powerState);
 
     if (this.invulnerableTimer > 0){
       this.invulnerableTimer--;
@@ -40,23 +44,25 @@ export class Player extends Body {
     this.jump(buttons);
 
     const rising = this.vy < 0 && has(buttons, Button.jump);
-    this.vy = Math.min(this.vy + (rising ? PLAYER.gravityHold : PLAYER.gravity), PLAYER.maxFall);
+    let currentGravity = rising ? PLAYER.gravityHold : PLAYER.gravity;
+    let currentMaxFall = PLAYER.maxFall;
+
+    if((this.powerState === 'leaf' || this.powerState === 'tanooki') && this.vy > 0 && has(buttons, Button.jump)){
+      currentMaxFall = 16;
+    }
+
+    this.vy = Math.min(this.vy + currentGravity, currentMaxFall);
 
     return this.move(map);
   }
 
   takeDamage(): void{
     if(this.invulnerableTimer > 0) return;
-    if(this.powerState === 'star'){
-      return;
-    }
+    if(this.powerState === 'star') return;
     if(this.powerState === 'small'){
       this.alive = false;
-    }else if(this.powerState === 'fire'){
-      this.powerState = 'big';
-      this.invulnerableTimer = PLAYER.invulnerableFrames;
-    }else if(this.powerState === 'big'){
-      this.powerState = 'small';
+    }else {
+      this.powerState = (this.powerState === 'big') ? 'small' : 'big';
       this.invulnerableTimer = PLAYER.invulnerableFrames;
     }
   }
@@ -80,8 +86,10 @@ export class Player extends Body {
   private jump(buttons: Buttons): void {
     const pressed = has(buttons, Button.jump) && !has(this.prevButtons, Button.jump);
     if (pressed && this.onGround) {
-      this.vy = -(Math.abs(this.vx) >= PLAYER.runJumpSpeed ? PLAYER.jumpRunning : PLAYER.jump);
+      const frogJump = (PLAYER as any).jumpFrog || 96
+      this.vy = -(this.powerState === 'frog' ? frogJump : Math.abs(this.vx) >= PLAYER.runJumpSpeed ? PLAYER.jumpRunning : PLAYER.jump);
       this.onGround = false;
+      this.hit.ground = false;
     }
   }
 }

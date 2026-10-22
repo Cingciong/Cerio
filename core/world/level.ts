@@ -1,13 +1,22 @@
 import { ENEMIES } from "../config/config.ts";
-import { TILE_SUB } from "../config/constants.ts";
+import { TILE, TILE_SUB } from "../config/constants.ts";
 import type { PipeLink } from "./pipes.ts";
 import { createTileMap, Tile, tileIdOfChar, type TileMap } from "./tiles.ts";
-
 
 export interface AreaFile {
   rows: string[];
   enemies: { type: string; x: number; y: number; count?: number }[];
-  objects?: { type: string; x: number; y: number }[];
+  platforms?: {
+    type: "horizontal" | "vertical";
+    x: number;
+    y: number;
+    w?: number;
+    h?: number;
+    range?: number;
+    speed?: number;
+    dir?: 1 | -1;
+  }[];
+  objects?: { type: string; x: number; y: number; coins?: [number, number][] }[];
   spawners?: { type: string; from: number; to: number }[];
   segments?: SegmentSpan[];
 }
@@ -46,10 +55,30 @@ export interface EnemySpawn extends Spawn {
   count?: number;
 }
 
+export interface PlatformSpawn extends Spawn {
+  type: "horizontal" | "vertical";
+  w: number;
+  h: number;
+  range: number;
+  speed?: number;
+  dir?: 1 | -1;
+}
+
+export interface PlatformSpawn extends Spawn {
+  type: "horizontal" | "vertical";
+  w: number;
+  h: number;
+  range: number;
+  speed?: number;
+  dir?: 1 | -1;
+}
+
 export interface Area {
   map: TileMap;
   enemies: EnemySpawn[];
+  platforms: PlatformSpawn[];
   segments: SegmentSpan[];
+  redRings: { x: number; y: number; coins: { x: number; y: number }[] }[];
 }
 
 export interface Level extends Area {
@@ -106,6 +135,40 @@ function loadArea(file: AreaFile, name: string): Area {
       y: e.y * TILE_SUB,
       ...(e.count === undefined ? {} : { count: e.count }),
     })),
+    platforms: [
+      ...(file.platforms ?? []).map((p) => {
+        const w = p.w !== undefined ? (p.w <= 16 ? p.w * TILE : p.w) : 3 * TILE;
+        const h = p.h !== undefined ? (p.h <= 2 ? p.h * TILE : p.h) : 8;
+        const range = p.range !== undefined ? (p.range <= 16 ? p.range * TILE : p.range) : 4 * TILE;
+        return {
+          type: p.type,
+          x: p.x * TILE_SUB,
+          y: p.y * TILE_SUB,
+          w,
+          h,
+          range,
+          speed: p.speed,
+          dir: p.dir,
+        };
+      }),
+      ...(file.objects ?? [])
+        .filter((o) => o.type === "lift")
+        .map((o) => ({
+          type: "vertical" as const,
+          x: o.x * TILE_SUB,
+          y: o.y * TILE_SUB,
+          w: 2 * TILE,
+          h: 8,
+          range: 3.5 * TILE,
+          speed: 1,
+          dir: 1 as const,
+        })),
+    ],
     segments: file.segments ?? [],
+    redRings: (file.objects ?? []).filter((o) => o.type === "red_ring").map((o) => ({
+      x: o.x * TILE_SUB,
+      y: o.y * TILE_SUB,
+      coins: (o.coins ?? []).map(([x, y]) => ({ x: x * TILE_SUB, y: y * TILE_SUB })),
+    })),
   };
 }
