@@ -2,7 +2,7 @@ import { Body } from "./body.ts";
 import { TILE_SUB, SUB } from "../config/constants.ts";
 import type { TileMap } from "../world/tiles.ts";
 
-export type ItemType = 'mushroom' | 'star' | 'flower' | 'leaf';
+export type ItemType = 'mushroom' | 'star' | 'flower' | 'leaf' | 'hammer_suit';
 
 export class Item extends Body {
   readonly id: number;

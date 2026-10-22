@@ -26,7 +26,7 @@
     "brick":           { "id": 10, "char": "B", "solid": true,  "color": "#8a5a2b", "hit": "break" },
     "hard":            { "id": 11, "char": "H", "solid": true,  "color": "#C87137", "hit": "bump" },
     "used":            { "id": 12, "char": "u", "solid": true,  "color": "#7A4A22", "hit": "bump" },
-    "brick_coins":     { "id": 13, "char": "C", "solid": true,  "color": "#B5502B", "contents": "coins", "becomes": "used", "hit": "bump" },
+    "brick_coins":     { "id": 13, "char": "C", "solid": true,  "color": "#B5502B", "contents": "coins", "becomes": "used", "hit": "coins" },
     "brick_star":      { "id": 14, "char": "S", "solid": true,  "color": "#B5502B", "contents": "star",  "becomes": "used", "hit": "bump" },
     "brick_vine":      { "id": 15, "char": "V", "solid": true,  "color": "#B5502B", "contents": "vine",  "becomes": "used", "hit": "bump" },
     "hidden_1up":      { "id": 16, "char": "U", "solid": false, "color": null,      "contents": "1up",   "becomes": "used", "hidden": true },
@@ -66,8 +66,8 @@
     "koopa_red": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828" },
     "piranha": { "w": 16, "h": 24, "speed": 12, "gravity": 0, "maxFall": 0, "color": "#00ac48" },
     "hammer_bro": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#696969" },
-    "paratroopa": { "w": 16, "h": 24, "speed": 8,  "gravity": 4, "maxFall": 64, "color": "#28cc28" },
-    "paratroopa_fly": { "w": 16, "h": 24, "speed": 6,  "gravity": 0, "maxFall": 0, "color": "#28cc28" },
+    "koopa_para": { "w": 16, "h": 24, "speed": 8,  "gravity": 4, "maxFall": 64, "color": "#28cc28" },
+    "koopa_para_red": { "w": 16, "h": 24, "speed": 6,  "gravity": 0, "maxFall": 0, "color": "#28cc28" },
     "cheep_cheep": { "w": 16, "h": 16, "speed": 12, "gravity": 3, "maxFall": 64, "color": "#ff0000" },
     "podoboo": { "w": 16, "h": 16, "speed": 0,  "gravity": 4, "maxFall": 64, "color": "#ff4500" },
     "bowser": { "w": 32, "h": 32, "speed": 4,  "gravity": 6, "maxFall": 64, "color": "#006400" },
@@ -78,7 +78,26 @@
 
   "items": {
     "mushroom": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 },
-    "star":     { "w": 16, "h": 16, "speed": 16, "gravity": 6, "maxFall": 64 }
+    "star":     { "w": 16, "h": 16, "speed": 16, "gravity": 6, "maxFall": 64 },
+    "flower":   { "w": 16, "h": 16, "speed": 0,  "gravity": 0, "maxFall": 0 },
+    "hammer_suit": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 }
+  },
+
+  "projectiles": {
+    "fireball": {
+      "w": 8, "h": 8,
+      "speed": 48, "gravity": 4, "bounce": 40, "maxFall": 64, "throwVy": 0,
+      "hitsTiles": true, "pierce": false,
+      "lifeFrames": 180, "maxAlive": 2,
+      "immune": ["buzzy_beetle", "bowser"]
+    },
+    "hammer": {
+      "w": 12, "h": 12,
+      "speed": 24, "gravity": 5, "bounce": 0, "maxFall": 64, "throwVy": 80,
+      "hitsTiles": false, "pierce": true,
+      "lifeFrames": 120, "maxAlive": 2,
+      "immune": ["bowser"]
+    }
   },
 
   "blocks": {
@@ -91,9 +110,12 @@
   },
 
   "rules": {
-    "stompTolerancePx": 4
+    "stompTolerancePx": 4,
+    "questionItem": "hammer_suit"
   },
 
+  "redCoins":{"timeFrames": 480},
+  
   "view": {
     "width": 16,
     "height": 15,
