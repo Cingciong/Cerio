@@ -93,6 +93,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     item.update(map);
     if (item.alive && !item.spawning && player.overlaps(item)) {
       item.alive = false;
+      
       if (item.type === 'mushroom') {
         if (player.powerState === 'small') {
           player.powerState = 'big';
@@ -100,11 +101,19 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         }
       } else if (item.type === 'flower') {
         player.powerState = 'fire';
-      } else if (item.type === 'hammer_suit') {
-        player.powerState = 'hammer_suit';
+      } else if (item.type === 'stopwatch') {
+        state.freezeTimer = 300;
       } else if (item.type === 'star') {
         player.powerState = 'star';
         player.invulnerableTimer = 600;
+      } else if (item.type === 'hammer_suit') {
+        player.powerState = 'hammer_suit';
+      } else if (item.type === 'leaf') {
+        player.powerState = 'leaf';
+      } else if (item.type === 'tanooki') {
+        player.powerState = 'tanooki';
+      } else if (item.type === 'frog') {
+        player.powerState = 'frog';
       }
     }
   }
@@ -131,16 +140,36 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     }
   }
 
+  if(state.freezeTimer > 0){
+    state.freezeTimer--;
+  }
+
   for (const enemy of state.enemies) {
-    enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map, player);
+    if(state.freezeTimer === 0){
+      enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map, player);
+    }
   }
 
   if (player.wantsShoot) {
-    const type = player.powerState === 'hammer_suit' ? 'hammer' : 'fireball';
-    const cfg = PROJECTILES[type];
-    if (state.projectiles.filter((p) => p.alive && p.type === type).length < cfg.maxAlive) {
-      const x = player.facing > 0 ? player.right : player.x - cfg.w * SUB;
-      state.projectiles.push(new Projectile(type, x, player.y + 8 * SUB, player.facing));
+    if(player.powerState === 'leaf' || player.powerState === 'tanooki'){
+      const tailW = 16 * SUB;
+      const tailX = player.facing > 0 ? player.right : player.x - tailW;
+      
+      for (const enemy of state.enemies) {
+        if (!enemy.alive) continue;
+        const hitX = enemy.x < tailX + tailW && enemy.right > tailX;
+        const hitY = enemy.y < player.bottom && enemy.bottom > player.y;
+        if (hitX && hitY) {
+          enemy.alive = false;
+        }
+      }
+    } else{
+      const type = player.powerState === 'hammer_suit' ? 'hammer' : 'fireball';
+      const cfg = PROJECTILES[type];
+      if (state.projectiles.filter((p) => p.alive && p.type === type).length < cfg.maxAlive) {
+        const x = player.facing > 0 ? player.right : player.x - cfg.w * SUB;
+        state.projectiles.push(new Projectile(type, x, player.y + 8 * SUB, player.facing));
+      }
     }
   }
   for (const p of state.projectiles) {

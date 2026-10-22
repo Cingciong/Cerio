@@ -33,6 +33,7 @@ export interface GameState {
   bumps: Bump[];
   debris: Debris[];
   events: GameEvent[]; 
+  freezeTimer: number;
   coins: number;
   multiCoins: Record<string, number>;
   redRings: RedRing[];
@@ -67,6 +68,7 @@ export function createState(level: Level): GameState {
     areaEnemies,
     areaPlatforms,
     standingPlatform: null,
+    freezeTimer: 0,
     bumps: [],
     debris: [],
     events: [],
@@ -85,6 +87,7 @@ export function setArea(state: GameState, area: string): void {
   state.enemies = state.areaEnemies[area];
   state.platforms = state.areaPlatforms[area] ?? [];
   state.standingPlatform = null;
+  state.freezeTimer = 0;
   state.bumps = [];
   state.debris = [];
   state.projectiles = [];

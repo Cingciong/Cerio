@@ -52,6 +52,7 @@
     "skid": 2,
     "jump": 72,
     "jumpRunning": 72,
+    "jumpFrog": 104,
     "runJumpSpeed": 32,
     "gravityHold": 2,
     "gravity": 6,
@@ -80,7 +81,11 @@
     "mushroom": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 },
     "star":     { "w": 16, "h": 16, "speed": 16, "gravity": 6, "maxFall": 64 },
     "flower":   { "w": 16, "h": 16, "speed": 0,  "gravity": 0, "maxFall": 0 },
-    "hammer_suit": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 }
+    "hammer_suit": { "w": 16, "h": 16, "speed": 0, "gravity": 0, "maxFall": 0 },
+    "leaf":     { "w": 16, "h": 16, "speed": 0,  "gravity": 2, "maxFall": 32 },
+    "tanooki":  { "w": 16, "h": 16, "speed": 0,  "gravity": 0, "maxFall": 0 },
+    "frog":     { "w": 16, "h": 16, "speed": 0,  "gravity": 0, "maxFall": 0 },
+    "stopwatch":{ "w": 16, "h": 16, "speed": 0,  "gravity": 0, "maxFall": 0 }
   },
 
   "projectiles": {
@@ -111,7 +116,7 @@
 
   "rules": {
     "stompTolerancePx": 4,
-    "questionItem": "hammer_suit"
+    "questionItem": "star"
   },
 
   "redCoins":{"timeFrames": 480},
