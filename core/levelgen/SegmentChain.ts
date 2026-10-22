@@ -48,7 +48,11 @@ export class SegmentChain {
         if (o.type === "lift") {
           area.platforms.push({ type: "vertical", x: o.x + x0, y: o.y, w: 2, h: 0.5, range: 3.5 });
         } else {
-          area.objects.push({ ...o, x: o.x + x0 });
+          area.objects.push({
+            ...o,
+            x: o.x + x0,
+            coins: o.coins?.map(([x, y]) => [x + x0, y] as [number, number]),
+          });
         }
       }
       for (const sp of s.spawners ?? []) area.spawners.push({ ...sp, from: sp.from + x0, to: sp.to + x0 });

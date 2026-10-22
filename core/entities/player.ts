@@ -5,11 +5,17 @@ import { Button, has, type Buttons } from "../config/buttons.ts";
 import { PLAYER } from "../config/config.ts";
 import type { TileMap } from "../world/tiles.ts";
 
+export type PowerState = 'small' | 'big' | 'fire' | 'hammer_suit' | 'star';
+
 export class Player extends Body {
   buttons: Buttons = 0; // pressed this frame
   prevButtons: Buttons = 0;
   alive = true;
   facing: -1 | 1 = 1;
+
+  powerState: PowerState = 'small';
+  invulnerableTimer = 0;
+  wantsShoot = false; 
 
   constructor(x: number, y: number) {
     super(x, y, PLAYER.w, PLAYER.h);
@@ -19,6 +25,21 @@ export class Player extends Body {
     this.prevButtons = this.buttons;
     this.buttons = buttons;
 
+    const attackPressed = has(buttons, Button.attack) && !has(this.prevButtons, Button.attack); 
+    this.wantsShoot = attackPressed && (this.powerState === 'fire' || this.powerState === 'hammer_suit');
+
+    if (this.invulnerableTimer > 0){
+      this.invulnerableTimer--;
+    }
+
+    const targetHeight = (this.powerState === 'small') ? PLAYER.h : 32;
+
+    if(this.h !== targetHeight){
+      const diff = targetHeight - this.h;
+      this.h = targetHeight;
+      this.y -= diff * 16;
+    }
+
     this.horizontal(buttons);
     this.jump(buttons);
 
@@ -26,6 +47,22 @@ export class Player extends Body {
     this.vy = Math.min(this.vy + (rising ? PLAYER.gravityHold : PLAYER.gravity), PLAYER.maxFall);
 
     return this.move(map);
+  }
+
+  takeDamage(): void{
+    if(this.invulnerableTimer > 0) return;
+    if(this.powerState === 'star'){
+      return;
+    }
+    if(this.powerState === 'small'){
+      this.alive = false;
+    }else if(this.powerState === 'fire' || this.powerState === 'hammer_suit'){
+      this.powerState = 'big';
+      this.invulnerableTimer = PLAYER.invulnerableFrames;
+    }else if(this.powerState === 'big'){
+      this.powerState = 'small';
+      this.invulnerableTimer = PLAYER.invulnerableFrames;
+    }
   }
 
   private horizontal(buttons: Buttons): void {

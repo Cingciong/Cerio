@@ -1,6 +1,9 @@
-// Canvas rendering only. Reads the state, never changes it.
 
-import { SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, HammerBro, KoopaEnemy, PiranhaPlant, type Platform } from "../core/index.ts";
+import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, HammerBro, KoopaEnemy, PiranhaPlant, type Platform } from "../core/index.ts";
+
+
+
+
 import {
   COIN_FRAMES,
   GOOMBA_WALK,
@@ -48,8 +51,19 @@ for (const [type, cfg] of Object.entries(ENEMIES)) {
   ENEMY_COLORS[type] = (cfg as any).color || COLORS.enemy;
 }
 
+const ITEM_COLORS: Record<string, string> = {
+  mushroom: "#FF4500",
+  flower: "#FF8C00",
+  star: "#FFD700",
+  leaf: "#8B4513",
+  stopwatch: "#00CED1",
+  frog: "#32CD32",
+  hammer_suit: "#696969",
+  tanooki: "#D2B48C"
+};
+
 export interface Camera {
-  x: number; // px, top-left of the screen in the world
+  x: number; 
   y: number;
 }
 
@@ -58,9 +72,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   ctx.fillStyle = COLORS.sky;
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
-  if (state.pipe) drawPlayer(ctx, state, cam); // behind the pipe while sliding
+  if (state.pipe) drawPlayer(ctx, state, cam); 
 
-  // tiles on screen
   const { map } = state;
   const first = Math.floor(cam.x / TILE);
   for (let ty = 0; ty < map.height; ty++) {
@@ -69,9 +82,20 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       const tileId = map.tiles[ty * map.width + tx];
       if (tileId === Tile.air || tileId === undefined) continue;
       const x = tx * TILE - cam.x;
-      const y = ty * TILE - cam.y;
+      const y = ty * TILE - cam.y - bumpOffset(state, tx, ty);
       
       drawTile(ctx, tileId, x, y, state.frame, map, tx, ty);
+    }
+  }
+  
+  ctx.fillStyle = ctx.strokeStyle = "#e02020";
+  for (const ring of state.redRings) {
+    if (ring.phase === "waiting") {
+      ctx.strokeRect(ring.x / SUB - cam.x + 3.5, ring.y / SUB - cam.y + 0.5, TILE - 7, 2 * TILE - 1);
+    } else if (ring.phase === "active") {
+      ring.coins.forEach((c, i) => {
+        if (!ring.collected[i]) ctx.fillRect(c.x / SUB - cam.x + 4, c.y / SUB - cam.y + 2, TILE - 8, TILE - 4);
+      });
     }
   }
 
@@ -127,8 +151,64 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   }
 
   drawPipesInFront(ctx, map, cam);
+
+  ctx.fillStyle = TILE_COLORS[Tile.brick];
+  for (const d of state.debris) ctx.fillRect(Math.round(d.x / SUB - cam.x), Math.round(d.y / SUB - cam.y), BLOCKS.debrisPx, BLOCKS.debrisPx);
   
-  if (!state.pipe) drawPlayer(ctx, state, cam);
+  ctx.fillStyle = ctx.strokeStyle = "#e02020";
+  for (const ring of state.redRings) {
+    if (ring.area !== state.area) continue;
+    if (ring.phase === "waiting") {
+      ctx.strokeRect(ring.x / SUB - cam.x + 3.5, ring.y / SUB - cam.y + 0.5, TILE - 7, 2 * TILE - 1);
+    } else if (ring.phase === "active") {
+      ring.coins.forEach((c, i) => {
+        if (!ring.collected[i]) ctx.fillRect(c.x / SUB - cam.x + 4, c.y / SUB - cam.y + 2, TILE - 8, TILE - 4);
+      });
+    }
+  }
+  if(state.items){
+    for(const item of state.items){
+      if(!item.alive) continue;
+
+      if(item.type === 'star' && Math.floor(state.frame/4)%2===0){
+        ctx.fillStyle = "#FFFFFF";
+      }else{
+        ctx.fillStyle = ITEM_COLORS[item.type] || "#FFFFFF";
+      }
+      ctx.fillRect(Math.round(item.x / SUB -cam.x), Math.round(item.y/SUB - cam.y), item.w, item.h);
+    }
+  }
+
+  for (const p of state.projectiles) {
+    const cx = Math.round(p.x / SUB - cam.x) + p.w / 2;
+    const cy = Math.round(p.y / SUB - cam.y) + p.h / 2;
+    if (p.type === "hammer") {
+      const f = HAMMER_PROJECTILE;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(state.frame * 0.4 * p.dir); // spinning
+      if (isSpriteReady(enemySpriteSheet)) {
+        ctx.drawImage(enemySpriteSheet, f.x, f.y, f.width, f.height, -f.width / 2, -f.height / 2, f.width, f.height);
+      } else {
+        ctx.fillStyle = "#696969";
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+    } else {
+      ctx.fillStyle = "#FF6A00";
+      ctx.beginPath();
+      ctx.arc(cx, cy, p.w / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  if (!state.pipe) {
+    const isBlinking = state.player.invulnerableTimer > 0 && Math.floor(state.frame / 4) % 2 === 0;
+    
+    if (!isBlinking) {
+      drawPlayer(ctx, state, cam); 
+    }
+  }
   const seg = segmentDebug(ctx, state, cam);
 
   ctx.fillStyle = COLORS.text;
@@ -154,9 +234,14 @@ function segmentDebug(ctx: CanvasRenderingContext2D, state: GameState, cam: Came
     ctx.stroke();
   }
   ctx.setLineDash([]);
-  const px = (state.player.x + state.player.w * SUB / 2) / (TILE * SUB);
-  const i = segs.findIndex((s) => px >= s.x && px < s.x + s.w);
-  return i < 0 ? "" : `seg ${i + 1}/${segs.length} ${segs[i].name}`;
+  const seg = currentSegment(state);
+  return seg ? `seg ${segs.indexOf(seg) + 1}/${segs.length} ${seg.name}` : "";
+}
+
+/** Segment the player's centre is in. */
+export function currentSegment(state: GameState): SegmentSpan | undefined {
+  const px = (state.player.x + (state.player.w * SUB) / 2) / (TILE * SUB);
+  return state.level.areas[state.area].segments.find((s) => px >= s.x && px < s.x + s.w);
 }
 
 function box(ctx: CanvasRenderingContext2D, b: Body, cam: Camera, color: string): void {

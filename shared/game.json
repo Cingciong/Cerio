@@ -23,12 +23,12 @@
     "pipe_right_top": { "id": 7, "char": ">", "solid": true, "color": "#00FF00" },
     "pipe_left_body": { "id": 8, "char": "[", "solid": true, "color": "#00FF00" },
     "pipe_right_body": { "id": 9, "char": "]", "solid": true, "color": "#00FF00" },
-    "brick":           { "id": 10, "char": "B", "solid": true,  "color": "#8a5a2b", "breakable": true },
-    "hard":            { "id": 11, "char": "H", "solid": true,  "color": "#C87137" },
-    "used":            { "id": 12, "char": "u", "solid": true,  "color": "#7A4A22" },
-    "brick_coins":     { "id": 13, "char": "C", "solid": true,  "color": "#B5502B", "contents": "coins", "becomes": "used" },
-    "brick_star":      { "id": 14, "char": "S", "solid": true,  "color": "#B5502B", "contents": "star",  "becomes": "used" },
-    "brick_vine":      { "id": 15, "char": "V", "solid": true,  "color": "#B5502B", "contents": "vine",  "becomes": "used" },
+    "brick":           { "id": 10, "char": "B", "solid": true,  "color": "#8a5a2b", "hit": "break" },
+    "hard":            { "id": 11, "char": "H", "solid": true,  "color": "#C87137", "hit": "bump" },
+    "used":            { "id": 12, "char": "u", "solid": true,  "color": "#7A4A22", "hit": "bump" },
+    "brick_coins":     { "id": 13, "char": "C", "solid": true,  "color": "#B5502B", "contents": "coins", "becomes": "used", "hit": "coins" },
+    "brick_star":      { "id": 14, "char": "S", "solid": true,  "color": "#B5502B", "contents": "star",  "becomes": "used", "hit": "bump" },
+    "brick_vine":      { "id": 15, "char": "V", "solid": true,  "color": "#B5502B", "contents": "vine",  "becomes": "used", "hit": "bump" },
     "hidden_1up":      { "id": 16, "char": "U", "solid": false, "color": null,      "contents": "1up",   "becomes": "used", "hidden": true },
     "hidden_coin":     { "id": 17, "char": "I", "solid": false, "color": null,      "contents": "coin",  "becomes": "used", "hidden": true },
     "coin":            { "id": 18, "char": "o", "solid": false, "color": "#FFD700", "collect": "coin" },
@@ -37,7 +37,8 @@
     "bridge":          { "id": 21, "char": "-", "solid": true,  "color": "#D2691E" },
     "lava":            { "id": 22, "char": "L", "solid": false, "color": "#FF3300", "deadly": true },
     "bowser_bridge":   { "id": 23, "char": "Z", "solid": true,  "color": "#A0A0A0", "collapses": true },
-    "axe":             { "id": 24, "char": "A", "solid": false, "color": "#FFA500", "goal": true }
+    "axe":             { "id": 24, "char": "A", "solid": false, "color": "#FFA500", "goal": true },
+    "question":        { "id": 25, "char": "?", "solid": true, "color": "#FFD700", "contents": "powerup", "becomes": "used" }
   },
 
 
@@ -55,7 +56,8 @@
     "gravityHold": 2,
     "gravity": 6,
     "maxFall": 64,
-    "stompBounce": 48
+    "stompBounce": 48,
+    "invulnerableFrames": 120
   },
 
   "enemies": {
@@ -74,10 +76,46 @@
     "bullet_bill": { "w": 16, "h": 16, "speed": 24, "gravity": 0, "maxFall": 0, "color": "#000000" }
   },
 
-  "rules": {
-    "stompTolerancePx": 4
+  "items": {
+    "mushroom": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 },
+    "star":     { "w": 16, "h": 16, "speed": 16, "gravity": 6, "maxFall": 64 },
+    "flower":   { "w": 16, "h": 16, "speed": 0,  "gravity": 0, "maxFall": 0 },
+    "hammer_suit": { "w": 16, "h": 16, "speed": 10, "gravity": 6, "maxFall": 64 }
   },
 
+  "projectiles": {
+    "fireball": {
+      "w": 8, "h": 8,
+      "speed": 48, "gravity": 4, "bounce": 40, "maxFall": 64, "throwVy": 0,
+      "hitsTiles": true, "pierce": false,
+      "lifeFrames": 180, "maxAlive": 2,
+      "immune": ["buzzy_beetle", "bowser"]
+    },
+    "hammer": {
+      "w": 12, "h": 12,
+      "speed": 24, "gravity": 5, "bounce": 0, "maxFall": 64, "throwVy": 80,
+      "hitsTiles": false, "pierce": true,
+      "lifeFrames": 120, "maxAlive": 2,
+      "immune": ["bowser"]
+    }
+  },
+
+  "blocks": {
+    "bumpFrames": 12,
+    "bumpPx": 8,
+    "debrisGravity": 4,
+    "debrisJump": 64,
+    "debrisSpeed": 16,
+    "debrisPx": 8
+  },
+
+  "rules": {
+    "stompTolerancePx": 4,
+    "questionItem": "hammer_suit"
+  },
+
+  "redCoins":{"timeFrames": 480},
+  
   "view": {
     "width": 16,
     "height": 15,

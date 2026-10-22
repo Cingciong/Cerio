@@ -3,7 +3,6 @@ import { TILE, TILE_SUB } from "../config/constants.ts";
 import type { PipeLink } from "./pipes.ts";
 import { createTileMap, Tile, tileIdOfChar, type TileMap } from "./tiles.ts";
 
-/** Contents of one area: what a segment or a hand-made level has. */
 export interface AreaFile {
   rows: string[];
   enemies: { type: string; x: number; y: number }[];
@@ -17,7 +16,7 @@ export interface AreaFile {
     speed?: number;
     dir?: 1 | -1;
   }[];
-  objects?: { type: string; x: number; y: number }[];
+  objects?: { type: string; x: number; y: number; coins?: [number, number][] }[];
   spawners?: { type: string; from: number; to: number }[];
   segments?: SegmentSpan[];
 }
@@ -69,6 +68,7 @@ export interface Area {
   enemies: EnemySpawn[];
   platforms: PlatformSpawn[];
   segments: SegmentSpan[];
+  redRings: { x: number; y: number; coins: { x: number; y: number }[] }[];
 }
 
 export interface Level extends Area {
@@ -147,5 +147,10 @@ function loadArea(file: AreaFile, name: string): Area {
         })),
     ],
     segments: file.segments ?? [],
+    redRings: (file.objects ?? []).filter((o) => o.type === "red_ring").map((o) => ({
+      x: o.x * TILE_SUB,
+      y: o.y * TILE_SUB,
+      coins: (o.coins ?? []).map(([x, y]) => ({ x: x * TILE_SUB, y: y * TILE_SUB })),
+    })),
   };
 }
