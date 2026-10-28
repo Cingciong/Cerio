@@ -63,6 +63,12 @@
 
   "enemies": {
     "goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
+    "para_goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
+    "para_goomba_brown": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
+    "para_goomba_red": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828" },
+    "goomba_para": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
+    "goomba_para_red": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828" },
+    "mini_goomba": { "w": 8, "h": 8, "speed": 0, "gravity": 2, "maxFall": 48, "color": "#8B4513" },
     "koopa": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#28cc28" },
     "koopa_red": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828" },
     "piranha": { "w": 16, "h": 24, "speed": 12, "gravity": 0, "maxFall": 0, "color": "#00ac48" },

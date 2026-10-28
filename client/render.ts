@@ -1,5 +1,5 @@
 
-import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, Goomba, HammerBro, KoopaEnemy, PiranhaPlant, type Platform } from "../core/index.ts";
+import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, Goomba, HammerBro, KoopaEnemy, MiniGoomba, ParaGoomba, ParaGoombaBrown, ParaGoombaRed, PiranhaPlant, type Platform } from "../core/index.ts";
 import {
   COIN_FRAMES,
   BRICK_DEBRIS_FRAMES,
@@ -391,6 +391,16 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   const frameIndex = Math.floor(frameNumber / 8);
   const moving = enemy.onGround && enemy.vx !== 0;
 
+  if (enemy instanceof MiniGoomba) {
+    drawMiniGoomba(ctx, enemy, cam);
+    return;
+  }
+
+  if (enemy instanceof ParaGoomba) {
+    drawParaGoomba(ctx, enemy, cam, frameNumber);
+    return;
+  }
+
   if (enemy instanceof BulletBillCannon) {
     drawBulletBillCannon(ctx, enemy, cam);
     return;
@@ -558,4 +568,84 @@ function drawPlatform(ctx: CanvasRenderingContext2D, platform: Platform, cam: Ca
   // Outline
   ctx.strokeStyle = "#000000";
   ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+}
+
+function drawMiniGoomba(ctx: CanvasRenderingContext2D, enemy: MiniGoomba, cam: Camera): void {
+  const x = Math.round(enemy.x / SUB - cam.x);
+  const y = Math.round(enemy.y / SUB - cam.y);
+  ctx.save();
+  ctx.fillStyle = "#8B4513";
+  ctx.beginPath();
+  ctx.arc(x + 4, y + 4, 4, Math.PI, 0);
+  ctx.lineTo(x + 8, y + 7);
+  ctx.lineTo(x, y + 7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(x + 2, y + 3, 1, 2);
+  ctx.fillRect(x + 5, y + 3, 1, 2);
+  ctx.fillStyle = "#000";
+  ctx.fillRect(x + 2, y + 4, 1, 1);
+  ctx.fillRect(x + 5, y + 4, 1, 1);
+  ctx.restore();
+}
+
+function drawParaGoomba(
+  ctx: CanvasRenderingContext2D,
+  enemy: ParaGoomba,
+  cam: Camera,
+  frameNumber: number,
+): void {
+  const frameIndex = Math.floor(frameNumber / 8);
+  const moving = enemy.onGround && enemy.vx !== 0;
+  const isRed = enemy instanceof ParaGoombaRed || enemy.type.includes("red");
+  const x = Math.round(enemy.x / SUB - cam.x);
+  const y = Math.round(enemy.y / SUB - cam.y);
+
+  if (!enemy.hasWings) {
+    if (isSpriteReady(enemySpriteSheet)) {
+      const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
+      drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir < 0);
+      if (isRed) {
+        ctx.save();
+        ctx.fillStyle = "rgba(220, 40, 40, 0.35)";
+        ctx.fillRect(x, y, enemy.w, enemy.h);
+        ctx.restore();
+      }
+    } else {
+      box(ctx, enemy, cam, isRed ? "#cc2828" : "#d9a400");
+    }
+    return;
+  }
+
+  if (isSpriteReady(enemySpriteSheet)) {
+    const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
+    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir < 0);
+    if (isRed) {
+      ctx.save();
+      ctx.fillStyle = "rgba(220, 40, 40, 0.35)";
+      ctx.fillRect(x, y, enemy.w, enemy.h);
+      ctx.restore();
+    }
+  } else {
+    box(ctx, enemy, cam, isRed ? "#cc2828" : "#d9a400");
+  }
+
+  const flap = Math.floor(frameNumber / 6) % 2 === 0;
+  const wingY = flap ? y + 1 : y - 3;
+  ctx.save();
+  ctx.fillStyle = "#fff";
+  ctx.strokeStyle = "#333";
+  ctx.lineWidth = 1;
+
+  ctx.beginPath();
+  ctx.ellipse(x - 2, wingY + 5, 3, 5, Math.PI / 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.ellipse(x + enemy.w + 2, wingY + 5, 3, 5, -Math.PI / 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
 }

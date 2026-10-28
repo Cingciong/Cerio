@@ -14,7 +14,7 @@ export type EnemyActionState = 'default' | 'shell_idle' | 'shell_sliding' | 'fal
 
 export class Enemy extends Body {
   readonly id: number;
-  readonly type: string;
+  type: string;
   readonly cfg: EnemyConfig;
   alive = true;
   dir = -1; // -1 left, 1 right
@@ -175,6 +175,247 @@ export class Goomba extends Enemy {
     return true;
   }
 
+}
+
+export class MiniGoomba extends Enemy {
+  constructor(id: number, x: number, y: number) {
+    super(id, "mini_goomba", x, y);
+    this.stompable = false;
+  }
+
+  update(_buttons: Buttons, map: TileMap): void {
+    if (!this.alive) return;
+    this.vy = Math.min(this.vy + 2, 48);
+    this.y += this.vy;
+    if (this.y > (map.height + 1) * TILE_SUB) {
+      this.alive = false;
+    }
+  }
+}
+
+export abstract class ParaGoomba extends Goomba {
+  hasWings = true;
+
+  constructor(id: number, type: string, x: number, y: number) {
+    super(id, type, x, y, 1);
+  }
+
+  onStomp(playerX: number): boolean {
+    if (this.hasWings) {
+      this.hasWings = false;
+      this.type = "goomba";
+      return true;
+    }
+    return super.onStomp(playerX);
+  }
+}
+
+export class ParaGoombaRed extends ParaGoomba {
+  static readonly HOP_VY = 36;
+  static readonly HIGH_JUMP_VY = 68;
+  static readonly WALK_DURATION = 90;
+  static readonly GROUND_DELAY = 10;
+
+  state: 'walking' | 'ground_pause' | 'jumping' = 'walking';
+  walkTimer = ParaGoombaRed.WALK_DURATION;
+  jumpCount = 0;
+  groundDelay = 0;
+
+  constructor(id: number, type = "para_goomba_red", x: number, y: number) {
+    super(id, type, x, y);
+  }
+
+  decide(map: TileMap, player?: Body): Buttons {
+    if (this.externalController) {
+      const extButtons = this.externalController(this, map, player);
+      if (extButtons !== undefined) return extButtons;
+    }
+    if (!this.hasWings) {
+      return super.decide(map, player);
+    }
+    if (this.state === 'ground_pause') return 0;
+    return this.dir < 0 ? Button.left : Button.right;
+  }
+
+  update(buttons: Buttons, map: TileMap, player?: Body): void {
+    if (!this.alive) return;
+    this.buttons = buttons;
+
+    if (!this.hasWings) {
+      super.update(buttons, map, player);
+      return;
+    }
+
+    if (this.state === 'walking') {
+      if (has(buttons, Button.left)) this.dir = -1;
+      if (has(buttons, Button.right)) this.dir = 1;
+
+      this.vx = has(buttons, Button.left | Button.right) ? this.dir * this.cfg.speed : 0;
+      this.vy = Math.min(this.vy + this.cfg.gravity, this.cfg.maxFall);
+
+      const hit = this.move(map);
+      if (hit.wall) this.dir = -this.dir;
+      if (hit.ground) {
+        this.walkTimer--;
+        if (this.walkTimer <= 0) {
+          this.state = 'ground_pause';
+          this.groundDelay = ParaGoombaRed.GROUND_DELAY;
+          this.jumpCount = 1;
+        }
+      }
+    } else if (this.state === 'ground_pause') {
+      this.vx = 0;
+      this.vy = Math.min(this.vy + this.cfg.gravity, this.cfg.maxFall);
+      this.move(map);
+
+      this.groundDelay--;
+      if (this.groundDelay <= 0) {
+        if (player) {
+          const playerCenter = player.x + (player.w * SUB) / 2;
+          const myCenter = this.x + (this.w * SUB) / 2;
+          this.dir = playerCenter >= myCenter ? 1 : -1;
+        }
+        this.vy = this.jumpCount === 3 ? -ParaGoombaRed.HIGH_JUMP_VY : -ParaGoombaRed.HOP_VY;
+        this.state = 'jumping';
+      }
+    } else if (this.state === 'jumping') {
+      this.vx = this.dir * this.cfg.speed;
+      this.vy = Math.min(this.vy + this.cfg.gravity, this.cfg.maxFall);
+
+      const hit = this.move(map);
+      if (hit.wall) this.dir = -this.dir;
+      if (hit.ground && this.vy >= 0) {
+        if (this.jumpCount < 3) {
+          this.jumpCount++;
+          this.state = 'ground_pause';
+          this.groundDelay = ParaGoombaRed.GROUND_DELAY;
+        } else {
+          this.jumpCount = 0;
+          this.state = 'walking';
+          this.walkTimer = ParaGoombaRed.WALK_DURATION;
+        }
+      }
+    }
+
+    if (this.y > (map.height + 1) * TILE_SUB) this.alive = false;
+  }
+}
+
+export class ParaGoombaBrown extends ParaGoomba {
+  static readonly WALK_DURATION = 100;
+  static readonly TAKEOFF_DURATION = 40;
+  static readonly FLY_DURATION = 160;
+  static readonly TURN_INTERVAL = 40;
+  static readonly DROP_INTERVAL = 50;
+  static readonly TAKEOFF_SPEED = 18;
+
+  state: 'walking' | 'takeoff' | 'flying' | 'descending' = 'walking';
+  walkTimer = ParaGoombaBrown.WALK_DURATION;
+  takeoffTimer = 0;
+  flyTimer = 0;
+  turnTimer = 0;
+  dropTimer = 0;
+  pendingMiniGoombas = false;
+
+  constructor(id: number, type = "para_goomba", x: number, y: number) {
+    super(id, type, x, y);
+  }
+
+  takeMiniGoomba(id: number): MiniGoomba | undefined {
+    if (!this.pendingMiniGoombas || !this.hasWings || !this.alive) return undefined;
+    this.pendingMiniGoombas = false;
+    return new MiniGoomba(id, this.x + 4 * SUB, this.bottom);
+  }
+
+  decide(map: TileMap, player?: Body): Buttons {
+    if (this.externalController) {
+      const extButtons = this.externalController(this, map, player);
+      if (extButtons !== undefined) return extButtons;
+    }
+    if (!this.hasWings) {
+      return super.decide(map, player);
+    }
+    return this.dir < 0 ? Button.left : Button.right;
+  }
+
+  update(buttons: Buttons, map: TileMap, player?: Body): void {
+    if (!this.alive) return;
+    this.buttons = buttons;
+
+    if (!this.hasWings) {
+      super.update(buttons, map, player);
+      return;
+    }
+
+    if (this.state === 'walking') {
+      if (has(buttons, Button.left)) this.dir = -1;
+      if (has(buttons, Button.right)) this.dir = 1;
+
+      this.vx = has(buttons, Button.left | Button.right) ? this.dir * this.cfg.speed : 0;
+      this.vy = Math.min(this.vy + this.cfg.gravity, this.cfg.maxFall);
+
+      const hit = this.move(map);
+      if (hit.wall) this.dir = -this.dir;
+      if (hit.ground) {
+        this.walkTimer--;
+        if (this.walkTimer <= 0) {
+          this.state = 'takeoff';
+          this.takeoffTimer = ParaGoombaBrown.TAKEOFF_DURATION;
+          this.vy = -ParaGoombaBrown.TAKEOFF_SPEED;
+        }
+      }
+    } else if (this.state === 'takeoff') {
+      this.vy = -ParaGoombaBrown.TAKEOFF_SPEED;
+      this.vx = this.dir * (this.cfg.speed / 2);
+
+      const hit = this.move(map);
+      if (hit.wall) this.dir = -this.dir;
+      this.takeoffTimer--;
+      if (this.takeoffTimer <= 0 || hit.ceiling) {
+        this.state = 'flying';
+        this.vy = 0;
+        this.flyTimer = ParaGoombaBrown.FLY_DURATION;
+        this.turnTimer = ParaGoombaBrown.TURN_INTERVAL;
+        this.dropTimer = ParaGoombaBrown.DROP_INTERVAL;
+      }
+    } else if (this.state === 'flying') {
+      this.vy = 0;
+      this.vx = this.dir * this.cfg.speed;
+
+      const hit = this.move(map);
+      if (hit.wall) this.dir = -this.dir;
+
+      this.turnTimer--;
+      if (this.turnTimer <= 0) {
+        this.dir = -this.dir;
+        this.turnTimer = ParaGoombaBrown.TURN_INTERVAL;
+      }
+
+      this.dropTimer--;
+      if (this.dropTimer <= 0) {
+        this.pendingMiniGoombas = true;
+        this.dropTimer = ParaGoombaBrown.DROP_INTERVAL;
+      }
+
+      this.flyTimer--;
+      if (this.flyTimer <= 0) {
+        this.state = 'descending';
+        this.vy = this.cfg.gravity;
+      }
+    } else if (this.state === 'descending') {
+      this.vx = this.dir * this.cfg.speed;
+      this.vy = Math.min(this.vy + this.cfg.gravity, this.cfg.maxFall);
+
+      const hit = this.move(map);
+      if (hit.wall) this.dir = -this.dir;
+      if (hit.ground) {
+        this.state = 'walking';
+        this.walkTimer = ParaGoombaBrown.WALK_DURATION;
+      }
+    }
+
+    if (this.y > (map.height + 1) * TILE_SUB) this.alive = false;
+  }
 }
 
 export class BulletBill extends Enemy {
@@ -680,6 +921,18 @@ export function createEnemy(id: number, type: string, x: number, y: number, coun
     switch (type){
       case 'goomba':
         return new Goomba(id, type, x, y, count);
+      case 'para_goomba':
+      case 'para_goomba_brown':
+      case 'goomba_para':
+      case 'paragoomba':
+        return new ParaGoombaBrown(id, type, x, y);
+      case 'para_goomba_red':
+      case 'goomba_para_red':
+      case 'paragoomba_red':
+        return new ParaGoombaRed(id, type, x, y);
+      case 'mini_goomba':
+      case 'micro_goomba':
+        return new MiniGoomba(id, x, y);
       case 'bullet_bill':
         return new BulletBill(id, x, y);
       case 'bullet_bill_cannon':
