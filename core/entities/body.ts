@@ -1,7 +1,7 @@
 // Axis-aligned hitbox moving through the tile map. Base class for the player and enemies.
 
 import { SUB, TILE_SUB } from "../config/constants.ts";
-import { isSolid, toTile, type TileMap } from "../world/tiles.ts";
+import { isSemiSolid, isSolid, Tile, toTile, type TileMap } from "../world/tiles.ts";
 
 export interface Collision {
   wall: boolean; // hit something while moving horizontally
@@ -54,10 +54,12 @@ export class Body {
     }
 
     // Y
+    const prevBottom = this.bottom;
     this.y += this.vy;
     if (this.vy !== 0) {
       const ty = this.vy > 0 ? toTile(this.bottom - 1) : toTile(this.y);
-      if (this.rowSolid(map, ty)) {
+      const LandOnSemiSolid = this.vy > 0 && prevBottom <=ty * TILE_SUB && this.rowSemiSolid(map, ty);
+      if (this.rowSolid(map, ty) || LandOnSemiSolid) {
         if (this.vy > 0) {
           this.y = ty * TILE_SUB - this.h * SUB;
         } else {
@@ -68,7 +70,9 @@ export class Body {
       }
     }
 
-    hit.ground = this.rowSolid(map, toTile(this.bottom)); // tile row just below the feet
+    const below = toTile(this.bottom);
+    const onSemiSoild = this.bottom === below *TILE_SUB && this.rowSemiSolid(map, below);
+    hit.ground = this.rowSolid(map, toTile(this.bottom)) || onSemiSoild; // tile row just below the feet
     this.onGround = hit.ground && this.vy >= 0;
     this.hit = hit;
     return hit;
@@ -84,6 +88,14 @@ export class Body {
   private rowSolid(map: TileMap, ty: number): boolean {
     for (let tx = toTile(this.x); tx <= toTile(this.right - 1); tx++) {
       if (isSolid(map, tx, ty)) return true;
+    }
+    return false;
+  }
+  private rowSemiSolid(map: TileMap, ty: number): boolean
+  {
+    for(let tx = toTile(this.x); tx<= toTile(this.right -1); tx++)
+    {
+      if(isSemiSolid(map,tx,ty)) return true;
     }
     return false;
   }
