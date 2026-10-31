@@ -22,7 +22,7 @@
     {"type": "goomba", "x": 8, "y": 12},
     {"type": "piranha", "x": 18.5, "y": 10},
     {"type": "koopa", "x": 36, "y": 12},
-    {"type": "goomba", "x": 48, "y": 12},
+    {"type": "spiny", "x": 48, "y": 12},
     {"type": "goomba", "x": 50, "y": 12}
   ]
 }

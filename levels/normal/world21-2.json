@@ -21,8 +21,8 @@
   "enemies": [
     { "type": "koopa",   "x": 4,    "y": 12 },
     { "type": "goomba",  "x": 6,    "y": 12 },
-    { "type": "goomba",  "x": 7.5,  "y": 12 },
-    { "type": "goomba",  "x": 9,    "y": 12 },
+    { "type": "goomba",  "x": 7.5,  "y": 12, "count": 2},
+    { "type": "goomba",  "x": 9,    "y": 12, "count": 3},
     { "type": "piranha", "x": 12.5, "y": 8 },
     { "type": "goomba",  "x": 25,   "y": 12 },
     { "type": "goomba",  "x": 26.5, "y": 12 },
