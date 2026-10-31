@@ -1,6 +1,10 @@
 
-import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, Goomba, HammerBro, KoopaEnemy, MiniGoomba, ParaGoomba, ParaGoombaBrown, ParaGoombaRed, PiranhaPlant, Spiny, type Platform } from "../core/index.ts";
+import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, BuzzyBeetle, Goomba, HammerBro, KoopaEnemy, MiniGoomba, ParaGoomba, ParaGoombaBrown, ParaGoombaRed, PiranhaPlant, Spiny, type Platform } from "../core/index.ts";
 import {
+  BULLET_BILL,
+  BULLET_BILL_CANNON,
+  BUZZY_BEETLE_SHELL,
+  BUZZY_BEETLE_WALK,
   COIN_FRAMES,
   BRICK_DEBRIS_FRAMES,
   GOOMBA_WALK,
@@ -25,6 +29,7 @@ function loadSpriteSheet(path: string): HTMLImageElement {
 
 const marioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Mario.png");
 const enemySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Enemies.png");
+const temporarySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/temporary_sprites.png");
 const itemSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Items.png");
 const overworldSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/OverWorld.png");
 const tintedTileCache = new Map<string, HTMLCanvasElement>();
@@ -404,12 +409,37 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   if (enemy instanceof BulletBillCannon) {
-    drawBulletBillCannon(ctx, enemy, cam);
+    if (isSpriteReady(temporarySpriteSheet)) {
+      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, BULLET_BILL_CANNON, false);
+    } else {
+      drawBulletBillCannon(ctx, enemy, cam);
+    }
     return;
   }
 
   if (enemy instanceof BulletBill) {
-    drawBulletBill(ctx, enemy, cam);
+    if (isSpriteReady(temporarySpriteSheet)) {
+      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, BULLET_BILL, enemy.dir > 0);
+    } else {
+      drawBulletBill(ctx, enemy, cam);
+    }
+    return;
+  }
+
+  if (enemy instanceof BuzzyBeetle && isSpriteReady(temporarySpriteSheet)) {
+    if (enemy.actionState === "shell_idle" || enemy.actionState === "shell_sliding") {
+      drawSpriteFrame(
+        ctx,
+        temporarySpriteSheet,
+        { x: enemy.x, y: enemy.y + 6 * SUB, w: enemy.w, h: 10 },
+        cam,
+        BUZZY_BEETLE_SHELL,
+        enemy.dir > 0,
+      );
+    } else {
+      const frame = BUZZY_BEETLE_WALK[moving ? frameIndex % BUZZY_BEETLE_WALK.length : 0];
+      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    }
     return;
   }
 

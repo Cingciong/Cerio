@@ -60,6 +60,13 @@ export const PIRANHA_PLANT_FRAMES: SpriteFrame[] = [
 ];
 export const HAMMER_PROJECTILE: SpriteFrame = { x: 13 * 32 + 10, y: 8, width: 13, height: 17 };
 export const SPINY_FRAMES = cells([19, 20]);
+export const BUZZY_BEETLE_WALK: SpriteFrame[] = [
+  { x: 5, y: 15, width: 21, height: 17 },
+  { x: 37, y: 15, width: 21, height: 17 },
+];
+export const BUZZY_BEETLE_SHELL: SpriteFrame = { x: 68, y: 15, width: 23, height: 17 };
+export const BULLET_BILL: SpriteFrame = { x: 99, y: 11, width: 21, height: 21 };
+export const BULLET_BILL_CANNON: SpriteFrame = { x: 133, y: 11, width: 19, height: 21 };
 
 export const SUPER_MUSHROOM: SpriteFrame = { x: 0, y: 0, width: 16, height: 16 };
 export const ONE_UP_MUSHROOM: SpriteFrame = { x: 16, y: 0, width: 16, height: 16 };

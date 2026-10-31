@@ -22,7 +22,7 @@
   "enemies": [
     {"type": "goomba", "x": 15, "y": 5},
     {"type": "hammer_bro", "x": 18, "y": 5},
-    {"type": "bullet_bill_canon", "x": 37, "y": 12},
+    {"type": "bullet_bill_cannon", "x": 37, "y": 12},
     {"type": "goomba", "x": 40, "y": 12}
   ]
 }
