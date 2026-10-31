@@ -1,5 +1,5 @@
 
-import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, Goomba, HammerBro, KoopaEnemy, MiniGoomba, ParaGoomba, ParaGoombaBrown, ParaGoombaRed, PiranhaPlant, type Platform } from "../core/index.ts";
+import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, Goomba, HammerBro, KoopaEnemy, MiniGoomba, ParaGoomba, ParaGoombaBrown, ParaGoombaRed, PiranhaPlant, Spiny, type Platform } from "../core/index.ts";
 import {
   COIN_FRAMES,
   BRICK_DEBRIS_FRAMES,
@@ -12,6 +12,7 @@ import {
   MARIO_JUMP,
   MARIO_WALK,
   PIRANHA_PLANT_FRAMES,
+  SPINY_FRAMES,
   TILE_SPRITES,
   type SpriteFrame,
 } from "./spriteFrames.ts";
@@ -114,6 +115,11 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
 
         const x = Math.round(hammer.x / SUB - cam.x);
         const y = Math.round(hammer.y / SUB - cam.y);
+        const width = HammerBro.HAMMER_WIDTH / SUB;
+        const height = HammerBro.HAMMER_HEIGHT / SUB;
+        ctx.save();
+        ctx.translate(x + width / 2, y + height / 2);
+        ctx.rotate(hammer.rotation);
         if (isSpriteReady(enemySpriteSheet)) {
           ctx.drawImage(
             enemySpriteSheet,
@@ -121,20 +127,16 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
             HAMMER_PROJECTILE.y,
             HAMMER_PROJECTILE.width,
             HAMMER_PROJECTILE.height,
-            x,
-            y,
-            HammerBro.HAMMER_WIDTH / SUB,
-            HammerBro.HAMMER_HEIGHT / SUB,
+            -width / 2,
+            -height / 2,
+            width,
+            height,
           );
         } else {
           ctx.fillStyle = COLORS.hammer;
-          ctx.fillRect(
-            x,
-            y,
-            HammerBro.HAMMER_WIDTH / SUB,
-            HammerBro.HAMMER_HEIGHT / SUB,
-          );
+          ctx.fillRect(-width / 2, -height / 2, width, height);
         }
+        ctx.restore();
       }
     }
   }
@@ -413,11 +415,21 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
 
   if (enemy instanceof HammerBro && isSpriteReady(enemySpriteSheet)) {
     const frame = enemy.state === "throwing"
-      ? HAMMER_BRO_FRAMES[3]
+      ? HAMMER_BRO_FRAMES[
+          2 + Math.floor(
+            (HammerBro.THROW_ANIMATION_DURATION - enemy.throwAnimationTimer) / 4,
+          ) % 2
+        ]
       : enemy.state === "moving"
         ? HAMMER_BRO_FRAMES[frameIndex % 2]
         : HAMMER_BRO_FRAMES[0];
     drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir > 0, 1.1);
+    return;
+  }
+
+  if (enemy instanceof Spiny && isSpriteReady(enemySpriteSheet)) {
+    const frame = SPINY_FRAMES[moving ? frameIndex % SPINY_FRAMES.length : 0];
+    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir > 0);
     return;
   }
 

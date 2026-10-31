@@ -768,6 +768,7 @@ export interface HammerProjectile {
   y: number;
   vx: number;
   vy: number;
+  rotation: number;
   alive: boolean;
 }
 
@@ -777,6 +778,7 @@ export class HammerBro extends Enemy {
   readonly hammers: HammerProjectile[] = [];
 
   state: HammerBroState = 'idle';
+  throwAnimationTimer = 0;
 
   private decisionTimer = 0;
   private currentAction: Buttons = 0;
@@ -785,6 +787,7 @@ export class HammerBro extends Enemy {
 
   private static readonly JUMP_SPEED = 80;
   private static readonly DECISION_TIME = 40;
+  static readonly THROW_ANIMATION_DURATION = 16;
 
   static readonly HAMMER_WIDTH = 12 * SUB;
   static readonly HAMMER_HEIGHT = 16 * SUB;
@@ -859,11 +862,14 @@ export class HammerBro extends Enemy {
     if (throwing) {
       this.throwHammer();
       this.shouldThrow = false;
+      this.throwAnimationTimer = HammerBro.THROW_ANIMATION_DURATION;
+    } else if (this.throwAnimationTimer > 0) {
+      this.throwAnimationTimer--;
     }
 
     this.updateHammers(map);
 
-    if (throwing) {
+    if (this.throwAnimationTimer > 0) {
       this.state = 'throwing';
     } else if (this.vy < 0) {
       this.state = 'jumping';
@@ -886,6 +892,7 @@ export class HammerBro extends Enemy {
       y: this.y + (this.h * SUB) / 4,
       vx: this.dir * HammerBro.HAMMER_VX,
       vy: HammerBro.HAMMER_VY,
+      rotation: 0,
       alive: true
     });
   }
@@ -896,6 +903,7 @@ export class HammerBro extends Enemy {
 
       hammer.x += hammer.vx;
       hammer.y += hammer.vy;
+      hammer.rotation += Math.PI / 8;
 
       hammer.vy = Math.min(hammer.vy + HammerBro.HAMMER_GRAVITY, HammerBro.HAMMER_MAX_FALL);
 
