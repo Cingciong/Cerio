@@ -3,7 +3,7 @@ import type { Buttons } from "../config/buttons.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
-import { BulletBillCannon, HammerBro } from "../entities/enemy.ts";
+import { BulletBillCannon, HammerBro, MiniGoomba, ParaGoombaBrown } from "../entities/enemy.ts";
 import { isSolid, Tile, tileAt, toTile } from "../world/tiles.ts";
 import { Item, type ItemType } from "../entities/powerup.ts";
 import { Projectile } from "../entities/projectile.ts";
@@ -213,11 +213,18 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   }
   if (state.freezeTimer === 0) {
     for (const cannon of state.enemies) {
-      if (!(cannon instanceof BulletBillCannon)) continue;
-      const bill = cannon.takeShot(state.nextEnemyId);
-      if (bill) {
-        state.nextEnemyId++;
-        state.enemies.push(bill);
+      if (cannon instanceof BulletBillCannon) {
+        const bill = cannon.takeShot(state.nextEnemyId);
+        if (bill) {
+          state.nextEnemyId++;
+          state.enemies.push(bill);
+        }
+      } else if (cannon instanceof ParaGoombaBrown) {
+        const mini = cannon.takeMiniGoomba(state.nextEnemyId);
+        if (mini) {
+          state.nextEnemyId++;
+          state.enemies.push(mini);
+        }
       }
     }
   }
@@ -315,6 +322,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
             enemy.alive = false;
           } else {
             player.takeDamage();
+            if (enemy instanceof MiniGoomba) {
+              enemy.alive = false;
+            }
           }
         }
       }

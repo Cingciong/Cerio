@@ -33,7 +33,7 @@
     "hidden_coin":     { "id": 17, "char": "I", "solid": false, "color": null,      "contents": "coin",  "becomes": "used", "hidden": true },
     "coin":            { "id": 18, "char": "o", "solid": false, "color": "#FFD700", "collect": "coin" },
     "flagpole":        { "id": 19, "char": "F", "solid": false, "color": "#7CFC00", "goal": true },
-    "treetop":         { "id": 20, "char": "T", "solid": true,  "color": "#5DBB2F" },
+    "treetop":         { "id": 20, "char": "T", "solid": false,"semisolid": true,  "color": "#5DBB2F" },
     "bridge":          { "id": 21, "char": "-", "solid": true,  "color": "#D2691E" },
     "lava":            { "id": 22, "char": "L", "solid": false, "color": "#FF3300", "deadly": true },
     "bowser_bridge":   { "id": 23, "char": "Z", "solid": true,  "color": "#A0A0A0", "collapses": true },
@@ -63,6 +63,12 @@
 
   "enemies": {
     "goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
+    "para_goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
+    "para_goomba_brown": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
+    "para_goomba_red": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828" },
+    "goomba_para": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
+    "goomba_para_red": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828" },
+    "mini_goomba": { "w": 8, "h": 8, "speed": 0, "gravity": 2, "maxFall": 48, "color": "#8B4513" },
     "koopa": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#28cc28" },
     "koopa_red": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828" },
     "piranha": { "w": 16, "h": 24, "speed": 12, "gravity": 0, "maxFall": 0, "color": "#00ac48" },

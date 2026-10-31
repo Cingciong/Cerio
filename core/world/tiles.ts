@@ -6,9 +6,11 @@ import { TILES, type TileName } from "../config/config.ts";
 export const Tile = Object.fromEntries(Object.entries(TILES).map(([name, t]) => [name, t.id])) as Record<TileName, number>;
 
 const SOLID: boolean[] = [];
+const SEMISOLID: boolean[] = [];
 const CHAR_TO_ID: Record<string, number> = {};
 for (const t of Object.values(TILES)) {
   SOLID[t.id] = t.solid;
+  SEMISOLID[t.id] = (t as {semisolid?: boolean}).semisolid ?? false;
   CHAR_TO_ID[t.char] = t.id;
 }
 
@@ -38,6 +40,11 @@ export function setTile(map: TileMap, tx: number, ty: number, id: number): void 
 
 export function isSolid(map: TileMap, tx: number, ty: number): boolean {
   return SOLID[tileAt(map, tx, ty)] ?? false;
+}
+
+export function isSemiSolid(map:TileMap, tx: number, ty: number):boolean
+{
+  return SEMISOLID[tileAt(map, tx, ty)] ?? false;
 }
 
 export function toTile(sub: number): number {
