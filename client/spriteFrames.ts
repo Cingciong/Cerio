@@ -97,3 +97,14 @@ export const TILE_SPRITES: Partial<Record<number, SpriteFrame>> = {
   [Tile.brick_star]: { x: 48, y: 0, width: 16, height: 16 },
   [Tile.brick_vine]: { x: 48, y: 0, width: 16, height: 16 },
 };
+
+export const POWERUP_SPRITES: Record<string, SpriteFrame> = {
+  mushroom:    { x: 0, y: 0, width: 16, height: 16 },
+  flower:      { x: 16, y: 0, width: 16, height: 16 },
+  star:        { x: 0, y: 16, width: 16, height: 16 },
+  leaf:        { x: 48, y: 0, width: 16, height: 16 },
+  hammer_suit: { x: 112, y: 16, width: 16, height: 16 },
+  frog:        { x: 128, y: 0, width: 16, height: 16 },
+  tanooki:     { x: 144, y: 16, width: 16, height: 16 },
+  stopwatch:   { x: 192, y: 16, width: 16, height: 16 }
+};

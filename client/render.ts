@@ -18,6 +18,7 @@ import {
   PIRANHA_PLANT_FRAMES,
   SPINY_FRAMES,
   TILE_SPRITES,
+  POWERUP_SPRITES,
   type SpriteFrame,
 } from "./spriteFrames.ts";
 
@@ -31,6 +32,7 @@ const marioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Mario.png"
 const enemySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Enemies.png");
 const temporarySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/temporary_sprites.png");
 const itemSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Items.png");
+const powerupSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Powerups.png");
 const overworldSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/OverWorld.png");
 const tintedTileCache = new Map<string, HTMLCanvasElement>();
 
@@ -183,16 +185,28 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       });
     }
   }
-  if(state.items){
-    for(const item of state.items){
-      if(!item.alive) continue;
+  if (state.items) {
+    for (const item of state.items) {
+      if (!item.alive) continue;
 
-      if(item.type === 'star' && Math.floor(state.frame/4)%2===0){
-        ctx.fillStyle = "#FFFFFF";
-      }else{
-        ctx.fillStyle = ITEM_COLORS[item.type] || "#FFFFFF";
+      const drawX = Math.round(item.x / SUB - cam.x);
+      const drawY = Math.round(item.y / SUB - cam.y);
+      const frame = POWERUP_SPRITES[item.type];
+
+      if (frame && isSpriteReady(powerupSpriteSheet)) {
+        ctx.drawImage(
+          powerupSpriteSheet,
+          frame.x, frame.y, frame.width, frame.height,
+          drawX, drawY, item.w, item.h
+        );
+      } else {
+        if (item.type === 'star' && Math.floor(state.frame / 4) % 2 === 0) {
+          ctx.fillStyle = "#FFFFFF";
+        } else {
+          ctx.fillStyle = ITEM_COLORS[item.type] || "#FFFFFF";
+        }
+        ctx.fillRect(drawX, drawY, item.w, item.h);
       }
-      ctx.fillRect(Math.round(item.x / SUB -cam.x), Math.round(item.y/SUB - cam.y), item.w, item.h);
     }
   }
 
