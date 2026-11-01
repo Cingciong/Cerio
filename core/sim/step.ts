@@ -140,13 +140,13 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     const tyAbove = toTile(player.y) - 1;
     const tileId = tileAt(map, txCenter, tyAbove);
 
-    if (tileId === Tile.question) {
+    if (tileId === Tile.question || tileId === Tile.brick_star) {
       map.tiles[tyAbove * map.width + txCenter] = Tile.used;
       const newItemId = state.items.length;
       const itemX = txCenter * 16 * SUB;
       const itemY = tyAbove * 16 * SUB;
 
-      const kind = questionItem(state);
+      const kind = tileId === Tile.brick_star ? 'star' : questionItem(state);
       state.items.push(new Item(newItemId, kind, itemX, itemY));
     }
     hitBlockAbove(state);
