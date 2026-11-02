@@ -34,7 +34,7 @@ export const GOOMBA_WALK: SpriteFrame[] = [0, 1].map((index) => ({
   width: 18,
   height: 17,
 }));
-export const GOOMBA_SQUASHED = cells([2])[0];
+export const GOOMBA_SQUASHED: SpriteFrame = { x: 71, y: 23, width: 26, height: 9 };
 
 export const KOOPA_WALK: SpriteFrame[] = [3, 4].map((index) => ({
   x: index * 32 + 5,
@@ -59,14 +59,45 @@ export const PIRANHA_PLANT_FRAMES: SpriteFrame[] = [
   { x: 8 * 32 + 6, y: 6, width: 20, height: 26 },
 ];
 export const HAMMER_PROJECTILE: SpriteFrame = { x: 13 * 32 + 10, y: 8, width: 13, height: 17 };
-export const SPINY_FRAMES = cells([19, 20]);
+export const SPINY_FRAMES: SpriteFrame[] = [
+  { x: 19 * 32 + 7, y: 15, width: 17, height: 17 },
+  { x: 20 * 32 + 9, y: 15, width: 16, height: 17 },
+];
+export const BUZZY_WALK_FRAMES: SpriteFrame[] = [
+  { x: 3, y: 12, width: 19, height: 16 },
+  { x: 25, y: 12, width: 19, height: 16 },
+  { x: 47, y: 12, width: 19, height: 16 },
+  { x: 69, y: 12, width: 19, height: 16 },
+];
+export const BUZZY_SHELL_FRAMES: SpriteFrame[] = [
+  { x: 3, y: 38, width: 18, height: 14 },
+  { x: 22, y: 38, width: 18, height: 14 },
+  { x: 41, y: 38, width: 19, height: 14 },
+  { x: 62, y: 38, width: 18, height: 14 },
+];
+export const PARATROOPA_WING: SpriteFrame = { x: 0, y: 0, width: 22, height: 22 };
+export const PODOBOO_FRAMES: SpriteFrame[] = [
+  { x: 0, y: 0, width: 16, height: 16 },
+  { x: 2, y: 18, width: 12, height: 12 },
+  { x: 3, y: 35, width: 10, height: 10 },
+  { x: 4, y: 52, width: 8, height: 8 },
+  { x: 5, y: 69, width: 6, height: 6 },
+];
+export const BOWSER_WALK_FRAMES: SpriteFrame[] = [0, 37, 74, 111].map((x) => ({
+  x,
+  y: 0,
+  width: 35,
+  height: 34,
+}));
 export const BUZZY_BEETLE_WALK: SpriteFrame[] = [
   { x: 5, y: 15, width: 21, height: 17 },
   { x: 37, y: 15, width: 21, height: 17 },
 ];
 export const BUZZY_BEETLE_SHELL: SpriteFrame = { x: 68, y: 15, width: 23, height: 17 };
-export const BULLET_BILL: SpriteFrame = { x: 99, y: 11, width: 21, height: 21 };
-export const BULLET_BILL_CANNON: SpriteFrame = { x: 133, y: 11, width: 19, height: 21 };
+export const BULLET_BILL: SpriteFrame = { x: 1, y: 1, width: 23, height: 15 };
+export const BULLET_BILL_CANNON: SpriteFrame = { x: 1, y: 21, width: 23, height: 21 };
+export const TEMP_BULLET_BILL: SpriteFrame = { x: 99, y: 11, width: 21, height: 21 };
+export const TEMP_BULLET_BILL_CANNON: SpriteFrame = { x: 133, y: 11, width: 19, height: 21 };
 
 export const SUPER_MUSHROOM: SpriteFrame = { x: 0, y: 0, width: 16, height: 16 };
 export const ONE_UP_MUSHROOM: SpriteFrame = { x: 16, y: 0, width: 16, height: 16 };
@@ -82,6 +113,11 @@ export const COIN_FRAMES: SpriteFrame[] = [0, 16, 32, 48].map((x) => ({
   width: 16,
   height: 16,
 }));
+export const OVERWORLD_CLOUD: SpriteFrame = { x: 88, y: 32, width: 40, height: 32 };
+export const OVERWORLD_SMALL_HILL: SpriteFrame = { x: 5, y: 89, width: 35, height: 23 };
+export const OVERWORLD_LARGE_HILL: SpriteFrame = { x: 48, y: 77, width: 80, height: 35 };
+export const AXE_FRAME: SpriteFrame = { x: 0, y: 0, width: 240, height: 368 };
+export const BRIDGE_LOG: SpriteFrame = { x: 0, y: 0, width: 16, height: 25 };
 
 export const TILE_SPRITES: Partial<Record<number, SpriteFrame>> = {
   [Tile.floor]: { x: 0, y: 0, width: 16, height: 16 },

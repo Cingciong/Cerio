@@ -152,7 +152,10 @@ export class KoopaEnemy extends Enemy {
 }
 
 export class Goomba extends Enemy {
+  static readonly SQUASH_DURATION_FRAMES = 18;
+
   stackCount: number;
+  squashTimer = 0;
 
   constructor(id: number, type: string, x: number, y: number, stackCount = 1) {
     super(id, type, x, y);
@@ -165,14 +168,25 @@ export class Goomba extends Enemy {
   }
 
   onStomp(playerX: number): boolean {
+    if (this.squashTimer > 0) return true;
     if (this.stackCount > 1) {
       this.stackCount--;
       this.y += this.cfg.h * SUB;
       this.h -= this.cfg.h;
     } else {
-      this.alive = false;
+      this.squashTimer = Goomba.SQUASH_DURATION_FRAMES;
+      this.stompable = false;
     }
     return true;
+  }
+
+  update(buttons: Buttons, map: TileMap, player?: Body): void {
+    if (this.squashTimer > 0) {
+      this.squashTimer--;
+      if (this.squashTimer === 0) this.alive = false;
+      return;
+    }
+    super.update(buttons, map, player);
   }
 
 }
@@ -454,7 +468,11 @@ export class BulletBillCannon extends Enemy {
   takeShot(id: number): BulletBill | undefined {
     if (!this.shotReady || !this.alive) return undefined;
     this.shotReady = false;
-    return new BulletBill(id, this.x - ENEMIES.bullet_bill.w * SUB, this.y);
+    const bulletWidth = ENEMIES.bullet_bill.w;
+    const bulletHeight = ENEMIES.bullet_bill.h;
+    const muzzleX = this.x + 2 * SUB;
+    const muzzleY = this.y + ((this.h - bulletHeight) / 2) * SUB;
+    return new BulletBill(id, muzzleX - bulletWidth * SUB, muzzleY);
   }
 }
 

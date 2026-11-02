@@ -1,13 +1,19 @@
 
 import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, BuzzyBeetle, Goomba, HammerBro, KoopaEnemy, MiniGoomba, ParaGoomba, ParaGoombaBrown, ParaGoombaRed, PiranhaPlant, Spiny, type Platform } from "../core/index.ts";
 import {
-  BULLET_BILL,
-  BULLET_BILL_CANNON,
-  BUZZY_BEETLE_SHELL,
-  BUZZY_BEETLE_WALK,
-  COIN_FRAMES,
-  BRICK_DEBRIS_FRAMES,
-  GOOMBA_WALK,
+ BULLET_BILL,
+ BULLET_BILL_CANNON,
+ BOWSER_WALK_FRAMES,
+ BRIDGE_LOG,
+ AXE_FRAME,
+ BUZZY_SHELL_FRAMES,
+ BUZZY_WALK_FRAMES,
+ BUZZY_BEETLE_SHELL,
+ BUZZY_BEETLE_WALK,
+ COIN_FRAMES,
+ BRICK_DEBRIS_FRAMES,
+ GOOMBA_WALK,
+ GOOMBA_SQUASHED,
   HAMMER_BRO_FRAMES,
   HAMMER_PROJECTILE,
   KOOPA_SHELL,
@@ -15,8 +21,15 @@ import {
   MARIO_IDLE,
   MARIO_JUMP,
   MARIO_WALK,
+  OVERWORLD_CLOUD,
+  OVERWORLD_LARGE_HILL,
+  OVERWORLD_SMALL_HILL,
   PIRANHA_PLANT_FRAMES,
+  PARATROOPA_WING,
+  PODOBOO_FRAMES,
   SPINY_FRAMES,
+  TEMP_BULLET_BILL,
+  TEMP_BULLET_BILL_CANNON,
   TILE_SPRITES,
   POWERUP_SPRITES,
   type SpriteFrame,
@@ -31,9 +44,17 @@ function loadSpriteSheet(path: string): HTMLImageElement {
 const marioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Mario.png");
 const enemySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Enemies.png");
 const temporarySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/temporary_sprites.png");
+const bulletBillSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/BulletBill.png");
 const itemSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Items.png");
 const powerupSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Powerups.png");
 const overworldSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/OverWorld.png");
+const bridgeSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/Bridge.png");
+const bowserBridgeSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/BowserBridge.png");
+const axeSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Axe.png");
+const buzzySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Buzzy Beetle1.png");
+const wingsSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/wings.png");
+const podobooSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Podoboo.png");
+const bowserSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Bowser.png");
 const tintedTileCache = new Map<string, HTMLCanvasElement>();
 
 const COLORS = {
@@ -52,6 +73,7 @@ const TILE_COLORS: Record<number, string> = {};
 for (const t of Object.values(TILES)) {
   TILE_COLORS[t.id] = (t as any).color || COLORS.block;
 }
+const SOLID_TILE_IDS = new Set(Object.values(TILES).filter((tile) => tile.solid).map((tile) => tile.id));
 
 const ENEMY_COLORS: Record<string, string> = {};
 for (const [type, cfg] of Object.entries(ENEMIES)) {
@@ -80,6 +102,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   ctx.fillStyle = caveTheme ? COLORS.caveBackground : COLORS.sky;
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
+  if (state.area === "overworld" && !caveTheme && isSpriteReady(overworldSpriteSheet)) {
+    drawOverworldBackdrop(ctx, state, cam);
+  }
+
   if (state.pipe) drawPlayer(ctx, state, cam); 
 
   const { map } = state;
@@ -95,6 +121,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       drawTile(ctx, tileId, x, y, state.frame, map, tx, ty, caveTheme);
     }
   }
+  drawTreetops(ctx, map, cam, caveTheme);
+  drawBridgeTiles(ctx, map, cam);
+  drawBowserBridgeTiles(ctx, map, cam);
+  drawAxeTiles(ctx, map, cam, caveTheme);
   
   for (const p of state.platforms) {
     drawPlatform(ctx, p, cam);
@@ -226,10 +256,25 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       }
       ctx.restore();
     } else {
-      ctx.fillStyle = "#FF6A00";
-      ctx.beginPath();
-      ctx.arc(cx, cy, p.w / 2, 0, Math.PI * 2);
-      ctx.fill();
+      const fireFrame = PODOBOO_FRAMES[0];
+      if (isSpriteReady(podobooSpriteSheet)) {
+        ctx.drawImage(
+          podobooSpriteSheet,
+          fireFrame.x,
+          fireFrame.y,
+          fireFrame.width,
+          fireFrame.height,
+          Math.round(p.x / SUB - cam.x),
+          Math.round(p.y / SUB - cam.y),
+          p.w,
+          p.h,
+        );
+      } else {
+        ctx.fillStyle = "#FF6A00";
+        ctx.beginPath();
+        ctx.arc(cx, cy, p.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 
@@ -299,15 +344,47 @@ function drawTile(
     return;
   }
 
+  if (tileId === Tile.flagpole) {
+    const isTop = ty === 0 || map.tiles[(ty - 1) * map.width + tx] !== Tile.flagpole;
+    ctx.fillStyle = "#315B32";
+    ctx.fillRect(x + 6, y, 4, TILE);
+    ctx.fillStyle = "#73C94B";
+    ctx.fillRect(x + 7, y, 2, TILE);
+
+    if (isTop) {
+      ctx.fillStyle = "#815A18";
+      ctx.beginPath();
+      ctx.arc(x + TILE / 2, y + 3, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#FFD84D";
+      ctx.beginPath();
+      ctx.arc(x + TILE / 2, y + 3, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return;
+  }
+
+  if (tileId === Tile.axe) return;
+  if (tileId === Tile.bridge) return;
+  if (tileId === Tile.bowser_bridge && isSpriteReady(bowserBridgeSpriteSheet)) return;
+
+  if (tileId === Tile.treetop) return;
+
   if (tileId === Tile.lava && isSpriteReady(overworldSpriteSheet)) {
     const frame = TILE_SPRITES[Tile.floor];
     if (frame) {
-      drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, "rgba(255, 84, 0, 0.82)");
+      drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, "rgba(255, 85, 0, 0.76)");
       return;
     }
   }
 
-  const frame = pipeSprite(map, tx, ty, tileId) ?? TILE_SPRITES[tileId];
+  const pipe = pipeSprite(map, tx, ty, tileId);
+  if (pipe && isSpriteReady(overworldSpriteSheet)) {
+    drawPipeSprite(ctx, pipe.frame, x, y, pipe.flipY);
+    return;
+  }
+
+  const frame = TILE_SPRITES[tileId];
   if (frame && isSpriteReady(overworldSpriteSheet)) {
     drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, tint);
     return;
@@ -320,16 +397,46 @@ function drawTile(
   tintCaveTile(ctx, x, y, tint);
 }
 
-function pipeSprite(map: GameState["map"], tx: number, ty: number, tileId: number): SpriteFrame | undefined {
+interface PipeSprite {
+  frame: SpriteFrame;
+  flipY: boolean;
+}
+
+function pipeSprite(map: GameState["map"], tx: number, ty: number, tileId: number): PipeSprite | undefined {
   if (!isPipeTile(tileId)) return undefined;
 
   const rightHalf = isPipeAt(map, tx - 1, ty);
-  const hasPipeAbove = isPipeAt(map, tx, ty - 1);
+  const isBody = tileId === Tile.pipe_left_body || tileId === Tile.pipe_right_body;
 
-  if (hasPipeAbove) {
-    return rightHalf ? TILE_SPRITES[Tile.pipe_right_body] : TILE_SPRITES[Tile.pipe_left_body];
+  if (isBody) {
+    return {
+      frame: rightHalf ? TILE_SPRITES[Tile.pipe_right_body]! : TILE_SPRITES[Tile.pipe_left_body]!,
+      flipY: false,
+    };
   }
-  return rightHalf ? TILE_SPRITES[Tile.pipe_right_top] : TILE_SPRITES[Tile.pipe_left_top];
+  return {
+    frame: rightHalf ? TILE_SPRITES[Tile.pipe_right_top]! : TILE_SPRITES[Tile.pipe_left_top]!,
+    flipY: isPipeBodyAt(map, tx, ty - 1),
+  };
+}
+
+function drawPipeSprite(
+  ctx: CanvasRenderingContext2D,
+  frame: SpriteFrame,
+  x: number,
+  y: number,
+  flipY: boolean,
+): void {
+  if (!flipY) {
+    drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, false);
+    return;
+  }
+
+  ctx.save();
+  ctx.translate(x, y + TILE);
+  ctx.scale(1, -1);
+  drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, 0, 0, TILE, TILE, false);
+  ctx.restore();
 }
 
 function drawPipesInFront(ctx: CanvasRenderingContext2D, map: GameState["map"], cam: Camera): void {
@@ -342,11 +449,11 @@ function drawPipesInFront(ctx: CanvasRenderingContext2D, map: GameState["map"], 
       const tileId = map.tiles[ty * map.width + tx];
       if (!isPipeTile(tileId)) continue;
 
-      const frame = pipeSprite(map, tx, ty, tileId) ?? TILE_SPRITES[tileId];
-      if (!frame) continue;
+      const sprite = pipeSprite(map, tx, ty, tileId);
+      if (!sprite) continue;
       const x = tx * TILE - cam.x;
       const y = ty * TILE - cam.y;
-      drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, false);
+      drawPipeSprite(ctx, sprite.frame, x, y, sprite.flipY);
     }
   }
 }
@@ -388,6 +495,195 @@ function drawSpriteSheetFrame(
   ctx.drawImage(tinted, x, y);
 }
 
+function drawBridgeTiles(ctx: CanvasRenderingContext2D, map: GameState["map"], cam: Camera): void {
+  const first = Math.floor(cam.x / TILE);
+  const last = Math.min(map.width - 1, first + SCREEN_W / TILE);
+  for (let ty = 0; ty < map.height; ty++) {
+    for (let tx = first; tx <= last; tx++) {
+      if (map.tiles[ty * map.width + tx] !== Tile.bridge) continue;
+
+      const x = Math.round(tx * TILE - cam.x);
+      const y = Math.round(ty * TILE - cam.y);
+      if (isSpriteReady(bridgeSpriteSheet)) {
+        drawSpriteSheetFrame(ctx, bridgeSpriteSheet, BRIDGE_LOG, x, y, TILE / 2, TILE, false);
+        drawSpriteSheetFrame(ctx, bridgeSpriteSheet, BRIDGE_LOG, x + TILE / 2, y, TILE / 2, TILE, false);
+      }
+    }
+  }
+}
+
+function drawBowserBridgeTiles(ctx: CanvasRenderingContext2D, map: GameState["map"], cam: Camera): void {
+  if (!isSpriteReady(bowserBridgeSpriteSheet)) return;
+
+  for (let ty = 0; ty < map.height; ty++) {
+    let tx = 0;
+    while (tx < map.width) {
+      if (map.tiles[ty * map.width + tx] !== Tile.bowser_bridge) {
+        tx++;
+        continue;
+      }
+
+      const start = tx;
+      while (tx < map.width && map.tiles[ty * map.width + tx] === Tile.bowser_bridge) tx++;
+      const end = tx;
+      const segmentStart = start * TILE;
+      const segmentEnd = end * TILE;
+      const spriteWidth = 3 * TILE;
+      const height = spriteWidth * bowserBridgeSpriteSheet.naturalHeight / bowserBridgeSpriteSheet.naturalWidth;
+
+      for (let worldX = segmentStart; worldX < segmentEnd; worldX += spriteWidth) {
+        const x = Math.round(worldX - cam.x);
+        const y = Math.round((ty + 1) * TILE - cam.y - height);
+        const clipWidth = Math.min(spriteWidth, segmentEnd - worldX);
+        if (worldX + clipWidth < cam.x || worldX > cam.x + SCREEN_W) continue;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, y, clipWidth, height);
+        ctx.clip();
+        ctx.drawImage(bowserBridgeSpriteSheet, x, y, spriteWidth, height);
+        ctx.restore();
+      }
+    }
+  }
+}
+
+function drawAxeTiles(
+  ctx: CanvasRenderingContext2D,
+  map: GameState["map"],
+  cam: Camera,
+  caveTint: boolean,
+): void {
+  const first = Math.floor(cam.x / TILE);
+  const last = Math.min(map.width - 1, first + SCREEN_W / TILE);
+  for (let ty = 0; ty < map.height; ty++) {
+    for (let tx = first; tx <= last; tx++) {
+      if (map.tiles[ty * map.width + tx] !== Tile.axe) continue;
+
+      const x = Math.round(tx * TILE - cam.x);
+      const y = Math.round(ty * TILE - cam.y);
+      if (isSpriteReady(axeSpriteSheet)) {
+        drawSpriteSheetFrame(ctx, axeSpriteSheet, AXE_FRAME, x, y - 8, TILE, 24, caveTint);
+      } else {
+        ctx.fillStyle = TILE_COLORS[Tile.axe];
+        ctx.fillRect(x, y, TILE, TILE);
+      }
+    }
+  }
+}
+
+function drawTreetops(
+  ctx: CanvasRenderingContext2D,
+  map: GameState["map"],
+  cam: Camera,
+  caveTint: boolean,
+): void {
+  for (let ty = 0; ty < map.height; ty++) {
+    let tx = 0;
+    while (tx < map.width) {
+      if (map.tiles[ty * map.width + tx] !== Tile.treetop) {
+        tx++;
+        continue;
+      }
+
+      const start = tx;
+      while (tx < map.width && map.tiles[ty * map.width + tx] === Tile.treetop) tx++;
+      const end = tx;
+      if (end * TILE < cam.x || start * TILE > cam.x + SCREEN_W) continue;
+
+      const x = Math.round(start * TILE - cam.x);
+      const y = Math.round(ty * TILE - cam.y);
+      const width = (end - start) * TILE;
+      drawTreetopCanopy(ctx, x, y, width);
+
+      for (let treeX = start; treeX < end; treeX++) {
+        for (let trunkRow = 1; trunkRow <= 3; trunkRow++) {
+          const mapY = ty + trunkRow;
+          if (mapY < map.height && map.tiles[mapY * map.width + treeX] !== Tile.air) break;
+          const trunkX = Math.round(treeX * TILE - cam.x);
+          const trunkY = Math.round(mapY * TILE - cam.y);
+          const isLeftEdge = treeX === start;
+          const isRightEdge = treeX === end - 1;
+          drawTreeTrunkTile(ctx, trunkX, trunkY, treeX, trunkRow, isLeftEdge, isRightEdge);
+          const leftInset = isLeftEdge ? (isRightEdge ? TILE / 4 : TILE / 2) : 0;
+          const rightInset = isRightEdge ? (isLeftEdge ? TILE / 4 : TILE / 2) : 0;
+          tintCaveTile(ctx, trunkX + leftInset, trunkY, caveTint, TILE - leftInset - rightInset);
+        }
+      }
+      if (caveTint) {
+        ctx.fillStyle = "rgba(35, 90, 210, 0.38)";
+        ctx.fillRect(x, y, width, TILE);
+      }
+    }
+  }
+}
+
+function drawTreetopCanopy(ctx: CanvasRenderingContext2D, x: number, y: number, width: number): void {
+  const right = x + width;
+  ctx.fillStyle = "#263522";
+  ctx.beginPath();
+  ctx.moveTo(x + 3, y);
+  ctx.lineTo(right - 3, y);
+  ctx.lineTo(right - 3, y + 1);
+  ctx.lineTo(right - 1, y + 1);
+  ctx.lineTo(right - 1, y + 3);
+  ctx.lineTo(right, y + 3);
+  ctx.lineTo(right, y + 13);
+  ctx.lineTo(right - 2, y + 15);
+  ctx.lineTo(x + 2, y + 15);
+  ctx.lineTo(x, y + 13);
+  ctx.lineTo(x, y + 3);
+  ctx.lineTo(x + 1, y + 1);
+  ctx.lineTo(x + 3, y + 1);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#9dcc32";
+  ctx.fillRect(x + 3, y + 2, width - 6, 1);
+  ctx.fillRect(x + 2, y + 3, width - 4, 10);
+  ctx.fillRect(x + 1, y + 13, width - 2, 1);
+  ctx.fillRect(x + 2, y + 14, width - 4, 1);
+  ctx.fillRect(x + 2, y + 15, width - 4, 1);
+
+  ctx.fillStyle = "#c5e85a";
+  ctx.fillRect(x + 4, y + 2, width - 8, 1);
+  ctx.fillRect(x + 2, y + 4, 1, 6);
+}
+
+function drawTreeTrunkTile(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  column: number,
+  row: number,
+  isLeftEdge: boolean,
+  isRightEdge: boolean,
+): void {
+  const leftInset = isLeftEdge ? (isRightEdge ? TILE / 4 : TILE / 2) : 0;
+  const rightInset = isRightEdge ? (isLeftEdge ? TILE / 4 : TILE / 2) : 0;
+  const trunkX = x + leftInset;
+  const trunkWidth = TILE - leftInset - rightInset;
+  ctx.fillStyle = "#56351f";
+  ctx.fillRect(trunkX, y, trunkWidth, TILE);
+  ctx.fillStyle = "#b96f35";
+  ctx.fillRect(trunkX + 1, y + 1, trunkWidth - 2, TILE - 2);
+  ctx.fillStyle = "#d18a48";
+  ctx.fillRect(trunkX + 2, y + 2, 1, TILE - 4);
+  ctx.fillRect(trunkX + Math.max(4, Math.floor(trunkWidth * 0.6)), y + 2, 1, TILE - 4);
+  ctx.fillStyle = "#764323";
+
+  if ((column + row) % 2 === 0) {
+    for (let step = 0; step < Math.min(5, trunkWidth - 3); step++) {
+      ctx.fillRect(trunkX + trunkWidth - 4 - step, y + 3 + step * 2, 2, 2);
+    }
+  } else {
+    const startX = Math.max(1, Math.floor(trunkWidth / 4));
+    for (let step = 0; step < Math.min(4, trunkWidth - 3); step++) {
+      ctx.fillRect(trunkX + startX + step, y + 4 + step * 2, 2, 2);
+    }
+  }
+}
+
 function tintCaveTile(ctx: CanvasRenderingContext2D, x: number, y: number, caveTint: boolean, size = TILE): void {
   if (!caveTint) return;
   ctx.fillStyle = "rgba(35, 90, 210, 0.38)";
@@ -404,13 +700,190 @@ function isPipeAt(map: GameState["map"], tx: number, ty: number): boolean {
   return isPipeTile(map.tiles[ty * map.width + tx]);
 }
 
+function isPipeBodyAt(map: GameState["map"], tx: number, ty: number): boolean {
+  if (tx < 0 || tx >= map.width || ty < 0 || ty >= map.height) return false;
+  const tileId = map.tiles[ty * map.width + tx];
+  return tileId === Tile.pipe_left_body || tileId === Tile.pipe_right_body;
+}
+
 function isSpriteReady(image: HTMLImageElement): boolean {
   return image.complete && image.naturalWidth > 0;
+}
+
+function drawOverworldBackdrop(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): void {
+  const cloudSpacing = 7 * TILE;
+  const firstCloud = Math.floor((cam.x - cloudSpacing) / cloudSpacing);
+  const lastCloud = Math.ceil((cam.x + SCREEN_W) / cloudSpacing);
+
+  for (let chunk = firstCloud; chunk <= lastCloud; chunk++) {
+    const seed = positionHash(chunk * 2 + 17);
+    if (seed % 4 === 0) continue;
+
+    const worldX = chunk * cloudSpacing + 8 + (seed % 48);
+    const worldY = 84 + ((seed >>> 8) % 5) * 12;
+    const x = Math.round(worldX - cam.x);
+    const y = Math.round(worldY - cam.y);
+    ctx.drawImage(
+      overworldSpriteSheet,
+      OVERWORLD_CLOUD.x,
+      OVERWORLD_CLOUD.y,
+      OVERWORLD_CLOUD.width,
+      OVERWORLD_CLOUD.height,
+      x,
+      y,
+      OVERWORLD_CLOUD.width,
+      OVERWORLD_CLOUD.height,
+    );
+  }
+
+  const hillSpacing = 12 * TILE;
+  const firstHill = Math.floor((cam.x - hillSpacing) / hillSpacing);
+  const lastHill = Math.ceil((cam.x + SCREEN_W) / hillSpacing);
+
+  for (let chunk = firstHill; chunk <= lastHill; chunk++) {
+    const seed = positionHash(chunk * 2 + 53);
+    if (seed % 3 === 0) continue;
+
+    const large = seed % 5 === 0;
+    const preferredX = chunk * hillSpacing + 12 + (seed % 52);
+    const placement = large
+      ? findGroundPlacement(
+          state.map,
+          preferredX,
+          OVERWORLD_LARGE_HILL.width,
+          OVERWORLD_LARGE_HILL.height,
+          chunk * hillSpacing,
+          (chunk + 1) * hillSpacing,
+        )
+      : undefined;
+    const frame = placement
+      ? OVERWORLD_LARGE_HILL
+      : OVERWORLD_SMALL_HILL;
+    const ground = placement ?? findGroundPlacement(
+      state.map,
+      preferredX,
+      frame.width,
+      frame.height,
+      chunk * hillSpacing,
+      (chunk + 1) * hillSpacing,
+    );
+    if (!ground) continue;
+
+    const x = Math.round(ground.x - cam.x);
+    const y = Math.round(ground.y - cam.y - frame.height);
+    drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, frame.width, frame.height, false);
+  }
+}
+
+function findGroundPlacement(
+  map: GameState["map"],
+  preferredX: number,
+  width: number,
+  height: number,
+  chunkStartX: number,
+  chunkEndX: number,
+): { x: number; y: number } | undefined {
+  const minTile = Math.max(0, Math.ceil(chunkStartX / TILE));
+  const maxTile = Math.min(
+    map.width - Math.ceil(width / TILE),
+    Math.floor((chunkEndX - width) / TILE),
+  );
+  if (minTile > maxTile) return undefined;
+
+  const preferredTile = Math.max(minTile, Math.min(maxTile, Math.round(preferredX / TILE)));
+  for (let distance = 0; preferredTile - distance >= minTile || preferredTile + distance <= maxTile; distance++) {
+    const candidates = distance === 0
+      ? [preferredTile]
+      : [preferredTile - distance, preferredTile + distance];
+    for (const tx of candidates) {
+      if (tx < minTile || tx > maxTile) continue;
+      const x = tx * TILE;
+      const y = groundSurfaceY(map, x, width, height);
+      if (y !== undefined) return { x, y };
+    }
+  }
+  return undefined;
+}
+
+function groundSurfaceY(
+  map: GameState["map"],
+  worldX: number,
+  width: number,
+  height: number,
+): number | undefined {
+  const firstTile = Math.floor(worldX / TILE);
+  const lastTile = Math.floor((worldX + width - 1) / TILE);
+  const supportFirstTile = firstTile - 1;
+  const supportLastTile = lastTile + 1;
+  if (supportFirstTile < 0 || supportLastTile >= map.width) return undefined;
+
+  let surfaceY: number | undefined;
+  for (let tx = supportFirstTile; tx <= supportLastTile; tx++) {
+    let ty = map.height - 1;
+    while (ty >= 0 && SOLID_TILE_IDS.has(map.tiles[ty * map.width + tx])) ty--;
+    if (ty === map.height - 1) return undefined;
+
+    const columnSurfaceY = (ty + 1) * TILE;
+    if (surfaceY !== undefined && columnSurfaceY !== surfaceY) return undefined;
+    surfaceY = columnSurfaceY;
+  }
+
+  if (surfaceY === undefined) return undefined;
+  const firstClearRow = Math.max(0, Math.floor((surfaceY - height) / TILE));
+  const lastClearRow = Math.floor((surfaceY - 1) / TILE);
+  for (let tx = firstTile; tx <= lastTile; tx++) {
+    for (let ty = firstClearRow; ty <= lastClearRow; ty++) {
+      if (SOLID_TILE_IDS.has(map.tiles[ty * map.width + tx])) return undefined;
+    }
+  }
+  return surfaceY;
+}
+
+function positionHash(value: number): number {
+  let hash = Math.imul(value ^ 0x45d9f3b, 0x45d9f3b);
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
+  return (hash ^ (hash >>> 16)) >>> 0;
 }
 
 function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, frameNumber: number): void {
   const frameIndex = Math.floor(frameNumber / 8);
   const moving = enemy.onGround && enemy.vx !== 0;
+
+  if (enemy.type === "bowser" && isSpriteReady(bowserSpriteSheet)) {
+    const frame = BOWSER_WALK_FRAMES[moving ? frameIndex % BOWSER_WALK_FRAMES.length : 0];
+    drawSpriteFrame(ctx, bowserSpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    return;
+  }
+
+  if (enemy.type === "podoboo") {
+    if (isSpriteReady(podobooSpriteSheet)) {
+      const frame = PODOBOO_FRAMES[Math.floor(frameNumber / 6) % PODOBOO_FRAMES.length];
+      const x = Math.round(enemy.x / SUB - cam.x + (enemy.w - frame.width) / 2);
+      const y = Math.round(enemy.y / SUB - cam.y + enemy.h - frame.height);
+      ctx.drawImage(
+        podobooSpriteSheet,
+        frame.x,
+        frame.y,
+        frame.width,
+        frame.height,
+        x,
+        y,
+        frame.width,
+        frame.height,
+      );
+    } else {
+      box(ctx, enemy, cam, ENEMY_COLORS[enemy.type] || COLORS.enemy);
+    }
+    return;
+  }
+
+  if (enemy.type === "buzzy_beetle" && isSpriteReady(buzzySpriteSheet)) {
+    const shell = enemy.actionState === "shell_idle" || enemy.actionState === "shell_sliding";
+    const frames = shell ? BUZZY_SHELL_FRAMES : BUZZY_WALK_FRAMES;
+    const frame = frames[moving || enemy.actionState === "shell_sliding" ? frameIndex % frames.length : 0];
+    drawSpriteFrame(ctx, buzzySpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    return;
+  }
 
   if (enemy instanceof MiniGoomba) {
     drawMiniGoomba(ctx, enemy, cam);
@@ -423,8 +896,17 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   if (enemy instanceof BulletBillCannon) {
-    if (isSpriteReady(temporarySpriteSheet)) {
-      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, BULLET_BILL_CANNON, false);
+    if (isSpriteReady(bulletBillSpriteSheet)) {
+      drawSpriteFrame(
+        ctx,
+        bulletBillSpriteSheet,
+        { x: enemy.x + 2 * SUB, y: enemy.y + 0.5 * SUB, w: 12, h: 15 },
+        cam,
+        BULLET_BILL_CANNON,
+        false,
+      );
+    } else if (isSpriteReady(temporarySpriteSheet)) {
+      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, TEMP_BULLET_BILL_CANNON, false);
     } else {
       drawBulletBillCannon(ctx, enemy, cam);
     }
@@ -432,8 +914,17 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   if (enemy instanceof BulletBill) {
-    if (isSpriteReady(temporarySpriteSheet)) {
-      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, BULLET_BILL, enemy.dir > 0);
+    if (isSpriteReady(bulletBillSpriteSheet)) {
+      drawSpriteFrame(
+        ctx,
+        bulletBillSpriteSheet,
+        { x: enemy.x, y: enemy.y + 3 * SUB, w: 16, h: 10 },
+        cam,
+        BULLET_BILL,
+        enemy.dir > 0,
+      );
+    } else if (isSpriteReady(temporarySpriteSheet)) {
+      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, TEMP_BULLET_BILL, enemy.dir > 0);
     } else {
       drawBulletBill(ctx, enemy, cam);
     }
@@ -457,6 +948,12 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
     return;
   }
 
+  if (enemy instanceof Spiny && isSpriteReady(enemySpriteSheet)) {
+    const frame = SPINY_FRAMES[moving ? frameIndex % SPINY_FRAMES.length : 0];
+    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    return;
+  }
+
   if (enemy instanceof HammerBro && isSpriteReady(enemySpriteSheet)) {
     const frame = enemy.state === "throwing"
       ? HAMMER_BRO_FRAMES[
@@ -471,13 +968,11 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
     return;
   }
 
-  if (enemy instanceof Spiny && isSpriteReady(enemySpriteSheet)) {
-    const frame = SPINY_FRAMES[moving ? frameIndex % SPINY_FRAMES.length : 0];
-    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir > 0);
-    return;
-  }
-
   if (enemy instanceof Goomba && isSpriteReady(enemySpriteSheet)) {
+    if (enemy.squashTimer > 0) {
+      drawSquashedGoomba(ctx, enemy, cam);
+      return;
+    }
     const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
     for (let i = 0; i < enemy.stackCount; i++) {
       drawSpriteFrame(
@@ -494,14 +989,42 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
 
   if (
     enemy instanceof KoopaEnemy &&
-    (enemy.type === "koopa" || enemy.type === "koopa_red") &&
+    (enemy.type === "koopa" || enemy.type === "koopa_red" || enemy.type === "koopa_para" || enemy.type === "koopa_para_red") &&
     isSpriteReady(enemySpriteSheet)
   ) {
     const shell = enemy.actionState !== "default";
     const frame = shell
       ? KOOPA_SHELL[enemy.actionState === "shell_sliding" ? frameIndex % KOOPA_SHELL.length : 0]
       : KOOPA_WALK[moving ? frameIndex % KOOPA_WALK.length : 0];
-    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    drawSpriteFrame(
+      ctx,
+      enemySpriteSheet,
+      enemy,
+      cam,
+      frame,
+      enemy.dir > 0,
+      1,
+      enemy.type === "koopa_red" || enemy.type === "koopa_para_red",
+    );
+
+    if ("hasWings" in enemy && enemy.hasWings === true && isSpriteReady(wingsSpriteSheet)) {
+      const wingWidth = 15;
+      const wingOffsetX = 3;
+      const mirroredWingOffsetX = enemy.w - wingOffsetX - wingWidth;
+      drawSpriteFrame(
+        ctx,
+        wingsSpriteSheet,
+        {
+          x: enemy.x + (enemy.dir > 0 ? mirroredWingOffsetX : wingOffsetX) * SUB,
+          y: enemy.y + 1 * SUB,
+          w: wingWidth,
+          h: 15,
+        },
+        cam,
+        PARATROOPA_WING,
+        enemy.dir > 0,
+      );
+    }
     return;
   }
 
@@ -530,11 +1053,55 @@ function drawSpriteFrame(
   frame: SpriteFrame,
   flip: boolean,
   scale = 1,
+  recolorGreenToRed = false,
 ): void {
   const drawW = enemy.w * scale;
   const drawH = enemy.h * scale;
   const x = Math.round(enemy.x / SUB - cam.x - (drawW - enemy.w) / 2);
   const y = Math.round(enemy.y / SUB - cam.y - (drawH - enemy.h) / 2);
+  let source: CanvasImageSource = image;
+  let sourceFrame = frame;
+  if (recolorGreenToRed) {
+    const key = `${image.src},${frame.x},${frame.y},${frame.width},${frame.height},green-to-red`;
+    let tinted = tintedTileCache.get(key);
+    if (!tinted) {
+      tinted = document.createElement("canvas");
+      tinted.width = frame.width;
+      tinted.height = frame.height;
+      const tintedContext = tinted.getContext("2d");
+      if (tintedContext) {
+        tintedContext.imageSmoothingEnabled = false;
+        tintedContext.drawImage(
+          image,
+          frame.x,
+          frame.y,
+          frame.width,
+          frame.height,
+          0,
+          0,
+          frame.width,
+          frame.height,
+        );
+        const pixels = tintedContext.getImageData(0, 0, frame.width, frame.height);
+        for (let i = 0; i < pixels.data.length; i += 4) {
+          const red = pixels.data[i];
+          const green = pixels.data[i + 1];
+          const blue = pixels.data[i + 2];
+          if (green > 40 && green > red * 1.15 && green > blue * 1.1) {
+            pixels.data[i] = green;
+            pixels.data[i + 1] = Math.round(green * 0.16);
+            pixels.data[i + 2] = Math.round(green * 0.08);
+          }
+        }
+        tintedContext.putImageData(pixels, 0, 0);
+        tintedTileCache.set(key, tinted);
+      }
+    }
+    if (tinted) {
+      source = tinted;
+      sourceFrame = { x: 0, y: 0, width: frame.width, height: frame.height };
+    }
+  }
 
   ctx.save();
   if (flip) {
@@ -543,7 +1110,7 @@ function drawSpriteFrame(
   } else {
     ctx.translate(x, y);
   }
-  ctx.drawImage(image, frame.x, frame.y, frame.width, frame.height, 0, 0, drawW, drawH);
+  ctx.drawImage(source, sourceFrame.x, sourceFrame.y, sourceFrame.width, sourceFrame.height, 0, 0, drawW, drawH);
   ctx.restore();
 }
 
@@ -660,14 +1227,12 @@ function drawParaGoomba(
 
   if (!enemy.hasWings) {
     if (isSpriteReady(enemySpriteSheet)) {
-      const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
-      drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir < 0);
-      if (isRed) {
-        ctx.save();
-        ctx.fillStyle = "rgba(220, 40, 40, 0.35)";
-        ctx.fillRect(x, y, enemy.w, enemy.h);
-        ctx.restore();
+      if (enemy.squashTimer > 0) {
+        drawSquashedGoomba(ctx, enemy, cam);
+        return;
       }
+      const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
+      drawParaGoombaSprite(ctx, enemy, cam, frame, isRed, x, y);
     } else {
       box(ctx, enemy, cam, isRed ? "#cc2828" : "#d9a400");
     }
@@ -676,32 +1241,70 @@ function drawParaGoomba(
 
   if (isSpriteReady(enemySpriteSheet)) {
     const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
-    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir < 0);
-    if (isRed) {
-      ctx.save();
-      ctx.fillStyle = "rgba(220, 40, 40, 0.35)";
-      ctx.fillRect(x, y, enemy.w, enemy.h);
-      ctx.restore();
+    if (isSpriteReady(wingsSpriteSheet)) {
+      const wingY = Math.floor(frameNumber / 6) % 2 === 0 ? 1 : -2;
+      drawSpriteFrame(
+        ctx,
+        wingsSpriteSheet,
+        { x: enemy.x - 5 * SUB, y: enemy.y + wingY * SUB, w: 6, h: 10 },
+        cam,
+        PARATROOPA_WING,
+        false,
+      );
+      drawSpriteFrame(
+        ctx,
+        wingsSpriteSheet,
+        { x: enemy.x + (enemy.w - 1) * SUB, y: enemy.y + wingY * SUB, w: 6, h: 10 },
+        cam,
+        PARATROOPA_WING,
+        true,
+      );
     }
+    drawParaGoombaSprite(ctx, enemy, cam, frame, isRed, x, y);
   } else {
     box(ctx, enemy, cam, isRed ? "#cc2828" : "#d9a400");
   }
+}
 
-  const flap = Math.floor(frameNumber / 6) % 2 === 0;
-  const wingY = flap ? y + 1 : y - 3;
+function drawParaGoombaSprite(
+  ctx: CanvasRenderingContext2D,
+  enemy: ParaGoomba,
+  cam: Camera,
+  frame: SpriteFrame,
+  isRed: boolean,
+  x: number,
+  y: number,
+): void {
   ctx.save();
-  ctx.fillStyle = "#fff";
-  ctx.strokeStyle = "#333";
-  ctx.lineWidth = 1;
-
-  ctx.beginPath();
-  ctx.ellipse(x - 2, wingY + 5, 3, 5, Math.PI / 4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.ellipse(x + enemy.w + 2, wingY + 5, 3, 5, -Math.PI / 4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
+  if (enemy.dir < 0) {
+    ctx.translate(2 * x + enemy.w, 0);
+    ctx.scale(-1, 1);
+  }
+  drawSpriteSheetFrame(
+    ctx,
+    enemySpriteSheet,
+    frame,
+    x,
+    y,
+    enemy.w,
+    enemy.h,
+    isRed ? "rgba(220,40,40,0.35)" : false,
+  );
   ctx.restore();
+}
+
+function drawSquashedGoomba(ctx: CanvasRenderingContext2D, enemy: Goomba, cam: Camera): void {
+  const x = Math.round(enemy.x / SUB - cam.x + (enemy.w - GOOMBA_SQUASHED.width) / 2);
+  const y = Math.round(enemy.y / SUB - cam.y + enemy.h - GOOMBA_SQUASHED.height);
+  ctx.drawImage(
+    enemySpriteSheet,
+    GOOMBA_SQUASHED.x,
+    GOOMBA_SQUASHED.y,
+    GOOMBA_SQUASHED.width,
+    GOOMBA_SQUASHED.height,
+    x,
+    y,
+    GOOMBA_SQUASHED.width,
+    GOOMBA_SQUASHED.height,
+  );
 }
