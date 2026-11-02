@@ -8,12 +8,12 @@ import {
  AXE_FRAME,
  BUZZY_SHELL_FRAMES,
  BUZZY_WALK_FRAMES,
- BUZZY_WINGS,
  BUZZY_BEETLE_SHELL,
  BUZZY_BEETLE_WALK,
  COIN_FRAMES,
  BRICK_DEBRIS_FRAMES,
  GOOMBA_WALK,
+ GOOMBA_SQUASHED,
   HAMMER_BRO_FRAMES,
   HAMMER_PROJECTILE,
   KOOPA_SHELL,
@@ -25,8 +25,11 @@ import {
   OVERWORLD_LARGE_HILL,
   OVERWORLD_SMALL_HILL,
   PIRANHA_PLANT_FRAMES,
+  PARATROOPA_WING,
   PODOBOO_FRAMES,
   SPINY_FRAMES,
+  TEMP_BULLET_BILL,
+  TEMP_BULLET_BILL_CANNON,
   TILE_SPRITES,
   POWERUP_SPRITES,
   type SpriteFrame,
@@ -41,6 +44,7 @@ function loadSpriteSheet(path: string): HTMLImageElement {
 const marioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Mario.png");
 const enemySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Enemies.png");
 const temporarySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/temporary_sprites.png");
+const bulletBillSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/BulletBill.png");
 const itemSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Items.png");
 const powerupSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Powerups.png");
 const overworldSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/OverWorld.png");
@@ -48,6 +52,7 @@ const bridgeSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/Bridge.png"
 const bowserBridgeSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/BowserBridge.png");
 const axeSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Axe.png");
 const buzzySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Buzzy Beetle1.png");
+const wingsSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/wings.png");
 const podobooSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Podoboo.png");
 const bowserSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Bowser.png");
 const tintedTileCache = new Map<string, HTMLCanvasElement>();
@@ -251,10 +256,25 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       }
       ctx.restore();
     } else {
-      ctx.fillStyle = "#FF6A00";
-      ctx.beginPath();
-      ctx.arc(cx, cy, p.w / 2, 0, Math.PI * 2);
-      ctx.fill();
+      const fireFrame = PODOBOO_FRAMES[0];
+      if (isSpriteReady(podobooSpriteSheet)) {
+        ctx.drawImage(
+          podobooSpriteSheet,
+          fireFrame.x,
+          fireFrame.y,
+          fireFrame.width,
+          fireFrame.height,
+          Math.round(p.x / SUB - cam.x),
+          Math.round(p.y / SUB - cam.y),
+          p.w,
+          p.h,
+        );
+      } else {
+        ctx.fillStyle = "#FF6A00";
+        ctx.beginPath();
+        ctx.arc(cx, cy, p.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 
@@ -353,7 +373,7 @@ function drawTile(
   if (tileId === Tile.lava && isSpriteReady(overworldSpriteSheet)) {
     const frame = TILE_SPRITES[Tile.floor];
     if (frame) {
-      drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, "rgba(255, 84, 0, 0.82)");
+      drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, "rgba(255, 85, 0, 0.76)");
       return;
     }
   }
@@ -825,53 +845,6 @@ function positionHash(value: number): number {
   return (hash ^ (hash >>> 16)) >>> 0;
 }
 
-function drawKoopaParaWings(
-  ctx: CanvasRenderingContext2D,
-  enemy: Enemy,
-  cam: Camera,
-  spriteSheet: CanvasImageSource,
-  frontWing = false,
-): void {
-  const width = 24;
-  const height = 12;
-  const x = Math.round(enemy.x / SUB - cam.x + (enemy.w - width) / 2);
-  const y = Math.round(enemy.y / SUB - cam.y + 2);
-  const sourceX = frontWing ? BUZZY_WINGS.x + BUZZY_WINGS.width / 2 : BUZZY_WINGS.x;
-  const sourceWidth = frontWing ? BUZZY_WINGS.width / 2 : BUZZY_WINGS.width;
-  const destinationX = frontWing ? width / 2 : 0;
-  const destinationWidth = frontWing ? width / 2 : width;
-
-  ctx.save();
-  if (enemy.dir > 0) {
-    ctx.translate(x + width, y);
-    ctx.scale(-1, 1);
-    ctx.drawImage(
-      spriteSheet,
-      sourceX,
-      BUZZY_WINGS.y,
-      sourceWidth,
-      BUZZY_WINGS.height,
-      destinationX,
-      0,
-      destinationWidth,
-      height,
-    );
-  } else {
-    ctx.drawImage(
-      spriteSheet,
-      sourceX,
-      BUZZY_WINGS.y,
-      sourceWidth,
-      BUZZY_WINGS.height,
-      x + destinationX,
-      y,
-      destinationWidth,
-      height,
-    );
-  }
-  ctx.restore();
-}
-
 function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, frameNumber: number): void {
   const frameIndex = Math.floor(frameNumber / 8);
   const moving = enemy.onGround && enemy.vx !== 0;
@@ -923,8 +896,17 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   if (enemy instanceof BulletBillCannon) {
-    if (isSpriteReady(temporarySpriteSheet)) {
-      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, BULLET_BILL_CANNON, false);
+    if (isSpriteReady(bulletBillSpriteSheet)) {
+      drawSpriteFrame(
+        ctx,
+        bulletBillSpriteSheet,
+        { x: enemy.x + 2 * SUB, y: enemy.y + 0.5 * SUB, w: 12, h: 15 },
+        cam,
+        BULLET_BILL_CANNON,
+        false,
+      );
+    } else if (isSpriteReady(temporarySpriteSheet)) {
+      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, TEMP_BULLET_BILL_CANNON, false);
     } else {
       drawBulletBillCannon(ctx, enemy, cam);
     }
@@ -932,8 +914,17 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   if (enemy instanceof BulletBill) {
-    if (isSpriteReady(temporarySpriteSheet)) {
-      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, BULLET_BILL, enemy.dir > 0);
+    if (isSpriteReady(bulletBillSpriteSheet)) {
+      drawSpriteFrame(
+        ctx,
+        bulletBillSpriteSheet,
+        { x: enemy.x, y: enemy.y + 3 * SUB, w: 16, h: 10 },
+        cam,
+        BULLET_BILL,
+        enemy.dir > 0,
+      );
+    } else if (isSpriteReady(temporarySpriteSheet)) {
+      drawSpriteFrame(ctx, temporarySpriteSheet, enemy, cam, TEMP_BULLET_BILL, enemy.dir > 0);
     } else {
       drawBulletBill(ctx, enemy, cam);
     }
@@ -978,6 +969,10 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   if (enemy instanceof Goomba && isSpriteReady(enemySpriteSheet)) {
+    if (enemy.squashTimer > 0) {
+      drawSquashedGoomba(ctx, enemy, cam);
+      return;
+    }
     const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
     for (let i = 0; i < enemy.stackCount; i++) {
       drawSpriteFrame(
@@ -997,18 +992,38 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
     (enemy.type === "koopa" || enemy.type === "koopa_red" || enemy.type === "koopa_para" || enemy.type === "koopa_para_red") &&
     isSpriteReady(enemySpriteSheet)
   ) {
-    if ("hasWings" in enemy && enemy.hasWings === true && isSpriteReady(buzzySpriteSheet)) {
-      drawKoopaParaWings(ctx, enemy, cam, buzzySpriteSheet);
-    }
     const shell = enemy.actionState !== "default";
     const frame = shell
       ? KOOPA_SHELL[enemy.actionState === "shell_sliding" ? frameIndex % KOOPA_SHELL.length : 0]
       : KOOPA_WALK[moving ? frameIndex % KOOPA_WALK.length : 0];
-    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir > 0);
-    if ("hasWings" in enemy && enemy.hasWings === true) {
-      if (isSpriteReady(buzzySpriteSheet)) {
-        drawKoopaParaWings(ctx, enemy, cam, buzzySpriteSheet, true);
-      }
+    drawSpriteFrame(
+      ctx,
+      enemySpriteSheet,
+      enemy,
+      cam,
+      frame,
+      enemy.dir > 0,
+      1,
+      enemy.type === "koopa_red" || enemy.type === "koopa_para_red",
+    );
+
+    if ("hasWings" in enemy && enemy.hasWings === true && isSpriteReady(wingsSpriteSheet)) {
+      const wingWidth = 15;
+      const wingOffsetX = 3;
+      const mirroredWingOffsetX = enemy.w - wingOffsetX - wingWidth;
+      drawSpriteFrame(
+        ctx,
+        wingsSpriteSheet,
+        {
+          x: enemy.x + (enemy.dir > 0 ? mirroredWingOffsetX : wingOffsetX) * SUB,
+          y: enemy.y + 1 * SUB,
+          w: wingWidth,
+          h: 15,
+        },
+        cam,
+        PARATROOPA_WING,
+        enemy.dir > 0,
+      );
     }
     return;
   }
@@ -1032,17 +1047,61 @@ function drawBulletBillCannon(ctx: CanvasRenderingContext2D, cannon: BulletBillC
 
 function drawSpriteFrame(
   ctx: CanvasRenderingContext2D,
-  image: CanvasImageSource,
+  image: HTMLImageElement,
   enemy: Pick<Body, "x" | "y" | "w" | "h">,
   cam: Camera,
   frame: SpriteFrame,
   flip: boolean,
   scale = 1,
+  recolorGreenToRed = false,
 ): void {
   const drawW = enemy.w * scale;
   const drawH = enemy.h * scale;
   const x = Math.round(enemy.x / SUB - cam.x - (drawW - enemy.w) / 2);
   const y = Math.round(enemy.y / SUB - cam.y - (drawH - enemy.h) / 2);
+  let source: CanvasImageSource = image;
+  let sourceFrame = frame;
+  if (recolorGreenToRed) {
+    const key = `${image.src},${frame.x},${frame.y},${frame.width},${frame.height},green-to-red`;
+    let tinted = tintedTileCache.get(key);
+    if (!tinted) {
+      tinted = document.createElement("canvas");
+      tinted.width = frame.width;
+      tinted.height = frame.height;
+      const tintedContext = tinted.getContext("2d");
+      if (tintedContext) {
+        tintedContext.imageSmoothingEnabled = false;
+        tintedContext.drawImage(
+          image,
+          frame.x,
+          frame.y,
+          frame.width,
+          frame.height,
+          0,
+          0,
+          frame.width,
+          frame.height,
+        );
+        const pixels = tintedContext.getImageData(0, 0, frame.width, frame.height);
+        for (let i = 0; i < pixels.data.length; i += 4) {
+          const red = pixels.data[i];
+          const green = pixels.data[i + 1];
+          const blue = pixels.data[i + 2];
+          if (green > 40 && green > red * 1.15 && green > blue * 1.1) {
+            pixels.data[i] = green;
+            pixels.data[i + 1] = Math.round(green * 0.16);
+            pixels.data[i + 2] = Math.round(green * 0.08);
+          }
+        }
+        tintedContext.putImageData(pixels, 0, 0);
+        tintedTileCache.set(key, tinted);
+      }
+    }
+    if (tinted) {
+      source = tinted;
+      sourceFrame = { x: 0, y: 0, width: frame.width, height: frame.height };
+    }
+  }
 
   ctx.save();
   if (flip) {
@@ -1051,7 +1110,7 @@ function drawSpriteFrame(
   } else {
     ctx.translate(x, y);
   }
-  ctx.drawImage(image, frame.x, frame.y, frame.width, frame.height, 0, 0, drawW, drawH);
+  ctx.drawImage(source, sourceFrame.x, sourceFrame.y, sourceFrame.width, sourceFrame.height, 0, 0, drawW, drawH);
   ctx.restore();
 }
 
@@ -1168,14 +1227,12 @@ function drawParaGoomba(
 
   if (!enemy.hasWings) {
     if (isSpriteReady(enemySpriteSheet)) {
-      const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
-      drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir < 0);
-      if (isRed) {
-        ctx.save();
-        ctx.fillStyle = "rgba(220, 40, 40, 0.35)";
-        ctx.fillRect(x, y, enemy.w, enemy.h);
-        ctx.restore();
+      if (enemy.squashTimer > 0) {
+        drawSquashedGoomba(ctx, enemy, cam);
+        return;
       }
+      const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
+      drawParaGoombaSprite(ctx, enemy, cam, frame, isRed, x, y);
     } else {
       box(ctx, enemy, cam, isRed ? "#cc2828" : "#d9a400");
     }
@@ -1184,32 +1241,70 @@ function drawParaGoomba(
 
   if (isSpriteReady(enemySpriteSheet)) {
     const frame = GOOMBA_WALK[moving ? frameIndex % GOOMBA_WALK.length : 0];
-    drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir < 0);
-    if (isRed) {
-      ctx.save();
-      ctx.fillStyle = "rgba(220, 40, 40, 0.35)";
-      ctx.fillRect(x, y, enemy.w, enemy.h);
-      ctx.restore();
+    if (isSpriteReady(wingsSpriteSheet)) {
+      const wingY = Math.floor(frameNumber / 6) % 2 === 0 ? 1 : -2;
+      drawSpriteFrame(
+        ctx,
+        wingsSpriteSheet,
+        { x: enemy.x - 5 * SUB, y: enemy.y + wingY * SUB, w: 6, h: 10 },
+        cam,
+        PARATROOPA_WING,
+        false,
+      );
+      drawSpriteFrame(
+        ctx,
+        wingsSpriteSheet,
+        { x: enemy.x + (enemy.w - 1) * SUB, y: enemy.y + wingY * SUB, w: 6, h: 10 },
+        cam,
+        PARATROOPA_WING,
+        true,
+      );
     }
+    drawParaGoombaSprite(ctx, enemy, cam, frame, isRed, x, y);
   } else {
     box(ctx, enemy, cam, isRed ? "#cc2828" : "#d9a400");
   }
+}
 
-  const flap = Math.floor(frameNumber / 6) % 2 === 0;
-  const wingY = flap ? y + 1 : y - 3;
+function drawParaGoombaSprite(
+  ctx: CanvasRenderingContext2D,
+  enemy: ParaGoomba,
+  cam: Camera,
+  frame: SpriteFrame,
+  isRed: boolean,
+  x: number,
+  y: number,
+): void {
   ctx.save();
-  ctx.fillStyle = "#fff";
-  ctx.strokeStyle = "#333";
-  ctx.lineWidth = 1;
-
-  ctx.beginPath();
-  ctx.ellipse(x - 2, wingY + 5, 3, 5, Math.PI / 4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.ellipse(x + enemy.w + 2, wingY + 5, 3, 5, -Math.PI / 4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
+  if (enemy.dir < 0) {
+    ctx.translate(2 * x + enemy.w, 0);
+    ctx.scale(-1, 1);
+  }
+  drawSpriteSheetFrame(
+    ctx,
+    enemySpriteSheet,
+    frame,
+    x,
+    y,
+    enemy.w,
+    enemy.h,
+    isRed ? "rgba(220,40,40,0.35)" : false,
+  );
   ctx.restore();
+}
+
+function drawSquashedGoomba(ctx: CanvasRenderingContext2D, enemy: Goomba, cam: Camera): void {
+  const x = Math.round(enemy.x / SUB - cam.x + (enemy.w - GOOMBA_SQUASHED.width) / 2);
+  const y = Math.round(enemy.y / SUB - cam.y + enemy.h - GOOMBA_SQUASHED.height);
+  ctx.drawImage(
+    enemySpriteSheet,
+    GOOMBA_SQUASHED.x,
+    GOOMBA_SQUASHED.y,
+    GOOMBA_SQUASHED.width,
+    GOOMBA_SQUASHED.height,
+    x,
+    y,
+    GOOMBA_SQUASHED.width,
+    GOOMBA_SQUASHED.height,
+  );
 }

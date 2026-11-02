@@ -3,7 +3,7 @@ import type { Buttons } from "../config/buttons.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
-import { BulletBillCannon, HammerBro, MiniGoomba, ParaGoombaBrown } from "../entities/enemy.ts";
+import { BulletBillCannon, Goomba, HammerBro, MiniGoomba, ParaGoombaBrown } from "../entities/enemy.ts";
 import { isSolid, Tile, tileAt, toTile } from "../world/tiles.ts";
 import { Item, type ItemType } from "../entities/powerup.ts";
 import { Projectile } from "../entities/projectile.ts";
@@ -305,7 +305,12 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   }
 
   for (const enemy of state.enemies) {
-    if (!enemy.alive || enemy instanceof BulletBillCannon || !player.overlaps(enemy)) continue;
+    if (
+      !enemy.alive ||
+      enemy instanceof BulletBillCannon ||
+      (enemy instanceof Goomba && enemy.squashTimer > 0) ||
+      !player.overlaps(enemy)
+    ) continue;
     const fromAbove = player.vy > 0 && prevBottom <= enemy.y + RULES.stompTolerancePx * SUB; // feet were in the top part of the enemy
     if (fromAbove && enemy.stompable) {
       const shouldBounce = enemy.onStomp(player.x);
