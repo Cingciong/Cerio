@@ -21,5 +21,9 @@
   "enemies": [],
   "spawners": [
     { "type": "cheepJump", "from": 0, "to": 32 }
+  ],
+    "objects": [
+    { "type": "red_ring", "x": 20, "y": 8,
+      "coins": [[22, 9], [23, 8], [24, 7], [25, 7], [26, 7], [27, 7], [28, 8], [29, 9]] }
   ]
 }
