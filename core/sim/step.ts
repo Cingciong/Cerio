@@ -4,7 +4,8 @@ import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
 import { Enemy, BulletBillCannon, Goomba, HammerBro, MiniGoomba, ParaGoombaBrown } from "../entities/enemy.ts";
-import { isSolid, Tile, tileAt, toTile } from "../world/tiles.ts";
+import { isDeadly, isGoal, isSolid, Tile, tileAt, toTile, type TileMap } from "../world/tiles.ts";
+import type { Body } from "../entities/body.ts";
 import { Item, type ItemType, type SlotItem } from "../entities/powerup.ts";
 import { Projectile } from "../entities/projectile.ts";
 import { hitBlockAbove, stepBlocks } from "./blocks.ts";
@@ -14,6 +15,14 @@ import { collectCoins } from "./coins.ts";
 import { plannedItem } from "./slots.ts";
 import { SCORE } from "../config/config.ts";
 import { addScore } from "./state.ts";
+
+/** True when the hitbox overlaps any tile for which `test` holds. */
+function touching(map: TileMap, body: Body, test: (map: TileMap, tx: number, ty: number) => boolean): boolean {
+  for (let ty = toTile(body.y); ty <= toTile(body.bottom - 1); ty++) {
+    for (let tx = toTile(body.x); tx <= toTile(body.right - 1); tx++) if (test(map, tx, ty)) return true;
+  }
+  return false;
+}
 
 export function questionItem(state: GameState): ItemType {
   if (RULES.questionItem !== 'auto') return RULES.questionItem as ItemType;
@@ -168,15 +177,17 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     const tileId = tileAt(map, txBump, tyAbove);
 
     if (tileId === Tile.question || tileId === Tile.brick_star) {
-      map.tiles[tyAbove * map.width + txBump] = Tile.used;
+      map.tiles[tyAbove * map.width + txBump] = Tile.used;     
       addScore(state, SCORE.questionBlock);
       const newItemId = state.items.length;
       const itemX = txBump * 16 * SUB;
       const itemY = tyAbove * 16 * SUB;
 
-      const kind: SlotItem = tileId === Tile.brick_star ? 'star' : plannedItem(state, txBump, tyAbove) ?? questionItem(state);
+      const kind: SlotItem = tileId === Tile.brick_star
+        ? 'star'
+        : plannedItem(state, txBump, tyAbove) ?? questionItem(state);   
       if (kind === 'coin')
-        { 
+        {
           state.coins++;
           addScore(state, SCORE.coin);
           state.events.push({ type: "coinPop", tx: txBump, ty: tyAbove });
@@ -380,18 +391,8 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   }
 
   if (player.y > map.height * TILE_SUB) player.alive = false; 
+  if (touching(map, player, isDeadly)) player.alive = false; // lava kills, also big Mario and star
+  if (state.area === "overworld" && touching(map, player, isGoal)) state.status = "won"; // the flagpole ends the level
   if (!player.alive) state.status = "dead";
-
-  if (state.area === "overworld") {
-  const levelWidth = state.map.width * TILE_SUB;
-  if (player.x > state.MaxDistance) {
-    const prevPct = Math.floor((state.MaxDistance / levelWidth) * 100);
-    const currPct = Math.min(100, Math.floor((player.x / levelWidth) * 100));
-    if (currPct > prevPct) {
-      addScore(state, (currPct - prevPct) * 10);
-    }
-    state.MaxDistance = player.x;
-  }
-}
-  if (state.area === "overworld" && player.right >= map.width * TILE_SUB) state.status = "won"; // touched the right edge of the map (until there is a flagpole)
+  if (state.area === "overworld" && player.right >= map.width * TILE_SUB) state.status = "won"; // levels without a flagpole end at the right edge of the map
 }

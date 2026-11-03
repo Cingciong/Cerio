@@ -63,3 +63,6 @@ checkpoints/
 
 # Generated levels
 levels/generated/
+
+# bot-evo: machine specific python path
+bot-evo/local.json

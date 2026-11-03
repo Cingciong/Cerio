@@ -21,7 +21,7 @@ let restart = false;
 let flag = false;
 
 window.addEventListener("keydown", (e) => {
-  if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) return; // typing, not playing
+  if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return; // typing, not playing
   if (e.code === "KeyR") restart = true;
   if (e.code === "KeyF") flag = true;
   if (e.code in KEYS) e.preventDefault();
