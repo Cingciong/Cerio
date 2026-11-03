@@ -22,7 +22,6 @@ export interface GenOptions {
   tolerance?: number;
   type?: LevelType;
   types?: LevelType[];
-  /** What the `?` blocks give. Missing fields come from shared/game.json rules.slots. Does not change the layout. */
   powerups?: Partial<PowerupPolicy>;
 }
 

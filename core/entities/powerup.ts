@@ -5,7 +5,7 @@ import { ITEMS } from "../config/config.ts";
 
 export type ItemType = 'mushroom' | 'star' | 'flower' | 'leaf' | 'hammer_suit' | 'tanooki' | 'frog' | 'stopwatch';
 
-/** What a `?` block gives: an item, or a coin. Decided at level generation (see levelgen/PowerupPlan.ts). */
+
 export type SlotItem = ItemType | 'coin';
 
 export const isItemType = (s: string): s is ItemType => Object.hasOwn(ITEMS, s);

@@ -122,35 +122,6 @@ Not in the game: P-meter, Tanooki statue, level timer, swimming levels (no water
 
 Needed by the above: enemies that react to fire, hammers, star and tail.
 
-## Power-up slots
-
-A **slot** is a `?` tile in a segment. The segment says *where* a block is, the generator decides *what* is in it
-(`core/levelgen/PowerupPlan.ts`), so the contents can be steered without changing the layout.
-
-- Generated level: `blocks: [{ "x": 12, "y": 9, "item": "flower" }]` (tiles) next to `rows`, for the overworld and the cave.
-  `item` is any key of `items` in `shared/game.json`, or `coin`.
-- Segment: the same `blocks` list **pins** a slot (e.g. a star the author wants in that place). The generator leaves pinned slots alone.
-- A `?` without an entry (hand-made level) still gives the old random item, so nothing breaks.
-- Like in SMB, a planned `mushroom` is a flower for big Mario (`rules.mushroomUpgrade`).
-- Items are decided when the level is generated, not when the block is hit: the same level always gives the same items (no gameplay rng).
-
-Policy (`GenOptions.powerups`, defaults in `shared/game.json` `rules.slots`):
-
-| Field | Meaning |
-|---|---|
-| `rate` | share of slots with a power-up, the rest give a coin. `0` = no power-ups, `1` = every slot |
-| `firstMushroom` | the first slot of the level is a mushroom (as in SMB 1-1) |
-| `minGap` | min distance in tiles between two power-up slots |
-| `weights` | relative chance of each item, `0`/missing = never |
-| `max` | max per item per level, e.g. `{ "star": 1 }` |
-
-The slot contents use their own random stream (`seed ^ SLOT_SALT`): the same seed gives the **same geometry and enemies for every policy**,
-so a curriculum can switch power-ups on and off (or test them separately) on identical levels.
-
-```ts
-gen.generate(seed, { length: 200, type: "normal", powerups: { rate: 0 } });                    // baseline without power-ups
-gen.generate(seed, { length: 200, type: "normal", powerups: { rate: 1, weights: { star: 1 } } }); // every slot a star (max 1 by default)
-```
 
 ## Core mechanics
 
