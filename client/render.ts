@@ -401,12 +401,9 @@ function drawTile(
     return;
   }
 
-  if (tileId === Tile.lava && isSpriteReady(overworldSpriteSheet)) {
-    const frame = TILE_SPRITES[Tile.floor];
-    if (frame) {
-      drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, "rgba(255, 85, 0, 0.76)");
-      return;
-    }
+  if (tileId === Tile.lava) {
+    drawLavaTile(ctx, x, y, frameNumber);
+    return;
   }
 
   const pipe = pipeSprite(map, tx, ty, tileId);
@@ -728,6 +725,28 @@ function drawWoodTile(
   }
   if (isLeftEdge) ctx.fillRect(trunkX, y, 1, TILE);
   if (isRightEdge) ctx.fillRect(trunkX + trunkWidth - 1, y, 1, TILE);
+}
+
+function drawLavaTile(ctx: CanvasRenderingContext2D, x: number, y: number, frameNumber: number): void {
+  ctx.fillStyle = "#b51f24";
+  ctx.fillRect(x, y, TILE, TILE);
+  ctx.fillStyle = "#ef382b";
+  ctx.fillRect(x + 1, y + 1, TILE - 2, TILE - 2);
+
+  const phase = Math.floor(frameNumber / 8);
+  const bubbles = [
+    { x: 4, y: 5 + (phase % 3), radius: 2 },
+    { x: 11, y: 10 - (phase % 3), radius: 2 },
+    { x: 8, y: 3 + ((phase + 1) % 3), radius: 1 },
+  ];
+  for (const bubble of bubbles) {
+    ctx.fillStyle = "#ffb52e";
+    ctx.beginPath();
+    ctx.arc(x + bubble.x, y + bubble.y, bubble.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff078";
+    ctx.fillRect(x + bubble.x - 1, y + bubble.y - 1, 1, 1);
+  }
 }
 
 function drawBigBlockTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
