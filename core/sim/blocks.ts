@@ -8,12 +8,11 @@ import { addScore } from "./state.ts";
 export interface Bump {
   tx: number;
   ty: number;
-  frames: number; // left
+  frames: number;
 }
 
-/** Brick piece after breaking. Visual only, does not collide. */
 export interface Debris {
-  x: number; // subpixels
+  x: number;
   y: number;
   vx: number;
   vy: number;
@@ -21,7 +20,7 @@ export interface Debris {
 
 /** The player hit a solid tile from below. */
 export interface GameEvent {
-  type: "blockBump" | "blockBreak";
+  type: "blockBump" | "blockBreak" | "coinPop";
   tx: number;
   ty: number;
 }
@@ -31,7 +30,7 @@ type HitBehaviour =(state: GameState, tx: number, ty: number) => void;
 const HIT: Record<string, HitBehaviour> = {
   bump,
   break: (state, tx, ty) => {
-    // TODO Filip/Jan: tylko duży Mario rozbija bricki, mały je tylko podbija: if (!state.player.big) return bump(state, tx, ty);
+    if (state.player.powerState === "small") return bump(state, tx, ty);
     killOnTop(state, tx, ty);
     setTile(state.map, tx, ty, Tile.air);
     spawnDebris(state, tx, ty);
@@ -40,13 +39,17 @@ const HIT: Record<string, HitBehaviour> = {
   },
   becomes: (state, tx, ty) => {
     const t = Object.values(TILES).find((t) => t.id === tileAt(state.map, tx, ty)) as { becomes?: TileName; contents?: string };
-    if(t.contents === "coin") state.coins++;
+    if(t.contents === "coin") {
+      state.coins++;
+      state.events.push({ type: "coinPop", tx, ty });
+    }
     if (t.becomes) setTile(state.map, tx, ty, Tile[t.becomes]);
     bump(state, tx, ty);
   },
     coins: (state, tx, ty) => {
     state.coins++;
     const key = `${state.area}:${ty * state.map.width + tx}`;
+    state.events.push({ type: "coinPop", tx, ty });
     const left = (state.multiCoins[key] ?? 10) - 1;
     state.multiCoins[key] = left;
     if (left <= 0) setTile(state.map, tx, ty, Tile.used);

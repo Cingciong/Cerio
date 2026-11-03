@@ -5,6 +5,7 @@ import { readButtons, takeFlag, takeRestart } from "./input.ts";
 import { connected, sendFrame, latestReply } from "./net.ts";
 import { camera, render } from "./render.ts";
 import { playSounds } from "./sound.ts";
+import { clearEffects, stepEffects } from "./effects.ts";
 import { ReplayPlayer, type ReplayLevel } from "./replay.ts";
 import { initBotMenu, type LaunchSpec } from "./botmenu.ts";
 
@@ -135,6 +136,7 @@ let acc = 0;
 const FRAMES_PER_DECISION = 4;
 
 let botEnabled = false;
+let effectsState = state;
 
 window.addEventListener("keydown", (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
@@ -161,6 +163,11 @@ function loop(now: number): void {
     }
   }
 
+  if (state !== effectsState) {
+    clearEffects();
+    effectsState = state;
+  }
+
   while (acc >= FRAME_MS) {
     const rp = replay?.tick(state);
     if (rp?.level) {
@@ -179,6 +186,7 @@ function loop(now: number): void {
 
     if (!rp?.frozen) step(state, playerButtons);
     playSounds(state.events);
+    stepEffects(state.events, state.area);
     sendFrame(toFrame(state));
 
     if (connected() && state.frame % FRAMES_PER_DECISION === 0) {

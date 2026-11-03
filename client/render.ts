@@ -37,6 +37,7 @@ import {
   POWERUP_SPRITES,
   type SpriteFrame,
 } from "./spriteFrames.ts";
+import { coinPops } from "./effects.ts";
 
 function loadSpriteSheet(path: string): HTMLImageElement {
   const image = new Image();
@@ -198,6 +199,21 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     }
   }
   
+  for (const pop of coinPops) {
+    if (pop.area !== state.area) continue;
+    const x = Math.round(pop.x - cam.x);
+    const y = Math.round(pop.y - cam.y);
+    if (isSpriteReady(itemSpriteSheet)) {
+      const frame = COIN_FRAMES[Math.floor(pop.frames / 3) % COIN_FRAMES.length]; // spins faster than a static coin
+      ctx.drawImage(itemSpriteSheet, frame.x, frame.y, frame.width, frame.height, x, y, TILE, TILE);
+    } else {
+      ctx.fillStyle = "#FFD700";
+      ctx.beginPath();
+      ctx.ellipse(x + TILE / 2, y + TILE / 2, TILE / 4, TILE / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   for (const ring of state.redRings) {
     if (ring.area !== state.area) continue;
     const bx = Math.round(ring.x/SUB - cam.x);
