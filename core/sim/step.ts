@@ -3,7 +3,7 @@ import type { Buttons } from "../config/buttons.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
-import { BulletBillCannon, Goomba, HammerBro, MiniGoomba, ParaGoombaBrown } from "../entities/enemy.ts";
+import { Enemy, BulletBillCannon, Goomba, HammerBro, MiniGoomba, ParaGoombaBrown } from "../entities/enemy.ts";
 import { isDeadly, isGoal, isSolid, Tile, tileAt, toTile, type TileMap } from "../world/tiles.ts";
 import type { Body } from "../entities/body.ts";
 import { Item, type ItemType, type SlotItem } from "../entities/powerup.ts";
