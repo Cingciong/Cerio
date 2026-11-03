@@ -194,6 +194,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       else state.items.push(new Item(newItemId, kind, itemX, itemY));
     }
     hitBlockAbove(state);
+  }
 
   for (const item of state.items) {
     item.update(map);
