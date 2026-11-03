@@ -5,6 +5,7 @@ import { readButtons, takeFlag, takeRestart } from "./input.ts";
 import { connected, sendFrame, latestReply } from "./net.ts";
 import { camera, render } from "./render.ts";
 import { playSounds } from "./sound.ts";
+import { clearEffects, stepEffects } from "./effects.ts";
 
 
 
@@ -48,6 +49,7 @@ let acc = 0;
 const FRAMES_PER_DECISION = 4;
 
 let botEnabled = false;
+let effectsState = state;
 
 window.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "b") {
@@ -73,6 +75,11 @@ function loop(now: number): void {
     }
   }
 
+  if (state !== effectsState) {
+    clearEffects();
+    effectsState = state;
+  }
+
   while (acc >= FRAME_MS) {
     const remote = latestReply();
     const playerButtons = (botEnabled && remote && remote.player != null) ? remote.player : readButtons();
@@ -86,6 +93,7 @@ function loop(now: number): void {
 
     step(state, playerButtons);
     playSounds(state.events);
+    stepEffects(state.events, state.area);
     sendFrame(toFrame(state));
 
     if (connected() && state.frame % FRAMES_PER_DECISION === 0) {

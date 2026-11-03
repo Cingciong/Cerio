@@ -21,7 +21,7 @@ export interface Debris {
 
 /** The player hit a solid tile from below. */
 export interface GameEvent {
-  type: "blockBump" | "blockBreak";
+  type: "blockBump" | "blockBreak" | "coinPop"; // coinPop: the tile gave a coin, the client shows it popping out
   tx: number;
   ty: number;
 }
@@ -40,13 +40,17 @@ const HIT: Record<string, HitBehaviour> = {
   },
   becomes: (state, tx, ty) => {
     const t = Object.values(TILES).find((t) => t.id === tileAt(state.map, tx, ty)) as { becomes?: TileName; contents?: string };
-    if(t.contents === "coin") state.coins++;
+    if(t.contents === "coin") {
+      state.coins++;
+      state.events.push({ type: "coinPop", tx, ty });
+    }
     if (t.becomes) setTile(state.map, tx, ty, Tile[t.becomes]);
     bump(state, tx, ty);
   },
     coins: (state, tx, ty) => {
     state.coins++;
     const key = `${state.area}:${ty * state.map.width + tx}`;
+    state.events.push({ type: "coinPop", tx, ty });
     const left = (state.multiCoins[key] ?? 10) - 1;
     state.multiCoins[key] = left;
     if (left <= 0) setTile(state.map, tx, ty, Tile.used);
