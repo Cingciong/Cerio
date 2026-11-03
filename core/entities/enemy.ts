@@ -137,7 +137,8 @@ export class KoopaEnemy extends Enemy {
     }else{
       this.vx = this.dir * this.cfg.speed;
     }
-    this.vy = Math.min(this.vy + this.cfg.gravity, this.cfg.maxFall);
+    const appliedGravity = this.cfg.gravity > 0 ? this.cfg.gravity : 15; 
+    this.vy = Math.min(this.vy + appliedGravity, this.cfg.maxFall);
 
     const previousDir = this.dir;
 
@@ -629,9 +630,14 @@ export class Spiny extends KoopaEnemy {
 export class KoopaParaTroopa extends KoopaEnemy {
   hasWings = true;
   vDir = -1; 
+  flyRange = 40
+  startX = 0;
+  startY = 0;
 
   constructor(id: number, type: string, x: number, y: number){
     super(id, type, x, y);
+    this.startX = x
+    this.startY = y
   }
 
   onStomp(playerX: number): boolean {
@@ -681,11 +687,13 @@ export class KoopaParaTroopa extends KoopaEnemy {
     const hit = this.move(map);
 
     if (this.type === 'koopa_para_red') {
-      if (hit.ceiling || hit.ground) {
+      const distanceY = Math.abs(this.y - this.startY) / 16;
+      if (hit.ceiling || hit.ground || distanceY >= this.flyRange) {
          this.vDir = -this.vDir;
       }
     } else {
-      if (hit.wall) {
+      const distanceX = Math.abs(this.x - this.startX) / 16;
+      if (hit.wall || distanceX >= this.flyRange) {
          this.dir = -this.dir;
       }
     }
