@@ -193,11 +193,16 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     }
   }
   
-  ctx.fillStyle = ctx.strokeStyle = "#e02020";
   for (const ring of state.redRings) {
     if (ring.area !== state.area) continue;
+    const bx = Math.round(ring.x/SUB - cam.x);
+    const by = Math.round(ring.y/SUB - cam.y) + 2*TILE;
+    ctx.fillStyle = "#606060";
+    ctx.fillRect(bx+1,by-4,TILE-2,4);
     if (ring.phase === "waiting") {
-      ctx.strokeRect(ring.x / SUB - cam.x + 3.5, ring.y / SUB - cam.y + 0.5, TILE - 7, 2 * TILE - 1);
+      ctx.fillStyle = "#e02020";
+      ctx.beginPath();
+      ctx.ellipse(bx + TILE/2,by-4,TILE/2-3,6,0,Math.PI,2*Math.PI);
     } else if (ring.phase === "active") {
       ring.coins.forEach((c, i) => {
         if (ring.collected[i]) return;

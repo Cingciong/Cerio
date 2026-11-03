@@ -38,7 +38,11 @@
     "lava":            { "id": 22, "char": "L", "solid": false, "color": "#FF3300", "deadly": true },
     "bowser_bridge":   { "id": 23, "char": "Z", "solid": true,  "color": "#A0A0A0", "collapses": true },
     "axe":             { "id": 24, "char": "A", "solid": false, "color": "#FFA500", "goal": true },
-    "question":        { "id": 25, "char": "?", "solid": true, "color": "#FFD700", "contents": "powerup", "becomes": "used" }
+    "question":        { "id": 25, "char": "?", "solid": true, "color": "#FFD700", "contents": "powerup", "becomes": "used" },
+    "wood":      { "id": 26, "char": "W", "solid": true,  "color": "#C8752F" },
+    "brick_1up": { "id": 27, "char": "1", "solid": true,  "color": "#B5502B", "contents": "1up", "becomes": "used", "hit": "becomes" },
+    "big_block": { "id": 28, "char": "K", "solid": false, "semisolid": true, "color": "#F4A6A6" },
+    "note":      { "id": 29, "char": "N", "solid": true,  "color": "#FFFFFF" }
   },
 
 
