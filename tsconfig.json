@@ -12,5 +12,5 @@
     "resolveJsonModule": true,
     "skipLibCheck": true
   },
-  "include": ["core", "client", "headless", "tests"]
+  "include": ["core", "client", "headless", "bot-evo", "tests"]
 }
