@@ -205,7 +205,6 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       if (item.type === 'mushroom') {
         if (player.powerState === 'small') {
           player.powerState = 'big';
-          player.y -= 16 * SUB;
         }
       } else if (item.type === 'flower') {
         player.powerState = 'fire';

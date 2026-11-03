@@ -35,6 +35,10 @@ export const GOOMBA_WALK: SpriteFrame[] = [0, 1].map((index) => ({
   height: 17,
 }));
 export const GOOMBA_SQUASHED: SpriteFrame = { x: 71, y: 23, width: 26, height: 9 };
+export const MINI_GOOMBA_FRAMES: SpriteFrame[] = [
+  { x: 0, y: 0, width: 10, height: 11 },
+  { x: 10, y: 0, width: 10, height: 11 },
+];
 
 export const KOOPA_WALK: SpriteFrame[] = [3, 4].map((index) => ({
   x: index * 32 + 5,
