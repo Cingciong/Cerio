@@ -8,12 +8,11 @@ import { addScore } from "./state.ts";
 export interface Bump {
   tx: number;
   ty: number;
-  frames: number; // left
+  frames: number;
 }
 
-/** Brick piece after breaking. Visual only, does not collide. */
 export interface Debris {
-  x: number; // subpixels
+  x: number;
   y: number;
   vx: number;
   vy: number;
@@ -21,7 +20,7 @@ export interface Debris {
 
 /** The player hit a solid tile from below. */
 export interface GameEvent {
-  type: "blockBump" | "blockBreak" | "coinPop"; // coinPop: the tile gave a coin, the client shows it popping out
+  type: "blockBump" | "blockBreak" | "coinPop";
   tx: number;
   ty: number;
 }
@@ -31,7 +30,7 @@ type HitBehaviour =(state: GameState, tx: number, ty: number) => void;
 const HIT: Record<string, HitBehaviour> = {
   bump,
   break: (state, tx, ty) => {
-    // TODO Filip/Jan: tylko duży Mario rozbija bricki, mały je tylko podbija: if (!state.player.big) return bump(state, tx, ty);
+    if (state.player.powerState === "small") return bump(state, tx, ty);
     killOnTop(state, tx, ty);
     setTile(state.map, tx, ty, Tile.air);
     spawnDebris(state, tx, ty);
