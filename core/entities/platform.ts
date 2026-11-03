@@ -20,7 +20,7 @@ export class Platform extends Body {
     h: number, // pixele
     type: LiftType,
     range: number, // pixele
-    speed: number = 1, // pixele na klatkę (domyślnie 1 px/klatkę = 16 subpixeli)
+    speed: number = 1, // pixele na klatkę
     dir: 1 | -1 = 1
   ) {
     super(x, y, w, h);
@@ -52,7 +52,7 @@ export class Platform extends Body {
       this.vy = this.dir * this.speed;
       this.y += this.vy;
 
-      // Ruch góra/dół (dir=1: w dół, dir=-1: w górę)
+      // Ruch góra/dół (dir=1 w dół, dir=-1 w górę)
       if (this.dir > 0 && this.y >= this.startY + this.range) {
         this.y = this.startY + this.range;
         this.dir = -1;
