@@ -8,6 +8,8 @@ import { PiranhaPlant } from "../entities/enemy.ts";
 import type { Player } from "../entities/player.ts";
 import type { PipeLink } from "../world/pipes.ts";
 import { setArea, type GameState } from "./state.ts";
+import { SCORE } from "../config/config.ts";
+import { addScore } from "./state.ts";
 
 const MARGIN = 4 * SUB; // the player's centre must be this far inside the opening
 
@@ -57,6 +59,10 @@ export function stepPipe(state: GameState): void {
   }
   const target = state.level.pipes[p.to!];
   setArea(state, target.area);
+  if (target.area !== "overworld" && !state.VisitedAreas.includes(target.area)) {
+    state.VisitedAreas.push(target.area);
+    addScore(state, SCORE.enterCave);
+  }
   for (const e of state.enemies) if (e instanceof PiranhaPlant && onPipe(e, target)) e.hide();
   player.x = target.x * TILE_SUB + ((2 * TILE - player.w) / 2) * SUB;
   player.y = target.opens === "up" ? target.y * TILE_SUB : (target.y + 1) * TILE_SUB - player.h * SUB;

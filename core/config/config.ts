@@ -26,3 +26,4 @@ export const PROJECTILES = config.projectiles;
 export const BLOCKS = config.blocks;
 export const RULES = config.rules;
 export const VIEW = config.view;
+export const SCORE = config.score;
