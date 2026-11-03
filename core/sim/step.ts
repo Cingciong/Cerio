@@ -177,22 +177,23 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     const tileId = tileAt(map, txBump, tyAbove);
 
     if (tileId === Tile.question || tileId === Tile.brick_star) {
-      map.tiles[tyAbove * map.width + txCenter] = Tile.used;
+      map.tiles[tyAbove * map.width + txBump] = Tile.used;     
       addScore(state, SCORE.questionBlock);
       const newItemId = state.items.length;
       const itemX = txBump * 16 * SUB;
       const itemY = tyAbove * 16 * SUB;
 
-      const kind: SlotItem = tileId === Tile.brick_star ? 'star' : plannedItem(state, txCenter, tyAbove) ?? questionItem(state);
+      const kind: SlotItem = tileId === Tile.brick_star
+        ? 'star'
+        : plannedItem(state, txBump, tyAbove) ?? questionItem(state);   
       if (kind === 'coin')
-        { 
+        {
           state.coins++;
           addScore(state, SCORE.coin);
         }
       else state.items.push(new Item(newItemId, kind, itemX, itemY));
     }
     hitBlockAbove(state);
-  }
 
   for (const item of state.items) {
     item.update(map);
