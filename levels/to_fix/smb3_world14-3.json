@@ -20,7 +20,21 @@
     "..............................WWW.....WWWWWWW"
   ],
   "enemies": [
-    { "type": "koopa_para_red", "x": 35, "y": 7 },
-    { "type": "koopa_red",      "x": 42, "y": 10 }
-  ]
+    {
+      "type": "koopa_para_red",
+      "x": 35,
+      "y": 7
+    },
+    {
+      "type": "koopa_red",
+      "x": 42,
+      "y": 10
+    }
+  ],
+  "fix": {
+    "from": "normal",
+    "comment": "nie da sie przeskoczyc",
+    "level": "gen-normal-4258643485",
+    "date": "2026-11-03T18:31:48.630Z"
+  }
 }

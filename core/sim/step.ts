@@ -3,7 +3,7 @@ import type { Buttons } from "../config/buttons.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
-import { BulletBillCannon, Goomba, HammerBro, MiniGoomba, ParaGoombaBrown } from "../entities/enemy.ts";
+import { Enemy, BulletBillCannon, Goomba, HammerBro, MiniGoomba, ParaGoombaBrown } from "../entities/enemy.ts";
 import { isSolid, Tile, tileAt, toTile } from "../world/tiles.ts";
 import { Item, type ItemType, type SlotItem } from "../entities/powerup.ts";
 import { Projectile } from "../entities/projectile.ts";
@@ -12,7 +12,8 @@ import { stepPipe, tryEnterPipe } from "./pipes.ts";
 import { updateRedCoins } from "./redcoins.ts";
 import { collectCoins } from "./coins.ts";
 import { plannedItem } from "./slots.ts";
-
+import { SCORE } from "../config/config.ts";
+import { addScore } from "./state.ts";
 
 export function questionItem(state: GameState): ItemType {
   if (RULES.questionItem !== 'auto') return RULES.questionItem as ItemType;
@@ -22,6 +23,18 @@ export function questionItem(state: GameState): ItemType {
 
 export type EnemyButtons = Record<number, Buttons>;
 
+function rewardEnemyKill(state: GameState, enemy: Enemy): void {
+  const points = (enemy.cfg as any).score ?? SCORE.defaultEnemy;
+  addScore(state, points);
+}
+
+function damagePlayer(state: GameState): void {
+  const hadPower = state.player.powerState !== 'small';
+  state.player.takeDamage();
+  if (hadPower && state.player.alive && state.player.invulnerableTimer > 0) {
+    addScore(state, SCORE.powerupLost);
+  }
+}
 export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButtons = {}): void {
   if (state.status !== "playing") return;
   state.frame++;
@@ -143,12 +156,17 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
     if (tileId === Tile.question || tileId === Tile.brick_star) {
       map.tiles[tyAbove * map.width + txCenter] = Tile.used;
+      addScore(state, SCORE.questionBlock);
       const newItemId = state.items.length;
       const itemX = txCenter * 16 * SUB;
       const itemY = tyAbove * 16 * SUB;
 
       const kind: SlotItem = tileId === Tile.brick_star ? 'star' : plannedItem(state, txCenter, tyAbove) ?? questionItem(state);
-      if (kind === 'coin') state.coins++;
+      if (kind === 'coin')
+        { 
+          state.coins++;
+          addScore(state, SCORE.coin);
+        }
       else state.items.push(new Item(newItemId, kind, itemX, itemY));
     }
     hitBlockAbove(state);
@@ -158,7 +176,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     item.update(map);
     if (item.alive && !item.spawning && player.overlaps(item)) {
       item.alive = false;
-      
+      addScore(state, SCORE.powerupCollect);
       if (item.type === 'mushroom') {
         if (player.powerState === 'small') {
           player.powerState = 'big';
@@ -242,6 +260,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         const hitY = enemy.y < player.bottom && enemy.bottom > player.y;
         if (hitX && hitY) {
           enemy.alive = false;
+          rewardEnemyKill(state, enemy);
         }
       }
     } else{
@@ -259,7 +278,11 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     const cfg = PROJECTILES[p.type];
     for (const enemy of state.enemies) {
       if (!enemy.alive || !p.overlaps(enemy)) continue;
-      if (!cfg.immune.includes(enemy.type)) enemy.alive = false;
+      if (!cfg.immune.includes(enemy.type))
+        { 
+          enemy.alive = false;
+          rewardEnemyKill(state, enemy);
+        }
       if (!cfg.pierce) {
         p.alive = false;
         break;
@@ -274,6 +297,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     for (const other of state.enemies) {
       if (enemy !== other && other.alive && enemy.overlaps(other)) {
         other.alive = false;
+        rewardEnemyKill(state, other);
       }
     }
   }
@@ -294,8 +318,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         if (overlaps) {
           if (player.powerState === 'star') {
             enemy.alive = false;
+            rewardEnemyKill(state, enemy);
           } else {
-            player.takeDamage();
+            damagePlayer(state);
           }
           hammer.alive = false;
           break;
@@ -316,6 +341,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     const fromAbove = player.vy > 0 && prevBottom <= enemy.y + RULES.stompTolerancePx * SUB; // feet were in the top part of the enemy
     if (fromAbove && enemy.stompable) {
       const shouldBounce = enemy.onStomp(player.x);
+      rewardEnemyKill(state, enemy);
       if (shouldBounce) {
         player.vy = -PLAYER.stompBounce;
       }
@@ -327,8 +353,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         if (!isShellMovingAway) {
           if (player.powerState === 'star') {
             enemy.alive = false;
+            rewardEnemyKill(state, enemy);
           } else {
-            player.takeDamage();
+            damagePlayer(state);
             if (enemy instanceof MiniGoomba) {
               enemy.alive = false;
             }
@@ -340,5 +367,17 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
   if (player.y > map.height * TILE_SUB) player.alive = false; 
   if (!player.alive) state.status = "dead";
+
+  if (state.area === "overworld") {
+  const levelWidth = state.map.width * TILE_SUB;
+  if (player.x > state.MaxDistance) {
+    const prevPct = Math.floor((state.MaxDistance / levelWidth) * 100);
+    const currPct = Math.min(100, Math.floor((player.x / levelWidth) * 100));
+    if (currPct > prevPct) {
+      addScore(state, (currPct - prevPct) * 10);
+    }
+    state.MaxDistance = player.x;
+  }
+}
   if (state.area === "overworld" && player.right >= map.width * TILE_SUB) state.status = "won"; // touched the right edge of the map (until there is a flagpole)
 }
