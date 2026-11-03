@@ -302,6 +302,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   ctx.fillText(info, 4, 10);
   if (seg) ctx.fillText(seg, 4, 20);
   ctx.fillText(`cave ${state.level.areas.cave ? "yes" : "no"}  area ${state.area}`, 4, 30);
+  const scoreStr = state.score.toString().padStart(6, "0");
+  ctx.fillText(`SCORE: ${scoreStr}`, 4, 40);
   if (state.status === "dead") ctx.fillText("DEAD - R to restart", 80, 120);
   if (state.status === "won") ctx.fillText("LEVEL DONE - R to restart", 64, 120);
 }

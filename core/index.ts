@@ -20,3 +20,4 @@ export * from "./sim/rng.ts";
 export * from "./levelgen/index.ts";
 export * from "./sim/coins.ts";
 export * from "./sim/redcoins.ts";
+export * from "./ai/observe.ts";

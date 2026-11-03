@@ -2,6 +2,7 @@
 <html lang="pl">
   <head>
     <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark" />
     <title>Cerio</title>
     <style>
       body { margin: 0; background: #111; color: #ccc; font: 13px monospace; display: grid; place-items: center; min-height: 100vh; }
@@ -12,11 +13,16 @@
     </style>
   </head>
   <body>
-    <div>
-      <canvas id="game" width="256" height="240"></canvas>
-      <p>←/→ or A/D move · Z/Space jump · X/Shift run · R restart</p>
-      <p><button id="flag" hidden>Flag segment (F)</button> <span id="flag-status"></span></p>
-    </div>
+    <table cellpadding="12">
+      <tr>
+        <td valign="top">
+          <canvas id="game" width="256" height="240"></canvas>
+          <p>←/→ or A/D move · Z/Space/↑ jump · X/Shift run · S/↓ down · C attack  · R restart</p>
+          <p><button id="flag" hidden>Flag segment (F)</button> <span id="flag-status"></span> <button id="bot-open" hidden>Bot-evo</button></p>
+        </td>
+        <td id="bot-panel" valign="top" width="780" hidden></td>
+      </tr>
+    </table>
     <dialog id="flag-dialog">
       <form method="dialog">
         <p>Zgłosić segment <b id="flag-name"></b> do poprawki?</p>

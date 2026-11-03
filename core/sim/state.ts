@@ -43,6 +43,9 @@ export interface GameState {
   redRings: RedRing[];
   redRingsCleared: number;
   rng: Rng; // seeded, used for gameplay randomness (e.g. which power-up a ? block gives)
+  score: number;
+  MaxDistance: number;
+  VisitedAreas: string[];
 }
 
 /** Same level + same seed + same inputs = same game. Default seed comes from the level name. */
@@ -89,6 +92,9 @@ export function createState(level: Level, seed: number = hashName(level.name)): 
     ),
     redRingsCleared: 0,
     rng: new Rng(seed),
+    score: 0,
+    MaxDistance: 0,
+    VisitedAreas: ["overworld"],
   };
 }
 
@@ -108,4 +114,8 @@ export function setArea(state: GameState, area: string): void {
   state.bumps = [];
   state.debris = [];
   state.projectiles = [];
+}
+
+export function addScore(state: GameState, amount: number): void {
+  state.score = Math.max(0, state.score + amount);
 }

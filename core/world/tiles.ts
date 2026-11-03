@@ -7,10 +7,14 @@ export const Tile = Object.fromEntries(Object.entries(TILES).map(([name, t]) => 
 
 const SOLID: boolean[] = [];
 const SEMISOLID: boolean[] = [];
+const DEADLY: boolean[] = []; // lava: kills on touch
+const GOAL: boolean[] = []; // flagpole: ends the level
 const CHAR_TO_ID: Record<string, number> = {};
 for (const t of Object.values(TILES)) {
   SOLID[t.id] = t.solid;
   SEMISOLID[t.id] = (t as {semisolid?: boolean}).semisolid ?? false;
+  DEADLY[t.id] = (t as { deadly?: boolean }).deadly ?? false;
+  GOAL[t.id] = (t as { goal?: boolean }).goal ?? false;
   CHAR_TO_ID[t.char] = t.id;
 }
 
@@ -45,6 +49,14 @@ export function isSolid(map: TileMap, tx: number, ty: number): boolean {
 export function isSemiSolid(map:TileMap, tx: number, ty: number):boolean
 {
   return SEMISOLID[tileAt(map, tx, ty)] ?? false;
+}
+
+export function isDeadly(map: TileMap, tx: number, ty: number): boolean {
+  return DEADLY[tileAt(map, tx, ty)] ?? false;
+}
+
+export function isGoal(map: TileMap, tx: number, ty: number): boolean {
+  return GOAL[tileAt(map, tx, ty)] ?? false;
 }
 
 export function toTile(sub: number): number {

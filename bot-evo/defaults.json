@@ -1,0 +1,297 @@
+{
+  "evolution": {
+    "pop": {
+      "value": 200,
+      "min": 10,
+      "max": 2000,
+      "step": 10,
+      "hot": false,
+      "label": "Populacja",
+      "desc": "Ile botów (genomów) gra w jednej generacji. Więcej = większa różnorodność, ale wolniejsza generacja. Tylko dla nowego treningu."
+    },
+    "levels": {
+      "value": 3,
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "hot": true,
+      "label": "Poziomy na genom",
+      "desc": "Na ilu poziomach gra każdy bot; wynik to średnia. Więcej = uczciwsza ocena, wolniej."
+    },
+    "gens": {
+      "value": 500,
+      "min": 1,
+      "max": 100000,
+      "step": 50,
+      "hot": true,
+      "label": "Liczba generacji",
+      "desc": "Po ilu generacjach (łącznie) trening sam się zatrzyma."
+    },
+    "sigma": {
+      "value": 0.05,
+      "min": 0.001,
+      "max": 0.5,
+      "step": 0.005,
+      "hot": true,
+      "label": "Siła mutacji (σ)",
+      "desc": "Odchylenie szumu dodawanego do wag potomstwa. Za duże = chaos, za małe = bot nie uczy się nowych zachowań."
+    },
+    "sigmaDecay": {
+      "value": 0.995,
+      "min": 0.9,
+      "max": 1,
+      "step": 0.001,
+      "hot": true,
+      "label": "Spadek σ na generację",
+      "desc": "Co generację σ jest mnożone przez tę wartość (do minimum 0,01). 1 = bez zmniejszania."
+    },
+    "staleBoost": {
+      "value": 1.5,
+      "min": 1,
+      "max": 5,
+      "step": 0.1,
+      "hot": true,
+      "label": "Wzrost σ przy stagnacji",
+      "desc": "Gdy wygładzony wynik elity nie rośnie przez 20 generacji, σ jest mnożone przez tę wartość (maks. 3× startowe σ), żeby wyjść z miejsca."
+    },
+    "elite": {
+      "value": 0.1,
+      "min": 0.01,
+      "max": 0.5,
+      "step": 0.01,
+      "hot": true,
+      "label": "Elita",
+      "desc": "Jaka część najlepszych botów przechodzi do następnej generacji bez zmian."
+    },
+    "parents": {
+      "value": 0.25,
+      "min": 0.02,
+      "max": 1,
+      "step": 0.01,
+      "hot": true,
+      "label": "Pula rodziców",
+      "desc": "Z jakiej części najlepszych botów wybierani są rodzice."
+    },
+    "tournament": {
+      "value": 3,
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "hot": true,
+      "label": "Turniej",
+      "desc": "Ilu losowych kandydatów rywalizuje o bycie rodzicem. Więcej = silniejsza selekcja."
+    },
+    "crossover": {
+      "value": 0.2,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "hot": true,
+      "label": "Krzyżowanie",
+      "desc": "Jaka część potomstwa powstaje z dwóch rodziców (reszta: mutacja jednego rodzica)."
+    },
+    "stallDecisions": {
+      "value": 150,
+      "min": 20,
+      "max": 2000,
+      "step": 10,
+      "hot": true,
+      "label": "Limit stania w miejscu",
+      "desc": "Po ilu decyzjach (po 4 klatki) bez nowego postępu epizod się kończy."
+    },
+    "maxDecisions": {
+      "value": 3000,
+      "min": 100,
+      "max": 20000,
+      "step": 100,
+      "hot": true,
+      "label": "Maks. długość epizodu",
+      "desc": "Górny limit decyzji w jednym epizodzie."
+    },
+    "stages": {
+      "value": "60,120,200",
+      "type": "text",
+      "hot": true,
+      "label": "Etapy (długości poziomów)",
+      "desc": "Długości poziomów w kaflach, po przecinku. Bot przechodzi do następnej, gdy nauczy się poprzedniej."
+    },
+    "stageProgress": {
+      "value": 0.9,
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "hot": true,
+      "label": "Próg przejścia etapu",
+      "desc": "Średni postęp górnych 10% botów potrzebny, by przejść do dłuższych poziomów."
+    },
+    "vizEvery": {
+      "value": 5,
+      "min": 1,
+      "max": 1000,
+      "step": 1,
+      "hot": true,
+      "label": "Wykresy co",
+      "desc": "Co ile generacji zapisywać wykresy sieci i histogramy (TensorBoard + PNG)."
+    },
+    "valEvery": {
+      "value": 10,
+      "min": 1,
+      "max": 1000,
+      "step": 1,
+      "hot": true,
+      "label": "Walidacja co",
+      "desc": "Co ile generacji sprawdzać najlepsze boty na 20 stałych, nowych poziomach."
+    },
+    "workers": {
+      "value": 5,
+      "min": 1,
+      "max": 16,
+      "step": 1,
+      "hot": false,
+      "label": "Procesy gry",
+      "desc": "Ile procesów Node symuluje grę równolegle. Tylko przy starcie."
+    },
+    "seed": {
+      "value": 0,
+      "min": 0,
+      "max": 1000000,
+      "step": 1,
+      "hot": false,
+      "label": "Ziarno losowości",
+      "desc": "Ten sam seed i parametry dają ten sam przebieg. Tylko przy starcie."
+    }
+  },
+  "score": {
+    "levelScore": {
+      "value": 3000,
+      "min": 0,
+      "max": 100000,
+      "step": 100,
+      "label": "Przejście poziomu",
+      "desc": "Punkty za przejście całego poziomu. Za część poziomu: postęp (0–1) razy ta wartość."
+    },
+    "coin": {
+      "value": 1,
+      "min": 0,
+      "max": 1000,
+      "step": 1,
+      "label": "Moneta",
+      "desc": "Punkty za każdą zebraną monetę."
+    },
+    "winBonus": {
+      "value": 0,
+      "min": 0,
+      "max": 100000,
+      "step": 100,
+      "label": "Premia za wygraną",
+      "desc": "Dodatkowe punkty za samo dotarcie do końca poziomu."
+    },
+    "speedBonus": {
+      "value": 0,
+      "min": 0,
+      "max": 100000,
+      "step": 50,
+      "label": "Premia za szybkość",
+      "desc": "Maksymalne punkty za szybkie przejście (tylko przy wygranej). Maleją liniowo do zera po czasie z pola niżej."
+    },
+    "speedFrames": {
+      "value": 3600,
+      "min": 60,
+      "max": 100000,
+      "step": 60,
+      "label": "Czas premii (klatki)",
+      "desc": "Po ilu klatkach (60 = 1 s) premia za szybkość spada do zera."
+    },
+    "deathPenalty": {
+      "value": 0,
+      "min": 0,
+      "max": 100000,
+      "step": 50,
+      "label": "Kara za śmierć",
+      "desc": "Punkty odejmowane, gdy bot zginie (wróg, dziura)."
+    }
+  },
+  "network": {
+    "tileEmb": {
+      "value": 4,
+      "min": 1,
+      "max": 16,
+      "step": 1,
+      "hot": false,
+      "label": "Opis kafla (liczby)",
+      "desc": "Ilu liczbami sieć opisuje jeden typ bloku (lawa, moneta, rura…). Więcej = bogatsze rozróżnianie, ale więcej wag."
+    },
+    "entEmb": {
+      "value": 3,
+      "min": 1,
+      "max": 16,
+      "step": 1,
+      "hot": false,
+      "label": "Opis bytu (liczby)",
+      "desc": "Ilu liczbami sieć opisuje typ wroga, przedmiotu lub pocisku."
+    },
+    "enemyHidden": {
+      "value": 8,
+      "min": 2,
+      "max": 64,
+      "step": 1,
+      "hot": false,
+      "label": "Wrogowie: neurony",
+      "desc": "Rozmiar wspólnej warstwy, która analizuje każdego wroga w oknie (potem łączy ich w jeden wektor)."
+    },
+    "conv1": {
+      "value": 8,
+      "min": 2,
+      "max": 64,
+      "step": 1,
+      "hot": false,
+      "label": "Konwolucja 1: filtry",
+      "desc": "Ile wzorców (np. „dziura przede mną”, „rura”) szuka pierwsza warstwa na widoku planszy."
+    },
+    "conv2": {
+      "value": 8,
+      "min": 2,
+      "max": 64,
+      "step": 1,
+      "hot": false,
+      "label": "Konwolucja 2: filtry",
+      "desc": "Ile bardziej złożonych wzorców składa druga warstwa z wyników pierwszej."
+    },
+    "dense1": {
+      "value": 32,
+      "min": 4,
+      "max": 512,
+      "step": 1,
+      "hot": false,
+      "label": "Warstwa decyzyjna 1: neurony",
+      "desc": "Główna warstwa łącząca widok planszy, wrogów i stan gracza. Najwięcej wag jest tutaj."
+    },
+    "dense2": {
+      "value": 16,
+      "min": 4,
+      "max": 256,
+      "step": 1,
+      "hot": false,
+      "label": "Warstwa decyzyjna 2: neurony",
+      "desc": "Druga warstwa przed wyjściem (przyciski)."
+    },
+    "dense3": {
+      "value": 0,
+      "min": 0,
+      "max": 256,
+      "step": 1,
+      "hot": false,
+      "label": "Warstwa decyzyjna 3: neurony",
+      "desc": "Dodatkowa warstwa (0 = brak). Głębsza sieć potrafi łączyć więcej informacji, ale trudniej ją wyewoluować."
+    },
+    "dense4": {
+      "value": 0,
+      "min": 0,
+      "max": 256,
+      "step": 1,
+      "hot": false,
+      "label": "Warstwa decyzyjna 4: neurony",
+      "desc": "Kolejna dodatkowa warstwa (0 = brak)."
+    }
+  }
+}

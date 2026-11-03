@@ -66,26 +66,26 @@
   },
 
   "enemies": {
-    "goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
-    "para_goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
-    "para_goomba_brown": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
-    "para_goomba_red": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828" },
-    "goomba_para": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400" },
-    "goomba_para_red": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828" },
-    "mini_goomba": { "w": 8, "h": 8, "speed": 0, "gravity": 2, "maxFall": 48, "color": "#8B4513" },
-    "koopa": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#28cc28" },
-    "koopa_red": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828" },
-    "piranha": { "w": 16, "h": 24, "speed": 12, "gravity": 0, "maxFall": 0, "color": "#00ac48" },
-    "hammer_bro": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#696969" },
-    "koopa_para": { "w": 16, "h": 24, "speed": 8,  "gravity": 4, "maxFall": 64, "color": "#28cc28" },
-    "koopa_para_red": { "w": 16, "h": 24, "speed": 6,  "gravity": 0, "maxFall": 64, "color": "#28cc28" },
-    "cheep_cheep": { "w": 16, "h": 16, "speed": 12, "gravity": 3, "maxFall": 64, "color": "#ff0000" },
-    "podoboo": { "w": 16, "h": 16, "speed": 0,  "gravity": 4, "maxFall": 64, "color": "#ff4500" },
-    "bowser": { "w": 32, "h": 32, "speed": 4,  "gravity": 6, "maxFall": 64, "color": "#006400" },
-    "buzzy_beetle": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#fcfc00" },
-    "spiny": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#ff0000" },
-    "bullet_bill": { "w": 16, "h": 16, "speed": 24, "gravity": 0, "maxFall": 0, "color": "#000000" },
-    "bullet_bill_cannon": { "w": 16, "h": 16, "speed": 0, "gravity": 0, "maxFall": 0, "color": "#333333" }
+    "goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400","score": 200 },
+    "para_goomba": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400","score": 200 },
+    "para_goomba_brown": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400","score": 200 },
+    "para_goomba_red": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828","score": 200 },
+    "goomba_para": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#d9a400","score": 200 },
+    "goomba_para_red": { "w": 16, "h": 16, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828","score": 300 },
+    "mini_goomba": { "w": 8, "h": 8, "speed": 0, "gravity": 2, "maxFall": 48, "color": "#8B4513","score": 100 },
+    "koopa": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#28cc28","score": 400 },
+    "koopa_red": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828","score": 400 },
+    "piranha": { "w": 16, "h": 24, "speed": 12, "gravity": 0, "maxFall": 0, "color": "#00ac48","score": 400 },
+    "hammer_bro": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#696969","score": 500 },
+    "koopa_para": { "w": 16, "h": 24, "speed": 8,  "gravity": 4, "maxFall": 64, "color": "#28cc28","score": 400 },
+    "koopa_para_red": { "w": 16, "h": 24, "speed": 6,  "gravity": 0, "maxFall": 0, "color": "#28cc28","score": 400 },
+    "cheep_cheep": { "w": 16, "h": 16, "speed": 12, "gravity": 3, "maxFall": 64, "color": "#ff0000","score": 400 },
+    "podoboo": { "w": 16, "h": 16, "speed": 0,  "gravity": 4, "maxFall": 64, "color": "#ff4500","score": 1000 },
+    "bowser": { "w": 32, "h": 32, "speed": 4,  "gravity": 6, "maxFall": 64, "color": "#006400","score": 1000 },
+    "buzzy_beetle": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#fcfc00","score": 400 },
+    "spiny": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#ff0000","score": 1000 },
+    "bullet_bill": { "w": 16, "h": 16, "speed": 24, "gravity": 0, "maxFall": 0, "color": "#000000","score": 1000 },
+    "bullet_bill_cannon": { "w": 16, "h": 16, "speed": 0, "gravity": 0, "maxFall": 0, "color": "#333333","score": 1000 }
   },
 
   "items": {
@@ -151,5 +151,15 @@
   "hiddenFrames": 60,
   "upFrames": 60,
   "safeRadiusPx": 28
-}
+},
+"score": {
+    "coin": 100,
+    "brickBreak": 50,
+    "questionBlock": 50,
+    "powerupCollect": 1000,
+    "powerupLost": -200,
+    "enterCave": 500,
+    "levelProgressTotal": 1000,
+    "defaultEnemy": 100
+  }
 }
