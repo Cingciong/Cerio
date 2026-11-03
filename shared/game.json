@@ -105,7 +105,7 @@
       "speed": 48, "gravity": 4, "bounce": 40, "maxFall": 64, "throwVy": 0,
       "hitsTiles": true, "pierce": false,
       "lifeFrames": 180, "maxAlive": 2,
-      "immune": ["buzzy_beetle", "bowser"]
+      "immune": ["buzzy_beetle", "bullet_bill", "bullet_bill_cannon", "bowser"]
     },
     "hammer": {
       "w": 12, "h": 12,
