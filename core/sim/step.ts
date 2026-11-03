@@ -137,19 +137,35 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   collectCoins(state);
   updateRedCoins(state);
   if (hit.ceiling) {
-    const txCenter = toTile(player.x + (player.w / 2) * SUB);
     const tyAbove = toTile(player.y) - 1;
-    const tileId = tileAt(map, txCenter, tyAbove);
+    const txLeft = toTile(player.x);
+    const txRight = toTile(player.right - 1);
+    const txCenter = toTile(player.x + (player.w / 2) * SUB);
+
+    let txBump = txCenter;
+    
+    if (!isSolid(map, txBump, tyAbove)) {
+      if (isSolid(map, txLeft, tyAbove)) {
+        txBump = txLeft;
+      } else if (isSolid(map, txRight, tyAbove)) {
+        txBump = txRight;
+      }
+    }
+
+    const tileId = tileAt(map, txBump, tyAbove);
 
     if (tileId === Tile.question || tileId === Tile.brick_star) {
-      map.tiles[tyAbove * map.width + txCenter] = Tile.used;
+      map.tiles[tyAbove * map.width + txBump] = Tile.used;
       const newItemId = state.items.length;
-      const itemX = txCenter * 16 * SUB;
+      const itemX = txBump * 16 * SUB;
       const itemY = tyAbove * 16 * SUB;
 
-      const kind: SlotItem = tileId === Tile.brick_star ? 'star' : plannedItem(state, txCenter, tyAbove) ?? questionItem(state);
-      if (kind === 'coin') state.coins++;
-      else state.items.push(new Item(newItemId, kind, itemX, itemY));
+      const kind: SlotItem = tileId === Tile.brick_star ? 'star' : plannedItem(state, txBump, tyAbove) ?? questionItem(state);
+      if (kind === 'coin') {
+        state.coins++;
+      } else {
+        state.items.push(new Item(newItemId, kind, itemX, itemY));
+      }
     }
     hitBlockAbove(state);
   }
