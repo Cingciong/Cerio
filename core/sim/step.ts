@@ -13,7 +13,8 @@ import { stepPipe, tryEnterPipe } from "./pipes.ts";
 import { updateRedCoins } from "./redcoins.ts";
 import { collectCoins } from "./coins.ts";
 import { plannedItem } from "./slots.ts";
-
+import { SCORE } from "../config/config.ts";
+import { addScore } from "./state.ts";
 
 /** True when the hitbox overlaps any tile for which `test` holds. */
 function touching(map: TileMap, body: Body, test: (map: TileMap, tx: number, ty: number) => boolean): boolean {
@@ -31,6 +32,18 @@ export function questionItem(state: GameState): ItemType {
 
 export type EnemyButtons = Record<number, Buttons>;
 
+function rewardEnemyKill(state: GameState, enemy: Enemy): void {
+  const points = (enemy.cfg as any).score ?? SCORE.defaultEnemy;
+  addScore(state, points);
+}
+
+function damagePlayer(state: GameState): void {
+  const hadPower = state.player.powerState !== 'small';
+  state.player.takeDamage();
+  if (hadPower && state.player.alive && state.player.invulnerableTimer > 0) {
+    addScore(state, SCORE.powerupLost);
+  }
+}
 export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButtons = {}): void {
   if (state.status !== "playing") return;
   state.frame++;
@@ -146,18 +159,36 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   collectCoins(state);
   updateRedCoins(state);
   if (hit.ceiling) {
-    const txCenter = toTile(player.x + (player.w / 2) * SUB);
     const tyAbove = toTile(player.y) - 1;
-    const tileId = tileAt(map, txCenter, tyAbove);
+    const txLeft = toTile(player.x);
+    const txRight = toTile(player.right - 1);
+    const txCenter = toTile(player.x + (player.w / 2) * SUB);
+
+    let txBump = txCenter;
+    
+    if (!isSolid(map, txBump, tyAbove)) {
+      if (isSolid(map, txLeft, tyAbove)) {
+        txBump = txLeft;
+      } else if (isSolid(map, txRight, tyAbove)) {
+        txBump = txRight;
+      }
+    }
+
+    const tileId = tileAt(map, txBump, tyAbove);
 
     if (tileId === Tile.question || tileId === Tile.brick_star) {
       map.tiles[tyAbove * map.width + txCenter] = Tile.used;
+      addScore(state, SCORE.questionBlock);
       const newItemId = state.items.length;
-      const itemX = txCenter * 16 * SUB;
+      const itemX = txBump * 16 * SUB;
       const itemY = tyAbove * 16 * SUB;
 
       const kind: SlotItem = tileId === Tile.brick_star ? 'star' : plannedItem(state, txCenter, tyAbove) ?? questionItem(state);
-      if (kind === 'coin') state.coins++;
+      if (kind === 'coin')
+        { 
+          state.coins++;
+          addScore(state, SCORE.coin);
+        }
       else state.items.push(new Item(newItemId, kind, itemX, itemY));
     }
     hitBlockAbove(state);
@@ -167,7 +198,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     item.update(map);
     if (item.alive && !item.spawning && player.overlaps(item)) {
       item.alive = false;
-      
+      addScore(state, SCORE.powerupCollect);
       if (item.type === 'mushroom') {
         if (player.powerState === 'small') {
           player.powerState = 'big';
@@ -251,6 +282,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         const hitY = enemy.y < player.bottom && enemy.bottom > player.y;
         if (hitX && hitY) {
           enemy.alive = false;
+          rewardEnemyKill(state, enemy);
         }
       }
     } else{
@@ -268,7 +300,11 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     const cfg = PROJECTILES[p.type];
     for (const enemy of state.enemies) {
       if (!enemy.alive || !p.overlaps(enemy)) continue;
-      if (!cfg.immune.includes(enemy.type)) enemy.alive = false;
+      if (!cfg.immune.includes(enemy.type))
+        { 
+          enemy.alive = false;
+          rewardEnemyKill(state, enemy);
+        }
       if (!cfg.pierce) {
         p.alive = false;
         break;
@@ -283,6 +319,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     for (const other of state.enemies) {
       if (enemy !== other && other.alive && enemy.overlaps(other)) {
         other.alive = false;
+        rewardEnemyKill(state, other);
       }
     }
   }
@@ -303,8 +340,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         if (overlaps) {
           if (player.powerState === 'star') {
             enemy.alive = false;
+            rewardEnemyKill(state, enemy);
           } else {
-            player.takeDamage();
+            damagePlayer(state);
           }
           hammer.alive = false;
           break;
@@ -325,6 +363,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     const fromAbove = player.vy > 0 && prevBottom <= enemy.y + RULES.stompTolerancePx * SUB; // feet were in the top part of the enemy
     if (fromAbove && enemy.stompable) {
       const shouldBounce = enemy.onStomp(player.x);
+      rewardEnemyKill(state, enemy);
       if (shouldBounce) {
         player.vy = -PLAYER.stompBounce;
       }
@@ -336,8 +375,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         if (!isShellMovingAway) {
           if (player.powerState === 'star') {
             enemy.alive = false;
+            rewardEnemyKill(state, enemy);
           } else {
-            player.takeDamage();
+            damagePlayer(state);
             if (enemy instanceof MiniGoomba) {
               enemy.alive = false;
             }

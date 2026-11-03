@@ -2,6 +2,8 @@ import { BLOCKS, TILES, type TileName } from "../config/config.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
 import { isSolid, setTile, Tile, tileAt, toTile } from "../world/tiles.ts";
 import type { GameState } from "./state.ts";
+import { SCORE } from "../config/config.ts";
+import { addScore } from "./state.ts";
 
 export interface Bump {
   tx: number;
@@ -34,6 +36,7 @@ const HIT: Record<string, HitBehaviour> = {
     setTile(state.map, tx, ty, Tile.air);
     spawnDebris(state, tx, ty);
     state.events.push({ type: "blockBreak", tx, ty });
+    addScore(state, SCORE.brickBreak);
   },
   becomes: (state, tx, ty) => {
     const t = Object.values(TILES).find((t) => t.id === tileAt(state.map, tx, ty)) as { becomes?: TileName; contents?: string };

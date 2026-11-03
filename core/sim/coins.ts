@@ -1,6 +1,8 @@
 import {TILES} from "../config/config.ts"
 import type { GameState } from "./state.ts"
 import {Tile, toTile} from "../world/tiles.ts"
+import { SCORE } from "../config/config.ts";
+import { addScore } from "./state.ts";
 
 interface TileInfo{
     contents?: string;
@@ -30,6 +32,7 @@ export function collectCoins(state: GameState): void{
             {
                 map.tiles[i] = Tile.air;
                 state.coins++;
+                addScore(state, SCORE.coin);
             }
         }
     }
