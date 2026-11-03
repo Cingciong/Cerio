@@ -122,6 +122,7 @@ Not in the game: P-meter, Tanooki statue, level timer, swimming levels (no water
 
 Needed by the above: enemies that react to fire, hammers, star and tail.
 
+
 ## Core mechanics
 
 - left, right, jump (variable height), run, crouch/down (pipes), attack (fire, hammer, tail)

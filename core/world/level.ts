@@ -1,6 +1,7 @@
 import { ENEMIES } from "../config/config.ts";
 import { TILE, TILE_SUB } from "../config/constants.ts";
 import type { PipeLink } from "./pipes.ts";
+import { isSlotItem, type SlotItem } from "../entities/powerup.ts";
 import { createTileMap, Tile, tileIdOfChar, type TileMap } from "./tiles.ts";
 
 export interface AreaFile {
@@ -18,6 +19,8 @@ export interface AreaFile {
   }[];
   objects?: { type: string; x: number; y: number; coins?: [number, number][] }[];
   spawners?: { type: string; from: number; to: number }[];
+  /** Contents of `?` blocks, in tiles. A `?` without an entry gives the old random item (see questionItem). */
+  blocks?: { x: number; y: number; item: string }[];
   segments?: SegmentSpan[];
 }
 
@@ -73,8 +76,15 @@ export interface PlatformSpawn extends Spawn {
   dir?: 1 | -1;
 }
 
+export interface BlockSpawn {
+  tx: number; // tiles
+  ty: number;
+  item: SlotItem;
+}
+
 export interface Area {
   map: TileMap;
+  blocks: BlockSpawn[];
   enemies: EnemySpawn[];
   platforms: PlatformSpawn[];
   segments: SegmentSpan[];
@@ -127,8 +137,17 @@ function loadArea(file: AreaFile, name: string): Area {
     }
   }
 
+  const seen = new Set<string>();
+  for (const b of file.blocks ?? []) {
+    if (!isSlotItem(b.item)) throw new Error(`${name}: unknown block item '${b.item}' at ${b.x},${b.y}`);
+    if (map.tiles[b.y * width + b.x] !== Tile.question) throw new Error(`${name}: block item at ${b.x},${b.y} is not on a '?' tile`);
+    if (seen.has(`${b.x},${b.y}`)) throw new Error(`${name}: two block items at ${b.x},${b.y}`);
+    seen.add(`${b.x},${b.y}`);
+  }
+
   return {
     map,
+    blocks: (file.blocks ?? []).map((b) => ({ tx: b.x, ty: b.y, item: b.item as SlotItem })),
     enemies: (file.enemies ?? []).map((e) => ({
       type: e.type,
       x: e.x * TILE_SUB,

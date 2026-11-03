@@ -6,6 +6,7 @@ export * from "./world/level.ts";
 export * from "./world/pipes.ts";
 export * from "./sim/pipes.ts";
 export * from "./sim/blocks.ts";
+export * from "./sim/slots.ts";
 export * from "./entities/body.ts";
 export * from "./entities/player.ts";
 export * from "./entities/powerup.ts";

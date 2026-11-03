@@ -4,6 +4,7 @@ import { findLips, type PipeLink } from "../world/pipes.ts";
 import { canFollow, joint } from "./segment.ts";
 import { LengthPolicy } from "./LengthPolicy.ts";
 import { planPipes } from "./PipePlan.ts";
+import { fillSlots, SLOT_SALT, type PowerupPolicy } from "./PowerupPlan.ts";
 import { SegmentChain, widthOf } from "./SegmentChain.ts";
 import type { SegmentLibrary } from "./SegmentLibrary.ts";
 import type { GeneratedLevel, LevelType, Segment } from "./types.ts";
@@ -21,6 +22,7 @@ export interface GenOptions {
   tolerance?: number;
   type?: LevelType;
   types?: LevelType[];
+  powerups?: Partial<PowerupPolicy>;
 }
 
 interface Built {
@@ -68,6 +70,7 @@ export class LevelGenerator {
 
     if (built.entry >= 0 && built.exit >= 0) this.addCave(level, area.segments![built.entry], area.segments![built.exit], caveType!, rng);
     else if (withCave) console.warn(`level ${seed}: pipe segments did not fit, no cave`);
+    fillSlots(level.cave ? [level.overworld, level.cave] : [level.overworld], new Rng((seed ^ SLOT_SALT) >>> 0), opts.powerups);
     return level;
   }
 

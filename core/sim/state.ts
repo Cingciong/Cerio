@@ -5,13 +5,14 @@ import { Player } from "../entities/player.ts";
 import { SUB, TILE } from "../config/constants.ts";
 import type { TileMap } from "../world/tiles.ts";
 import { createEnemy } from "../entities/enemy.ts";
-import { Item } from "../entities/powerup.ts";
+import { Item, type SlotItem } from "../entities/powerup.ts";
 import type { Projectile } from "../entities/projectile.ts";
 import type { Bump, Debris, GameEvent } from "./blocks.ts";
 import type { PipeTravel } from "./pipes.ts";
 import { Platform } from "../entities/platform.ts";
 import type { RedRing } from "./redcoins.ts";
 import { Rng } from "./rng.ts";
+import { blockKey } from "./slots.ts";
 
 export type Status = "playing" | "dead" | "won";
 
@@ -38,6 +39,7 @@ export interface GameState {
   freezeTimer: number;
   coins: number;
   multiCoins: Record<string, number>;
+  blockItems: Record<string, SlotItem>; // planned contents of ? blocks, key = blockKey()
   redRings: RedRing[];
   redRingsCleared: number;
   rng: Rng; // seeded, used for gameplay randomness (e.g. which power-up a ? block gives)
@@ -50,7 +52,9 @@ export function createState(level: Level, seed: number = hashName(level.name)): 
   const areaEnemies: Record<string, Enemy[]> = {};
   const areaPlatforms: Record<string, Platform[]> = {};
   const maps: Record<string, TileMap> = {};
+  const blockItems: Record<string, SlotItem> = {};
   for (const [name, area] of Object.entries(level.areas)) {
+    for (const b of area.blocks) blockItems[blockKey(name, area.map.width, b.tx, b.ty)] = b.item;
     areaEnemies[name] = area.enemies.map((e) => createEnemy(id++, e.type, e.x, e.y, e.count));
     areaPlatforms[name] = (area.platforms ?? []).map(
       (p) => new Platform(platformId++, p.x, p.y, p.w, p.h, p.type, p.range, p.speed, p.dir)
@@ -79,6 +83,7 @@ export function createState(level: Level, seed: number = hashName(level.name)): 
     events: [],
     coins: 0,
     multiCoins: {},
+    blockItems,
     redRings: Object.entries(level.areas).flatMap(([name, a]) =>
       (a.redRings ?? []).map((r) => ({ ...r, area: name, phase: "waiting" as const, timer: 0, collected: r.coins.map(() => false) })),
     ),
