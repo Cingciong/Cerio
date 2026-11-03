@@ -1,4 +1,5 @@
-import { ENEMIES } from "../config/config.ts";
+import { ENEMIES, TILES } from "../config/config.ts";
+import { isSlotItem } from "../entities/powerup.ts";
 import { tileIdOfChar } from "../world/tiles.ts";
 import type { LevelType, Segment } from "./types.ts";
 
@@ -9,8 +10,10 @@ const has = (s: Segment, tag: string) => s.tags?.includes(tag) ?? false;
 function valid(s: Segment): boolean {
   const tile = s.rows.join("").split("").find((c) => tileIdOfChar(c) === undefined);
   const enemy = (s.enemies ?? []).find((e) => !ENEMIES[e.type]);
+  const block = (s.blocks ?? []).find((b) => s.rows[b.y]?.[b.x] !== TILES.question.char || !isSlotItem(b.item));
   if (tile || enemy) console.warn(`segment ${s.name} skipped: unknown ${tile ? `tile '${tile}'` : `enemy '${enemy!.type}'`}`);
-  return !tile && !enemy;
+  if (block) console.warn(`segment ${s.name} skipped: block item '${block.item}' at ${block.x},${block.y} is not on a '?' or unknown`);
+  return !tile && !enemy && !block;
 }
 
 /** Segments grouped by type, sorted by name so the same seed gives the same level. */

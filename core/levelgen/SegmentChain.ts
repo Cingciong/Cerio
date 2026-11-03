@@ -35,6 +35,7 @@ export class SegmentChain {
       platforms: [],
       objects: [],
       spawners: [],
+      blocks: [],
       segments: [],
     };
     let player: LevelFile["player"];
@@ -55,6 +56,7 @@ export class SegmentChain {
           });
         }
       }
+      for (const b of s.blocks ?? []) area.blocks.push({ ...b, x: b.x + x0 });
       for (const sp of s.spawners ?? []) area.spawners.push({ ...sp, from: sp.from + x0, to: sp.to + x0 });
       area.segments.push({ name: s.name, x: x0, w });
       if (!player && s.player) player = { x: s.player.x + x0, y: s.player.y };

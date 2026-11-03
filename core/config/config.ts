@@ -21,6 +21,7 @@ export const PIRANHA = config.piranha;
 export const ENEMIES: Record<string, EnemyConfig> = config.enemies;
 export type EnemyConfig = (typeof config.enemies)[keyof typeof config.enemies];
 
+export const ITEMS = config.items;
 export const PROJECTILES = config.projectiles;
 export const BLOCKS = config.blocks;
 export const RULES = config.rules;

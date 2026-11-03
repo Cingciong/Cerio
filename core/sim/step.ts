@@ -5,12 +5,13 @@ import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
 import { BulletBillCannon, Goomba, HammerBro, MiniGoomba, ParaGoombaBrown } from "../entities/enemy.ts";
 import { isSolid, Tile, tileAt, toTile } from "../world/tiles.ts";
-import { Item, type ItemType } from "../entities/powerup.ts";
+import { Item, type ItemType, type SlotItem } from "../entities/powerup.ts";
 import { Projectile } from "../entities/projectile.ts";
 import { hitBlockAbove, stepBlocks } from "./blocks.ts";
 import { stepPipe, tryEnterPipe } from "./pipes.ts";
 import { updateRedCoins } from "./redcoins.ts";
 import { collectCoins } from "./coins.ts";
+import { plannedItem } from "./slots.ts";
 
 
 export function questionItem(state: GameState): ItemType {
@@ -146,8 +147,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       const itemX = txCenter * 16 * SUB;
       const itemY = tyAbove * 16 * SUB;
 
-      const kind = tileId === Tile.brick_star ? 'star' : questionItem(state);
-      state.items.push(new Item(newItemId, kind, itemX, itemY));
+      const kind: SlotItem = tileId === Tile.brick_star ? 'star' : plannedItem(state, txCenter, tyAbove) ?? questionItem(state);
+      if (kind === 'coin') state.coins++;
+      else state.items.push(new Item(newItemId, kind, itemX, itemY));
     }
     hitBlockAbove(state);
   }

@@ -124,7 +124,15 @@
   "rules": {
     "stompTolerancePx": 4,
     "questionItem": "auto",
-    "questionPool": ["flower", "leaf", "tanooki", "frog", "hammer_suit", "stopwatch"]
+    "questionPool": ["flower", "leaf", "tanooki", "frog", "hammer_suit", "stopwatch"],
+    "mushroomUpgrade": "flower",
+    "slots": {
+      "rate": 0.5,
+      "firstMushroom": true,
+      "minGap": 10,
+      "weights": { "mushroom": 3, "flower": 3, "leaf": 2, "tanooki": 1, "frog": 1, "hammer_suit": 1, "stopwatch": 1, "star": 1 },
+      "max": { "star": 1 }
+    }
   },
 
   "redCoins":{"timeFrames": 480},

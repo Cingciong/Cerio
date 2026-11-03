@@ -4,5 +4,6 @@ export * from "./SegmentLibrary.ts";
 export * from "./SegmentChain.ts";
 export * from "./LengthPolicy.ts";
 export * from "./PipePlan.ts";
+export * from "./PowerupPlan.ts";
 export * from "./LevelGenerator.ts";
 export * from "./LevelSequence.ts";
