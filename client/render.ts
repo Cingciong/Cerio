@@ -14,11 +14,14 @@ import {
  BRICK_DEBRIS_FRAMES,
  GOOMBA_WALK,
  GOOMBA_SQUASHED,
+ MINI_GOOMBA_FRAMES,
   HAMMER_BRO_FRAMES,
   HAMMER_PROJECTILE,
   KOOPA_SHELL,
   KOOPA_WALK,
   MARIO_IDLE,
+  MARIO_BIG_FRAMES,
+  MARIO_FIRE_FRAMES,
   MARIO_JUMP,
   MARIO_WALK,
   OVERWORLD_CLOUD,
@@ -43,6 +46,7 @@ function loadSpriteSheet(path: string): HTMLImageElement {
 
 const marioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Mario.png");
 const enemySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Enemies.png");
+const miniGoombaSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/MiniGoomba.png");
 const temporarySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/temporary_sprites.png");
 const bulletBillSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/BulletBill.png");
 const itemSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Items.png");
@@ -50,6 +54,7 @@ const powerupSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Powerups.png")
 const overworldSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/OverWorld.png");
 const bridgeSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/Bridge.png");
 const bowserBridgeSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/BowserBridge.png");
+const noteBlockSprite = loadSpriteSheet("./sprites/Mario1/Tilesets/Note.png");
 const axeSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/Axe.png");
 const buzzySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Buzzy Beetle1.png");
 const wingsSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/wings.png");
@@ -249,12 +254,12 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     const cx = Math.round(p.x / SUB - cam.x) + p.w / 2;
     const cy = Math.round(p.y / SUB - cam.y) + p.h / 2;
     if (p.type === "hammer") {
-      const f = HAMMER_PROJECTILE;
+      const f = POWERUP_SPRITES.hammer_suit;
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(state.frame * 0.4 * p.dir); // spinning
-      if (isSpriteReady(enemySpriteSheet)) {
-        ctx.drawImage(enemySpriteSheet, f.x, f.y, f.width, f.height, -f.width / 2, -f.height / 2, f.width, f.height);
+      if (isSpriteReady(powerupSpriteSheet)) {
+        ctx.drawImage(powerupSpriteSheet, f.x, f.y, f.width, f.height, -f.width / 2, -f.height / 2, f.width, f.height);
       } else {
         ctx.fillStyle = "#696969";
         ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
@@ -374,6 +379,25 @@ function drawTile(
   if (tileId === Tile.bowser_bridge && isSpriteReady(bowserBridgeSpriteSheet)) return;
 
   if (tileId === Tile.treetop) return;
+  if ((tileId === Tile.hidden_1up || tileId === Tile.hidden_coin)) return;
+
+  if (tileId === Tile.wood) {
+    drawWoodTile(ctx, map, tx, ty, x, y);
+    tintCaveTile(ctx, x, y, tint);
+    return;
+  }
+
+  if (tileId === Tile.big_block) {
+    drawBigBlockTile(ctx, x, y);
+    tintCaveTile(ctx, x, y, tint);
+    return;
+  }
+
+  if (tileId === Tile.note && isSpriteReady(noteBlockSprite)) {
+    ctx.drawImage(noteBlockSprite, 0, 0, noteBlockSprite.naturalWidth, noteBlockSprite.naturalHeight, x, y, TILE, TILE);
+    tintCaveTile(ctx, x, y, tint);
+    return;
+  }
 
   if (tileId === Tile.lava && isSpriteReady(overworldSpriteSheet)) {
     const frame = TILE_SPRITES[Tile.floor];
@@ -389,7 +413,7 @@ function drawTile(
     return;
   }
 
-  const frame = TILE_SPRITES[tileId];
+  const frame = tileId === Tile.brick_1up ? TILE_SPRITES[Tile.brick] : TILE_SPRITES[tileId];
   if (frame && isSpriteReady(overworldSpriteSheet)) {
     drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, tint);
     return;
@@ -599,22 +623,15 @@ function drawTreetops(
       const x = Math.round(start * TILE - cam.x);
       const y = Math.round(ty * TILE - cam.y);
       const width = (end - start) * TILE;
-      drawTreetopCanopy(ctx, x, y, width);
-
-      for (let treeX = start; treeX < end; treeX++) {
-        for (let trunkRow = 1; trunkRow <= 3; trunkRow++) {
-          const mapY = ty + trunkRow;
-          if (mapY < map.height && map.tiles[mapY * map.width + treeX] !== Tile.air) break;
-          const trunkX = Math.round(treeX * TILE - cam.x);
-          const trunkY = Math.round(mapY * TILE - cam.y);
-          const isLeftEdge = treeX === start;
-          const isRightEdge = treeX === end - 1;
-          drawTreeTrunkTile(ctx, trunkX, trunkY, treeX, trunkRow, isLeftEdge, isRightEdge);
-          const leftInset = isLeftEdge ? (isRightEdge ? TILE / 4 : TILE / 2) : 0;
-          const rightInset = isRightEdge ? (isLeftEdge ? TILE / 4 : TILE / 2) : 0;
-          tintCaveTile(ctx, trunkX + leftInset, trunkY, caveTint, TILE - leftInset - rightInset);
-        }
-      }
+      const hasTreetopAbove = ty > 0 && Array.from(
+        { length: end - start },
+        (_, offset) => map.tiles[(ty - 1) * map.width + start + offset] === Tile.treetop,
+      ).every(Boolean);
+      const hasTreetopBelow = ty + 1 < map.height && Array.from(
+        { length: end - start },
+        (_, offset) => map.tiles[(ty + 1) * map.width + start + offset] === Tile.treetop,
+      ).every(Boolean);
+      drawTreetopCanopy(ctx, x, y, width, !hasTreetopAbove, !hasTreetopBelow);
       if (caveTint) {
         ctx.fillStyle = "rgba(35, 90, 210, 0.38)";
         ctx.fillRect(x, y, width, TILE);
@@ -623,52 +640,74 @@ function drawTreetops(
   }
 }
 
-function drawTreetopCanopy(ctx: CanvasRenderingContext2D, x: number, y: number, width: number): void {
-  const right = x + width;
-  ctx.fillStyle = "#263522";
-  ctx.beginPath();
-  ctx.moveTo(x + 3, y);
-  ctx.lineTo(right - 3, y);
-  ctx.lineTo(right - 3, y + 1);
-  ctx.lineTo(right - 1, y + 1);
-  ctx.lineTo(right - 1, y + 3);
-  ctx.lineTo(right, y + 3);
-  ctx.lineTo(right, y + 13);
-  ctx.lineTo(right - 2, y + 15);
-  ctx.lineTo(x + 2, y + 15);
-  ctx.lineTo(x, y + 13);
-  ctx.lineTo(x, y + 3);
-  ctx.lineTo(x + 1, y + 1);
-  ctx.lineTo(x + 3, y + 1);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = "#9dcc32";
-  ctx.fillRect(x + 3, y + 2, width - 6, 1);
-  ctx.fillRect(x + 2, y + 3, width - 4, 10);
-  ctx.fillRect(x + 1, y + 13, width - 2, 1);
-  ctx.fillRect(x + 2, y + 14, width - 4, 1);
-  ctx.fillRect(x + 2, y + 15, width - 4, 1);
-
-  ctx.fillStyle = "#c5e85a";
-  ctx.fillRect(x + 4, y + 2, width - 8, 1);
-  ctx.fillRect(x + 2, y + 4, 1, 6);
-}
-
-function drawTreeTrunkTile(
+function drawTreetopCanopy(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  column: number,
-  row: number,
-  isLeftEdge: boolean,
-  isRightEdge: boolean,
+  width: number,
+  showTopEdge: boolean,
+  showBottomEdge: boolean,
 ): void {
-  const leftInset = isLeftEdge ? (isRightEdge ? TILE / 4 : TILE / 2) : 0;
-  const rightInset = isRightEdge ? (isLeftEdge ? TILE / 4 : TILE / 2) : 0;
-  const trunkX = x + leftInset;
-  const trunkWidth = TILE - leftInset - rightInset;
-  ctx.fillStyle = "#56351f";
+  const right = x + width;
+  const bottom = y + TILE;
+  ctx.fillStyle = "#263522";
+  ctx.beginPath();
+  ctx.moveTo(x + (showTopEdge ? 3 : 0), y);
+  ctx.lineTo(right - (showTopEdge ? 3 : 0), y);
+  if (showTopEdge) ctx.quadraticCurveTo(right, y, right, y + 3);
+  else ctx.lineTo(right, y);
+  ctx.lineTo(right, bottom - (showBottomEdge ? 3 : 0));
+  if (showBottomEdge) ctx.quadraticCurveTo(right, bottom, right - 3, bottom);
+  else ctx.lineTo(right, bottom);
+  ctx.lineTo(x + (showBottomEdge ? 3 : 0), bottom);
+  if (showBottomEdge) ctx.quadraticCurveTo(x, bottom, x, bottom - 3);
+  else ctx.lineTo(x, bottom);
+  ctx.lineTo(x, y + (showTopEdge ? 3 : 0));
+  if (showTopEdge) ctx.quadraticCurveTo(x, y, x + 3, y);
+  else ctx.lineTo(x, y);
+  ctx.closePath();
+  ctx.fill();
+
+  const topInset = showTopEdge ? 2 : 0;
+  const bottomInset = showBottomEdge ? 2 : 0;
+  ctx.fillStyle = "#9dcc32";
+  ctx.beginPath();
+  ctx.moveTo(x + (showTopEdge ? 2 : 0), y + topInset);
+  ctx.lineTo(right - (showTopEdge ? 2 : 0), y + topInset);
+  if (showTopEdge) ctx.quadraticCurveTo(right - 2, y + topInset, right - 2, y + topInset + 2);
+  else ctx.lineTo(right, y + topInset);
+  ctx.lineTo(right - (showBottomEdge ? 2 : 0), bottom - bottomInset);
+  if (showBottomEdge) ctx.quadraticCurveTo(right - 2, bottom - bottomInset, right - 2, bottom - bottomInset - 2);
+  else ctx.lineTo(right, bottom - bottomInset);
+  ctx.lineTo(x + (showBottomEdge ? 2 : 0), bottom - bottomInset);
+  if (showBottomEdge) ctx.quadraticCurveTo(x + 2, bottom - bottomInset, x + 2, bottom - bottomInset - 2);
+  else ctx.lineTo(x, bottom - bottomInset);
+  ctx.lineTo(x + (showTopEdge ? 2 : 0), y + topInset);
+  if (showTopEdge) ctx.quadraticCurveTo(x + 2, y + topInset, x + 2, y + topInset + 2);
+  else ctx.lineTo(x, y + topInset);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#c5e85a";
+  ctx.fillRect(x + 3, y + topInset + 3, 1, Math.max(0, TILE - topInset - bottomInset - 6));
+}
+
+function drawWoodTile(
+  ctx: CanvasRenderingContext2D,
+  map: GameState["map"],
+  tx: number,
+  ty: number,
+  x: number,
+  y: number,
+): void {
+  const tileAt = (tileX: number, tileY: number) =>
+    tileX >= 0 && tileX < map.width && tileY >= 0 && tileY < map.height &&
+    map.tiles[tileY * map.width + tileX] === Tile.wood;
+  const isLeftEdge = !tileAt(tx - 1, ty);
+  const isRightEdge = !tileAt(tx + 1, ty);
+  const trunkX = x;
+  const trunkWidth = TILE;
+  const outline = "#49301f";
+  ctx.fillStyle = outline;
   ctx.fillRect(trunkX, y, trunkWidth, TILE);
   ctx.fillStyle = "#b96f35";
   ctx.fillRect(trunkX + 1, y + 1, trunkWidth - 2, TILE - 2);
@@ -676,17 +715,32 @@ function drawTreeTrunkTile(
   ctx.fillRect(trunkX + 2, y + 2, 1, TILE - 4);
   ctx.fillRect(trunkX + Math.max(4, Math.floor(trunkWidth * 0.6)), y + 2, 1, TILE - 4);
   ctx.fillStyle = "#764323";
-
-  if ((column + row) % 2 === 0) {
-    for (let step = 0; step < Math.min(5, trunkWidth - 3); step++) {
-      ctx.fillRect(trunkX + trunkWidth - 4 - step, y + 3 + step * 2, 2, 2);
+  if ((tx + ty) % 2 === 0) {
+    for (let step = 0; step < 3; step++) {
+      ctx.fillRect(trunkX + trunkWidth - 4 - step, y + 4 + step * 3, 1, 1);
     }
   } else {
-    const startX = Math.max(1, Math.floor(trunkWidth / 4));
-    for (let step = 0; step < Math.min(4, trunkWidth - 3); step++) {
-      ctx.fillRect(trunkX + startX + step, y + 4 + step * 2, 2, 2);
+    for (let step = 0; step < 3; step++) {
+      ctx.fillRect(trunkX + 4 + step, y + 3 + step * 3, 1, 1);
     }
   }
+  if (isLeftEdge) ctx.fillRect(trunkX, y, 1, TILE);
+  if (isRightEdge) ctx.fillRect(trunkX + trunkWidth - 1, y, 1, TILE);
+}
+
+function drawBigBlockTile(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.fillStyle = "#493a36";
+  ctx.fillRect(x, y, TILE, TILE);
+  ctx.fillStyle = "#b97943";
+  ctx.fillRect(x + 2, y + 2, TILE - 4, TILE - 4);
+  ctx.fillStyle = "#e2ad69";
+  ctx.fillRect(x + 3, y + 3, TILE - 6, 2);
+  ctx.fillRect(x + 3, y + 8, 4, 2);
+  ctx.fillRect(x + 9, y + 8, 4, 2);
+  ctx.fillStyle = "#805334";
+  ctx.fillRect(x + 2, y + 6, TILE - 4, 1);
+  ctx.fillRect(x + 2, y + 11, TILE - 4, 1);
+  ctx.fillRect(x + 7, y + 6, 1, 6);
 }
 
 function tintCaveTile(ctx: CanvasRenderingContext2D, x: number, y: number, caveTint: boolean, size = TILE): void {
@@ -891,7 +945,12 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   if (enemy instanceof MiniGoomba) {
-    drawMiniGoomba(ctx, enemy, cam);
+    if (isSpriteReady(miniGoombaSpriteSheet)) {
+      const frame = MINI_GOOMBA_FRAMES[Math.floor(frameNumber / 8) % MINI_GOOMBA_FRAMES.length];
+      drawMiniGoomba(ctx, enemy, cam, frame);
+    } else {
+      drawMiniGoombaFallback(ctx, enemy, cam);
+    }
     return;
   }
 
@@ -1121,7 +1180,9 @@ function drawSpriteFrame(
 
 function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): void {
   const { player } = state;
-  const x = Math.round(player.x / SUB - cam.x - (TILE - player.w) / 2);
+  const isPoweredUp = player.powerState !== "small";
+  const drawSize = isPoweredUp ? 32 : TILE;
+  const x = Math.round(player.x / SUB - cam.x - (drawSize - player.w) / 2);
   const y = Math.round(player.y / SUB - cam.y);
 
   if (!isSpriteReady(marioSpriteSheet)) {
@@ -1130,16 +1191,21 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera
   }
 
   const walking = player.onGround && player.vx !== 0;
+  const largeFrames = player.powerState === "fire" ? MARIO_FIRE_FRAMES : MARIO_BIG_FRAMES;
   const frame = !player.onGround
-    ? MARIO_JUMP
+    ? isPoweredUp
+      ? largeFrames[player.powerState === "fire" ? largeFrames.length - 1 : 5]
+      : MARIO_JUMP
     : walking
-      ? MARIO_WALK[Math.floor(state.frame / 7) % MARIO_WALK.length]
-      : MARIO_IDLE;
-  const drawX = Math.floor((TILE - player.w) / 2);
-
+      ? isPoweredUp
+        ? largeFrames[1 + (Math.floor(state.frame / 7) % 3)]
+        : MARIO_WALK[Math.floor(state.frame / 7) % MARIO_WALK.length]
+      : isPoweredUp
+        ? largeFrames[0]
+        : MARIO_IDLE;
   ctx.save();
   if (player.facing < 0) {
-    ctx.translate(x + TILE, y);
+    ctx.translate(x + drawSize, y);
     ctx.scale(-1, 1);
   } else {
     ctx.translate(x, y);
@@ -1150,10 +1216,10 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera
     frame.y,
     frame.width,
     frame.height,
-    drawX,
     0,
-    TILE,
-    TILE,
+    0,
+    drawSize,
+    drawSize,
   );
   ctx.restore();
 }
@@ -1198,7 +1264,28 @@ function drawPlatform(ctx: CanvasRenderingContext2D, platform: Platform, cam: Ca
   ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
 }
 
-function drawMiniGoomba(ctx: CanvasRenderingContext2D, enemy: MiniGoomba, cam: Camera): void {
+function drawMiniGoomba(
+  ctx: CanvasRenderingContext2D,
+  enemy: MiniGoomba,
+  cam: Camera,
+  frame: SpriteFrame,
+): void {
+  const x = Math.round(enemy.x / SUB - cam.x);
+  const y = Math.round(enemy.y / SUB - cam.y);
+  ctx.drawImage(
+    miniGoombaSpriteSheet,
+    frame.x,
+    frame.y,
+    frame.width,
+    frame.height,
+    x - 1,
+    y - 2,
+    frame.width,
+    frame.height,
+  );
+}
+
+function drawMiniGoombaFallback(ctx: CanvasRenderingContext2D, enemy: MiniGoomba, cam: Camera): void {
   const x = Math.round(enemy.x / SUB - cam.x);
   const y = Math.round(enemy.y / SUB - cam.y);
   ctx.save();
