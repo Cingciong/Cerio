@@ -1097,10 +1097,16 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
     const frame = shell
       ? KOOPA_SHELL[enemy.actionState === "shell_sliding" ? frameIndex % KOOPA_SHELL.length : 0]
       : KOOPA_WALK[moving ? frameIndex % KOOPA_WALK.length : 0];
+
+    const visualW = 16;
+    const visualH = shell ? 16 : 24;
+    
+    const renderX = enemy.x - ((visualW - enemy.w) / 2) * SUB;
+    const renderY = enemy.bottom - visualH * SUB;
     drawSpriteFrame(
       ctx,
       enemySpriteSheet,
-      enemy,
+      { x: renderX, y: renderY, w: visualW, h: visualH },
       cam,
       frame,
       enemy.dir > 0,

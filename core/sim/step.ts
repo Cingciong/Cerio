@@ -355,14 +355,25 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     }
   }
 
+  const stompCandidates = new Set(
+    state.enemies.filter(
+      (enemy) =>
+        enemy.alive &&
+        enemy.stompable &&
+        player.overlaps(enemy) &&
+        player.vy > 0 &&
+        prevBottom <= enemy.y + RULES.stompTolerancePx * SUB,
+    ),
+  );
+
   for (const enemy of state.enemies) {
     if (
       !enemy.alive ||
       enemy instanceof BulletBillCannon ||
-      (enemy instanceof Goomba && enemy.squashTimer > 0) ||
+      (enemy instanceof Goomba && enemy.squashTimer > 0 && !stompCandidates.has(enemy)) ||
       !player.overlaps(enemy)
     ) continue;
-    const fromAbove = player.vy > 0 && prevBottom <= enemy.y + RULES.stompTolerancePx * SUB; // feet were in the top part of the enemy
+    const fromAbove = stompCandidates.has(enemy);
     if (fromAbove && enemy.stompable) {
       const shouldBounce = enemy.onStomp(player.x);
       rewardEnemyKill(state, enemy);
