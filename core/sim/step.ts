@@ -1,5 +1,5 @@
 
-import type { Buttons } from "../config/buttons.ts";
+import { Button, type Buttons } from "../config/buttons.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
@@ -252,7 +252,12 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
   for (const enemy of state.enemies) {
     if(state.freezeTimer === 0){
-      enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map, player);
+      let buttons = enemyButtons[enemy.id] ?? enemy.decide(map, player);
+      if (enemy.turnAwayFromLava(map)) {
+        buttons &= ~(Button.left | Button.right);
+        buttons |= enemy.dir < 0 ? Button.left : Button.right;
+      }
+      enemy.update(buttons, map, player);
     }
   }
   if (state.freezeTimer === 0) {

@@ -7,7 +7,7 @@ import { Body } from "./body.ts";
 import { Button, has, type Buttons } from "../config/buttons.ts";
 import { ENEMIES, PIRANHA, type EnemyConfig } from "../config/config.ts";
 import { TILE_SUB, SUB } from "../config/constants.ts";
-import { isSolid, toTile, type TileMap } from "../world/tiles.ts";
+import { isDeadly, isSolid, toTile, type TileMap } from "../world/tiles.ts";
 
 export type EnemyController = (enemy: Enemy, map: TileMap, player?: Body) => Buttons | undefined;
 export type EnemyActionState = 'default' | 'shell_idle' | 'shell_sliding' | 'falling';
@@ -40,6 +40,19 @@ export class Enemy extends Body {
 
   setController(controller: EnemyController): void {
     this.externalController = controller;
+  }
+
+  turnAwayFromLava(map: TileMap): boolean {
+    if (!this.onGround || this.actionState === 'shell_sliding') return false;
+
+    const tx = this.dir > 0 ? toTile(this.right) : toTile(this.x) - 1;
+    for (let ty = toTile(this.y); ty <= toTile(this.bottom); ty++) {
+      if (isDeadly(map, tx, ty)) {
+        this.dir = -this.dir;
+        return true;
+      }
+    }
+    return false;
   }
 
   /** Default controller: walk, turn around at walls. */
