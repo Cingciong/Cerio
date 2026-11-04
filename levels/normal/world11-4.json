@@ -20,7 +20,7 @@
   ],
   "player": {"x": 2, "y": 12},
   "enemies": [
-    {"type": "koopa", "x": 5, "y": 12},
+    {"type": "koopa", "x": 5, "y": 11},
     {"type": "goomba", "x": 18, "y": 12},
     {"type": "goomba", "x": 21, "y": 12},
     {"type": "goomba", "x": 33, "y": 12},

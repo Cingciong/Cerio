@@ -20,8 +20,8 @@
   ],
   "player": { "x": 2, "y": 10 },
   "enemies": [
-    { "type": "koopa_red", "x": 26, "y": 6 },
-    { "type": "koopa_red", "x": 34, "y": 10 }
+    { "type": "koopa_red", "x": 26, "y": 5 },
+    { "type": "koopa_red", "x": 34, "y": 9 }
   ],
   "platforms": [
     { "type": "vertical", "x": 50, "y": 8, "w": 4, "h": 0.5, "range": 2, "speed": 1, "dir": -1 }

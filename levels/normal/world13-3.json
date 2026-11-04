@@ -20,6 +20,6 @@
   ],
   "player": {"x": 4,"y": 10},
   "enemies": [
-    {"type": "koopa_red", "x": 21,"y": 6}
+    {"type": "koopa_red", "x": 21,"y": 5}
   ]
 }

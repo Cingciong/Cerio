@@ -21,9 +21,9 @@
   "enemies": [
     {"type": "buzzy_beetle", "x": 3, "y": 12},
     {"type": "goomba", "x": 21, "y": 12},
-    {"type": "koopa_para", "x": 23, "y": 8},
+    {"type": "koopa_para", "x": 23, "y": 7},
     {"type": "goomba", "x": 24, "y": 12},
-    {"type": "koopa", "x": 41, "y": 12},
+    {"type": "koopa", "x": 41, "y": 11},
     {"type": "para_goomba", "x": 43, "y": 12}
   ]
 }
