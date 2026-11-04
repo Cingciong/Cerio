@@ -30,7 +30,7 @@ type HitBehaviour =(state: GameState, tx: number, ty: number) => void;
 const HIT: Record<string, HitBehaviour> = {
   bump,
   break: (state, tx, ty) => {
-    if (state.player.powerState === "small") return bump(state, tx, ty);
+    if (state.player.form === "small") return bump(state, tx, ty);
     killOnTop(state, tx, ty);
     setTile(state.map, tx, ty, Tile.air);
     spawnDebris(state, tx, ty);

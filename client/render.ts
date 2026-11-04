@@ -1223,7 +1223,8 @@ function drawSpriteFrame(
 
 function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): void {
   const { player } = state;
-  const isPoweredUp = player.powerState !== "small";
+  const form = player.form; // under a star: the form from before it
+  const isPoweredUp = form !== "small";
   const drawSize = isPoweredUp ? 32 : TILE;
   const x = Math.round(player.x / SUB - cam.x - (drawSize - player.w) / 2);
   const y = Math.round(player.y / SUB - cam.y);
@@ -1234,10 +1235,10 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera
   }
 
   const walking = player.onGround && player.vx !== 0;
-  const largeFrames = player.powerState === "fire" ? MARIO_FIRE_FRAMES : MARIO_BIG_FRAMES;
+  const largeFrames = form === "fire" ? MARIO_FIRE_FRAMES : MARIO_BIG_FRAMES;
   const frame = !player.onGround
     ? isPoweredUp
-      ? largeFrames[player.powerState === "fire" ? largeFrames.length - 1 : 5]
+      ? largeFrames[form === "fire" ? largeFrames.length - 1 : 5]
       : MARIO_JUMP
     : walking
       ? isPoweredUp
