@@ -150,7 +150,7 @@
   "piranha": {
   "hiddenFrames": 60,
   "upFrames": 60,
-  "safeRadiusPx": 28
+  "safeRadiusPx": 16
 },
 "score": {
     "coin": 100,
