@@ -12,7 +12,7 @@ import { hitBlockAbove, stepBlocks } from "./blocks.ts";
 import { stepPipe, tryEnterPipe } from "./pipes.ts";
 import { updateRedCoins } from "./redcoins.ts";
 import { collectCoins } from "./coins.ts";
-import { plannedItem } from "./slots.ts";
+import { plannedItem, SUIT_ITEMS } from "./slots.ts";
 import { SCORE } from "../config/config.ts";
 import { addScore } from "./state.ts";
 
@@ -25,8 +25,8 @@ function touching(map: TileMap, body: Body, test: (map: TileMap, tx: number, ty:
 }
 
 export function questionItem(state: GameState): ItemType {
-  if (RULES.questionItem !== 'auto') return RULES.questionItem as ItemType;
   if (state.player.powerState === 'small') return 'mushroom';
+  if (RULES.questionItem !== 'auto') return RULES.questionItem as ItemType;
   return state.rng.pick(RULES.questionPool as ItemType[]);
 }
 
@@ -202,7 +202,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     if (item.alive && !item.spawning && player.overlaps(item)) {
       item.alive = false;
       addScore(state, SCORE.powerupCollect);
-      if (item.type === 'mushroom') {
+      if (SUIT_ITEMS.includes(item.type) && player.powerState === 'small') {
+        player.powerState = 'big';
+      } else if (item.type === 'mushroom') {
         if (player.powerState === 'small') {
           player.powerState = 'big';
         }
