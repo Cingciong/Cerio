@@ -15,6 +15,8 @@ export class Player extends Body {
 
   powerState: PowerState = 'small';
   invulnerableTimer = 0;
+  starTimer = 0; // frames of star power left
+  powerBeforeStar: PowerState = 'small'; // form restored when the star runs out
   wantsShoot = false; 
 
   constructor(x: number, y: number) {
@@ -32,7 +34,16 @@ export class Player extends Body {
       this.invulnerableTimer--;
     }
 
-    const targetHeight = (this.powerState === 'small') ? PLAYER.h : 32;
+    if (this.starTimer > 0) {
+      this.starTimer--;
+      if (this.starTimer === 0 && this.powerState === 'star') {
+        this.powerState = this.powerBeforeStar; // star is over: enemies hurt again
+        this.invulnerableTimer = 0;
+      }
+    }
+
+    const form = this.powerState === 'star' ? this.powerBeforeStar : this.powerState;
+    const targetHeight = (form === 'small') ? PLAYER.h : 32;
 
     if(this.h !== targetHeight){
       const diff = targetHeight - this.h;
@@ -54,6 +65,13 @@ export class Player extends Body {
     this.vy = Math.min(this.vy + currentGravity, currentMaxFall);
 
     return this.move(map);
+  }
+
+  startStar(duration: number): void {
+    if (this.powerState !== 'star') this.powerBeforeStar = this.powerState;
+    this.powerState = 'star';
+    this.starTimer = duration;
+    this.invulnerableTimer = duration;
   }
 
   takeDamage(): void{

@@ -202,6 +202,8 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     if (item.alive && !item.spawning && player.overlaps(item)) {
       item.alive = false;
       addScore(state, SCORE.powerupCollect);
+      const wasStar = player.powerState === 'star' && item.type !== 'star';
+      if (wasStar) player.powerState = player.powerBeforeStar;
       if (SUIT_ITEMS.includes(item.type) && player.powerState === 'small') {
         player.powerState = 'big';
       } else if (item.type === 'mushroom') {
@@ -213,8 +215,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       } else if (item.type === 'stopwatch') {
         state.freezeTimer = 300;
       } else if (item.type === 'star') {
-        player.powerState = 'star';
-        player.invulnerableTimer = 600;
+        player.startStar(600);
       } else if (item.type === 'hammer_suit') {
         player.powerState = 'hammer_suit';
       } else if (item.type === 'leaf') {
@@ -223,6 +224,10 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         player.powerState = 'tanooki';
       } else if (item.type === 'frog') {
         player.powerState = 'frog';
+      }
+      if (wasStar) {
+        player.powerBeforeStar = player.powerState;
+        player.powerState = 'star';
       }
     }
   }
