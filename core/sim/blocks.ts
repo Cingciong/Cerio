@@ -73,7 +73,7 @@ function killOnTop(state: GameState, tx: number, ty: number): void {
   const top = ty * TILE_SUB;
   for (const e of state.enemies) {
     const standing = e.bottom >= top - 2 * SUB && e.bottom <= top;
-    if (e.alive && standing && e.right > tx * TILE_SUB && e.x < (tx + 1) * TILE_SUB) e.alive = false;
+    if (e.alive && standing && e.right > tx * TILE_SUB && e.x < (tx + 1) * TILE_SUB) e.onBump(); // Goomba dies, Koopa turns into a shell
   }
 }
 
