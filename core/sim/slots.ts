@@ -7,8 +7,13 @@ export function blockKey(area: string, width: number, tx: number, ty: number): s
 }
 
 
+export const SUIT_ITEMS: readonly SlotItem[] = ["flower", "leaf", "tanooki", "frog", "hammer_suit"];
+
 export function plannedItem(state: GameState, tx: number, ty: number): SlotItem | undefined {
   const item = state.blockItems[blockKey(state.area, state.map.width, tx, ty)];
-  if (item === "mushroom" && state.player.powerState !== "small") return RULES.mushroomUpgrade as ItemType;
+  if (!item) return undefined;
+  const small = state.player.powerState === "small";
+  if (small && SUIT_ITEMS.includes(item)) return "mushroom";
+  if (!small && item === "mushroom") return RULES.mushroomUpgrade as ItemType;
   return item;
 }

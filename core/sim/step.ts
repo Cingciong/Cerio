@@ -1,5 +1,5 @@
 
-import type { Buttons } from "../config/buttons.ts";
+import { Button, type Buttons } from "../config/buttons.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
@@ -12,7 +12,7 @@ import { hitBlockAbove, stepBlocks } from "./blocks.ts";
 import { stepPipe, tryEnterPipe } from "./pipes.ts";
 import { updateRedCoins } from "./redcoins.ts";
 import { collectCoins } from "./coins.ts";
-import { plannedItem } from "./slots.ts";
+import { plannedItem, SUIT_ITEMS } from "./slots.ts";
 import { SCORE } from "../config/config.ts";
 import { addScore } from "./state.ts";
 
@@ -25,8 +25,8 @@ function touching(map: TileMap, body: Body, test: (map: TileMap, tx: number, ty:
 }
 
 export function questionItem(state: GameState): ItemType {
-  if (RULES.questionItem !== 'auto') return RULES.questionItem as ItemType;
   if (state.player.powerState === 'small') return 'mushroom';
+  if (RULES.questionItem !== 'auto') return RULES.questionItem as ItemType;
   return state.rng.pick(RULES.questionPool as ItemType[]);
 }
 
@@ -202,7 +202,9 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     if (item.alive && !item.spawning && player.overlaps(item)) {
       item.alive = false;
       addScore(state, SCORE.powerupCollect);
-      if (item.type === 'mushroom') {
+      if (SUIT_ITEMS.includes(item.type) && player.powerState === 'small') {
+        player.powerState = 'big';
+      } else if (item.type === 'mushroom') {
         if (player.powerState === 'small') {
           player.powerState = 'big';
         }
@@ -252,7 +254,12 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
   for (const enemy of state.enemies) {
     if(state.freezeTimer === 0){
-      enemy.update(enemyButtons[enemy.id] ?? enemy.decide(map, player), map, player);
+      let buttons = enemyButtons[enemy.id] ?? enemy.decide(map, player);
+      if (enemy.turnAwayFromLava(map)) {
+        buttons &= ~(Button.left | Button.right);
+        buttons |= enemy.dir < 0 ? Button.left : Button.right;
+      }
+      enemy.update(buttons, map, player);
     }
   }
   if (state.freezeTimer === 0) {
@@ -355,14 +362,25 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     }
   }
 
+  const stompCandidates = new Set(
+    state.enemies.filter(
+      (enemy) =>
+        enemy.alive &&
+        enemy.stompable &&
+        player.overlaps(enemy) &&
+        player.vy > 0 &&
+        prevBottom <= enemy.y + RULES.stompTolerancePx * SUB,
+    ),
+  );
+
   for (const enemy of state.enemies) {
     if (
       !enemy.alive ||
       enemy instanceof BulletBillCannon ||
-      (enemy instanceof Goomba && enemy.squashTimer > 0) ||
+      (enemy instanceof Goomba && enemy.squashTimer > 0 && !stompCandidates.has(enemy)) ||
       !player.overlaps(enemy)
     ) continue;
-    const fromAbove = player.vy > 0 && prevBottom <= enemy.y + RULES.stompTolerancePx * SUB; // feet were in the top part of the enemy
+    const fromAbove = stompCandidates.has(enemy);
     if (fromAbove && enemy.stompable) {
       const shouldBounce = enemy.onStomp(player.x);
       rewardEnemyKill(state, enemy);
