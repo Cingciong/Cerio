@@ -33,6 +33,11 @@ export class Enemy extends Body {
     this.type = type;
   }
 
+  onBump(): boolean {
+    this.alive = false;
+    return true;
+  }
+
   setController(controller: EnemyController): void {
     this.externalController = controller;
   }
@@ -70,6 +75,19 @@ export class Enemy extends Body {
 export class KoopaEnemy extends Enemy {
 
   readonly defaultHeight: number;
+  static readonly BUMP_HOP = 32;
+
+  onBump(): boolean {
+    if (this.actionState === 'default' || this.actionState === 'falling') {
+      const oldH = this.h;
+      this.h = 16;
+      this.y += (oldH - this.h) * SUB;
+    }
+    this.actionState = 'shell_idle';
+    this.vx = 0;
+    this.vy = -KoopaEnemy.BUMP_HOP;
+    return false;
+  }
 
   constructor(id: number, type: string, x: number, y: number){
     super(id, type, x, y);
@@ -448,6 +466,10 @@ export class BulletBill extends Enemy {
 }
 
 export class BulletBillCannon extends Enemy {
+  onBump(): boolean {
+    return false;
+  }
+
   private static readonly SHOT_INTERVAL_FRAMES = 180;
   private shotTimer = BulletBillCannon.SHOT_INTERVAL_FRAMES;
   private shotReady = false;
@@ -479,6 +501,12 @@ export class BulletBillCannon extends Enemy {
 
 export class BuzzyBeetle extends KoopaEnemy {
   private static readonly SHELL_DURATION_FRAMES = 300;
+
+  onBump(): boolean {
+    super.onBump();
+    this.shellTimer = BuzzyBeetle.SHELL_DURATION_FRAMES;
+    return false;
+  }
   private shellTimer = 0;
   private ceilingChecked = false;
   private droppingFromCeiling = false;
@@ -568,6 +596,11 @@ export class Spiny extends KoopaEnemy {
   private ceilingChecked = false;
   private onCeiling = false;
 
+  onBump(): boolean {
+    this.alive = false;
+    return true;
+  }
+
   constructor(id: number, type: string, x: number, y: number) {
     super(id, type, x, y);
     this.stompable = false;
@@ -631,6 +664,11 @@ export class KoopaParaTroopa extends KoopaEnemy {
   hasWings = true;
   vDir = -1; 
   flyRange = 40
+
+  onBump(): boolean {
+    this.hasWings = false;
+    return super.onBump();
+  }
   startX = 0;
   startY = 0;
 
