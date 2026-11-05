@@ -12,7 +12,7 @@ export const SUIT_ITEMS: readonly SlotItem[] = ["flower", "leaf", "tanooki", "fr
 export function plannedItem(state: GameState, tx: number, ty: number): SlotItem | undefined {
   const item = state.blockItems[blockKey(state.area, state.map.width, tx, ty)];
   if (!item) return undefined;
-  const small = state.player.powerState === "small";
+  const small = state.player.form === "small";
   if (small && SUIT_ITEMS.includes(item)) return "mushroom";
   if (!small && item === "mushroom") return RULES.mushroomUpgrade as ItemType;
   return item;

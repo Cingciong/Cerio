@@ -21,9 +21,9 @@
 
   ],
   "enemies": [
-    { "type": "goomba", "x": 15, "y": 13 },
+    { "type": "goomba", "x": 15, "y": 10 },
     { "type": "goomba", "x": 14, "y": 7 },
-    { "type": "goomba", "x": 29, "y": 11 },
+    { "type": "goomba", "x": 29, "y": 10 },
     { "type": "goomba", "x": 29, "y": 5 }
   ]
 }

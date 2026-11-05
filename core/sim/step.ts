@@ -25,7 +25,7 @@ function touching(map: TileMap, body: Body, test: (map: TileMap, tx: number, ty:
 }
 
 export function questionItem(state: GameState): ItemType {
-  if (state.player.powerState === 'small') return 'mushroom';
+  if (state.player.form === 'small') return 'mushroom';
   if (RULES.questionItem !== 'auto') return RULES.questionItem as ItemType;
   return state.rng.pick(RULES.questionPool as ItemType[]);
 }
@@ -202,6 +202,8 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     if (item.alive && !item.spawning && player.overlaps(item)) {
       item.alive = false;
       addScore(state, SCORE.powerupCollect);
+      const wasStar = player.powerState === 'star' && item.type !== 'star';
+      if (wasStar) player.powerState = player.powerBeforeStar;
       if (SUIT_ITEMS.includes(item.type) && player.powerState === 'small') {
         player.powerState = 'big';
       } else if (item.type === 'mushroom') {
@@ -213,8 +215,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
       } else if (item.type === 'stopwatch') {
         state.freezeTimer = 300;
       } else if (item.type === 'star') {
-        player.powerState = 'star';
-        player.invulnerableTimer = 600;
+        player.startStar(600);
       } else if (item.type === 'hammer_suit') {
         player.powerState = 'hammer_suit';
       } else if (item.type === 'leaf') {
@@ -223,6 +224,10 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         player.powerState = 'tanooki';
       } else if (item.type === 'frog') {
         player.powerState = 'frog';
+      }
+      if (wasStar) {
+        player.powerBeforeStar = player.powerState;
+        player.powerState = 'star';
       }
     }
   }
@@ -281,7 +286,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
   }
 
   if (player.wantsShoot) {
-    if(player.powerState === 'leaf' || player.powerState === 'tanooki'){
+    if(player.form === 'leaf' || player.form === 'tanooki'){
       const tailW = 16 * SUB;
       const tailX = player.facing > 0 ? player.right : player.x - tailW;
       
@@ -295,7 +300,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
         }
       }
     } else{
-      const type = player.powerState === 'hammer_suit' ? 'hammer' : 'fireball';
+      const type = player.form === 'hammer_suit' ? 'hammer' : 'fireball';
       const cfg = PROJECTILES[type];
       if (state.projectiles.filter((p) => p.alive && p.type === type).length < cfg.maxAlive) {
         const x = player.facing > 0 ? player.right : player.x - cfg.w * SUB;

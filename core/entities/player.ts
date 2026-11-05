@@ -15,6 +15,8 @@ export class Player extends Body {
 
   powerState: PowerState = 'small';
   invulnerableTimer = 0;
+  starTimer = 0; // frames of star power left
+  powerBeforeStar: PowerState = 'small'; // form restored when the star runs out
   wantsShoot = false; 
 
   constructor(x: number, y: number) {
@@ -26,13 +28,21 @@ export class Player extends Body {
     this.buttons = buttons;
 
     const attackPressed = has(buttons, Button.attack) && !has(this.prevButtons, Button.attack); 
-    this.wantsShoot = attackPressed && ['fire', 'hammer_suit', 'leaf', 'tanooki'].includes(this.powerState);
+    this.wantsShoot = attackPressed && ['fire', 'hammer_suit', 'leaf', 'tanooki'].includes(this.form);
 
     if (this.invulnerableTimer > 0){
       this.invulnerableTimer--;
     }
 
-    const targetHeight = (this.powerState === 'small') ? PLAYER.h : 32;
+    if (this.starTimer > 0) {
+      this.starTimer--;
+      if (this.starTimer === 0 && this.powerState === 'star') {
+        this.powerState = this.powerBeforeStar; // star is over: enemies hurt again
+        this.invulnerableTimer = 0;
+      }
+    }
+
+    const targetHeight = (this.form === 'small') ? PLAYER.h : 32;
 
     if(this.h !== targetHeight){
       const diff = targetHeight - this.h;
@@ -47,13 +57,25 @@ export class Player extends Body {
     let currentGravity = rising ? PLAYER.gravityHold : PLAYER.gravity;
     let currentMaxFall = PLAYER.maxFall;
 
-    if((this.powerState === 'leaf' || this.powerState === 'tanooki') && this.vy > 0 && has(buttons, Button.jump)){
+    if((this.form === 'leaf' || this.form === 'tanooki') && this.vy > 0 && has(buttons, Button.jump)){
       currentMaxFall = 16;
     }
 
     this.vy = Math.min(this.vy + currentGravity, currentMaxFall);
 
     return this.move(map);
+  }
+
+  /** The form Mario has under a star: the one he had before it. */
+  get form(): PowerState {
+    return this.powerState === 'star' ? this.powerBeforeStar : this.powerState;
+  }
+
+  startStar(duration: number): void {
+    if (this.powerState !== 'star') this.powerBeforeStar = this.powerState;
+    this.powerState = 'star';
+    this.starTimer = duration;
+    this.invulnerableTimer = duration;
   }
 
   takeDamage(): void{
@@ -87,7 +109,7 @@ export class Player extends Body {
     const pressed = has(buttons, Button.jump) && !has(this.prevButtons, Button.jump);
     if (pressed && this.onGround) {
       const frogJump = (PLAYER as any).jumpFrog || 96
-      this.vy = -(this.powerState === 'frog' ? frogJump : Math.abs(this.vx) >= PLAYER.runJumpSpeed ? PLAYER.jumpRunning : PLAYER.jump);
+      this.vy = -(this.form === 'frog' ? frogJump : Math.abs(this.vx) >= PLAYER.runJumpSpeed ? PLAYER.jumpRunning : PLAYER.jump);
       this.onGround = false;
       this.hit.ground = false;
     }
