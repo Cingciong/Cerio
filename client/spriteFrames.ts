@@ -28,6 +28,17 @@ export const MARIO_SMALL_FRAMES = cells([0, 1, 2, 3, 4, 5, 6, 7]);
 export const MARIO_BIG_FRAMES = cells([8, 9, 10, 11, 12, 13, 14, 15, 16]);
 export const MARIO_FIRE_FRAMES = cells([17, 18, 19, 20, 21, 22]);
 
+export const MARIO_TANOOKI_FRAMES: SpriteFrame[] = [
+  { x: 0 * 32, y: 0, width: 32, height: 32 },
+  { x: 1 * 32, y: 0, width: 32, height: 32 }, 
+  { x: 2 * 32, y: 0, width: 32, height: 32 }, 
+  { x: 3 * 32, y: 0, width: 32, height: 32 },
+  { x: 4 * 32, y: 0, width: 32, height: 32 }, 
+  { x: 5 * 32, y: 0, width: 32, height: 32 },
+  { x: 6 * 32, y: 0, width: 32, height: 32 },
+  { x: 7 * 32, y: 0, width: 32, height: 32 },
+];
+
 export const GOOMBA_WALK: SpriteFrame[] = [0, 1].map((index) => ({
   x: index * 32 + 7,
   y: 15,

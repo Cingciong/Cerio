@@ -185,7 +185,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
       const kind: SlotItem = tileId === Tile.brick_star
         ? 'star'
-        : plannedItem(state, txBump, tyAbove) ?? questionItem(state);   
+        : plannedItem(state, txBump, tyAbove) ?? questionItem(state);
       if (kind === 'coin')
         {
           state.coins++;
@@ -285,8 +285,16 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     }
   }
 
+  if ((player as any).spinTimer > 0) {
+    (player as any).spinTimer--;
+  }
+
   if (player.wantsShoot) {
     if(player.form === 'leaf' || player.form === 'tanooki'){
+      if (!(player as any).spinTimer) {
+        (player as any).spinTimer = 16;
+      }
+
       const tailW = 16 * SUB;
       const tailX = player.facing > 0 ? player.right : player.x - tailW;
       

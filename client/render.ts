@@ -24,6 +24,7 @@ import {
   MARIO_FIRE_FRAMES,
   MARIO_JUMP,
   MARIO_WALK,
+  MARIO_TANOOKI_FRAMES, 
   OVERWORLD_CLOUD,
   OVERWORLD_LARGE_HILL,
   OVERWORLD_SMALL_HILL,
@@ -46,6 +47,7 @@ function loadSpriteSheet(path: string): HTMLImageElement {
 }
 
 const marioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Mario.png");
+const tanookiSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Tanooki_Sprite_Sheet.png");
 const enemySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Enemies.png");
 const miniGoombaSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/MiniGoomba.png");
 const temporarySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/temporary_sprites.png");
@@ -1229,24 +1231,60 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera
   const x = Math.round(player.x / SUB - cam.x - (drawSize - player.w) / 2);
   const y = Math.round(player.y / SUB - cam.y);
 
-  if (!isSpriteReady(marioSpriteSheet)) {
+  if (form === "tanooki" && !isSpriteReady(tanookiSpriteSheet)) {
+    box(ctx, player, cam, COLORS.player);
+    return;
+  }
+  if (form !== "tanooki" && !isSpriteReady(marioSpriteSheet)) {
     box(ctx, player, cam, COLORS.player);
     return;
   }
 
   const walking = player.onGround && player.vx !== 0;
-  const largeFrames = form === "fire" ? MARIO_FIRE_FRAMES : MARIO_BIG_FRAMES;
-  const frame = !player.onGround
-    ? isPoweredUp
-      ? largeFrames[form === "fire" ? largeFrames.length - 1 : 5]
-      : MARIO_JUMP
-    : walking
-      ? isPoweredUp
-        ? largeFrames[1 + (Math.floor(state.frame / 7) % 3)]
-        : MARIO_WALK[Math.floor(state.frame / 7) % MARIO_WALK.length]
-      : isPoweredUp
-        ? largeFrames[0]
-        : MARIO_IDLE;
+  
+  let largeFrames: SpriteFrame[];
+  let activeSheet = marioSpriteSheet;
+
+  if (form === "tanooki") {
+    largeFrames = MARIO_TANOOKI_FRAMES;
+    activeSheet = tanookiSpriteSheet;
+  } else if (form === "fire") {
+    largeFrames = MARIO_FIRE_FRAMES;
+  } else {
+    largeFrames = MARIO_BIG_FRAMES;
+  }
+
+  let frame: SpriteFrame;
+const spinTimer = (player as any).spinTimer || 0;
+
+  if (spinTimer > 0 && form === "tanooki") {
+    const spinIndex = Math.floor((16 - spinTimer) / 4);
+    frame = largeFrames[4 + spinIndex];
+  } 
+  else if (!player.onGround) {
+    if (form === "tanooki") {
+      frame = largeFrames[1];
+    } else if (isPoweredUp) {
+      frame = form === "fire" ? largeFrames[largeFrames.length - 1] : largeFrames[5];
+    } else {
+      frame = MARIO_JUMP;
+    }
+  } 
+  else if (walking) {
+    if (form === "tanooki" || isPoweredUp) {
+      frame = largeFrames[1 + (Math.floor(state.frame / 7) % 3)];
+    } else {
+      frame = MARIO_WALK[Math.floor(state.frame / 7) % MARIO_WALK.length];
+    }
+  } 
+  else {
+    if (isPoweredUp) {
+      frame = largeFrames[0];
+    } else {
+      frame = MARIO_IDLE;
+    }
+  }
+
   ctx.save();
   if (player.facing < 0) {
     ctx.translate(x + drawSize, y);
@@ -1254,8 +1292,9 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera
   } else {
     ctx.translate(x, y);
   }
+  
   ctx.drawImage(
-    marioSpriteSheet,
+    activeSheet,
     frame.x,
     frame.y,
     frame.width,
