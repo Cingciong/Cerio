@@ -1,5 +1,5 @@
 
-import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, BuzzyBeetle, Goomba, HammerBro, KoopaEnemy, MiniGoomba, ParaGoomba, ParaGoombaBrown, ParaGoombaRed, PiranhaPlant, Spiny, type Platform } from "../core/index.ts";
+import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, BuzzyBeetle, Goomba, HammerBro, KoopaEnemy, MiniGoomba, ParaGoomba, ParaGoombaBrown, ParaGoombaRed, PiranhaPlant, Spiny, VenusFireTrap, type Platform } from "../core/index.ts";
 import {
  BULLET_BILL,
  BULLET_BILL_CANNON,
@@ -141,11 +141,35 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   for (const e of state.enemies) {
     if (!e.alive) continue;
 
+    if (e instanceof VenusFireTrap) {
+      const size = VenusFireTrap.FIREBALL_SIZE;
+      const fireFrame = PODOBOO_FRAMES[Math.floor(state.frame / 4) % PODOBOO_FRAMES.length];
+      for (const fb of e.fireballs) {
+        if (!fb.alive) continue;
+        const x = Math.round(fb.x / SUB - cam.x);
+        const y = Math.round(fb.y / SUB - cam.y);
+        if (isSpriteReady(podobooSpriteSheet)) {
+          ctx.drawImage(podobooSpriteSheet, fireFrame.x, fireFrame.y, fireFrame.width, fireFrame.height, x, y, size, size);
+        } else {
+          const r = size / 2;
+          ctx.fillStyle = "#FF4500";
+          ctx.beginPath();
+          ctx.arc(x + r, y + r, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#FFD700";
+          ctx.beginPath();
+          ctx.arc(x + r, y + r, r * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
     if (e instanceof PiranhaPlant) {
       if (e.phase === "hidden") continue;
+      const isFire = e instanceof VenusFireTrap || e.type.includes("fire");
       if (isSpriteReady(enemySpriteSheet)) {
         const frame = PIRANHA_PLANT_FRAMES[Math.floor(state.frame / 8) % PIRANHA_PLANT_FRAMES.length];
-        drawSpriteFrame(ctx, enemySpriteSheet, e, cam, frame, false);
+        drawSpriteFrame(ctx, enemySpriteSheet, e, cam, frame, false, 1, isFire);
       } else {
         box(ctx, e, cam, ENEMY_COLORS[e.type] || COLORS.enemy);
       }
@@ -185,6 +209,8 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       }
     }
   }
+
+
 
   drawPipesInFront(ctx, map, cam);
 
@@ -326,7 +352,6 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
   if (state.status === "won") ctx.fillText("LEVEL DONE - R to restart", 64, 120);
 }
 
-/** Dashed line at each segment start; returns "seg i/n name" for the player's segment. */
 function segmentDebug(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): string {
   const segs = state.level.areas[state.area].segments;
   ctx.strokeStyle = COLORS.segment;
@@ -344,7 +369,6 @@ function segmentDebug(ctx: CanvasRenderingContext2D, state: GameState, cam: Came
   return seg ? `seg ${segs.indexOf(seg) + 1}/${segs.length} ${seg.name}` : "";
 }
 
-/** Segment the player's centre is in. */
 export function currentSegment(state: GameState): SegmentSpan | undefined {
   const px = (state.player.x + (state.player.w * SUB) / 2) / (TILE * SUB);
   return state.level.areas[state.area].segments.find((s) => px >= s.x && px < s.x + s.w);

@@ -3,7 +3,7 @@ import { Button, type Buttons } from "../config/buttons.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
-import { Enemy, BulletBillCannon, Goomba, HammerBro, MiniGoomba, ParaGoombaBrown } from "../entities/enemy.ts";
+import { Enemy, BulletBillCannon, Goomba, HammerBro, MiniGoomba, ParaGoombaBrown, VenusFireTrap } from "../entities/enemy.ts";
 import { isDeadly, isGoal, isSolid, Tile, tileAt, toTile, type TileMap } from "../world/tiles.ts";
 import type { Body } from "../entities/body.ts";
 import { Item, type ItemType, type SlotItem } from "../entities/powerup.ts";
@@ -348,28 +348,56 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
 
   if (player.alive) {
     for (const enemy of state.enemies) {
-      if (!(enemy instanceof HammerBro) || !enemy.alive) continue;
+      if (!enemy.alive) continue;
 
-      for (const hammer of enemy.hammers) {
-        if (!hammer.alive) continue;
+      if (enemy instanceof HammerBro){
+        for (const hammer of enemy.hammers) {
+          if (!hammer.alive) continue;
 
-        const overlaps =
-          hammer.x < player.x + player.w * SUB &&
-          hammer.x + HammerBro.HAMMER_WIDTH > player.x &&
-          hammer.y < player.y + player.h * SUB &&
-          hammer.y + HammerBro.HAMMER_HEIGHT > player.y;
+          const overlaps =
+            hammer.x < player.x + player.w * SUB &&
+            hammer.x + HammerBro.HAMMER_WIDTH > player.x &&
+            hammer.y < player.y + player.h * SUB &&
+            hammer.y + HammerBro.HAMMER_HEIGHT > player.y;
 
-        if (overlaps) {
-          if (player.powerState === 'star') {
-            enemy.alive = false;
-            rewardEnemyKill(state, enemy);
-          } else {
-            damagePlayer(state);
+          if (overlaps) {
+            if (player.powerState === 'star') {
+              enemy.alive = false;
+              rewardEnemyKill(state, enemy);
+            } else {
+              damagePlayer(state);
+            }
+            hammer.alive = false;
+            break;
           }
-          hammer.alive = false;
-          break;
         }
       }
+
+      if (enemy instanceof VenusFireTrap){
+        const fbW = VenusFireTrap.FIREBALL_SIZE * SUB;
+        const fbH = VenusFireTrap.FIREBALL_SIZE * SUB;
+
+        for (const fb of enemy.fireballs) {
+
+          if (!fb.alive) continue;
+          
+          const overlaps =
+            fb.x < player.right &&
+            fb.x + fbW > player.x &&
+            fb.y < player.bottom &&
+            fb.y + fbH > player.y;
+          
+          if (overlaps) {
+            fb.alive = false;
+          
+          if (player.powerState !== 'star') {
+            damagePlayer(state)
+          }
+          break;
+          }
+        }
+      }
+
 
       if (!player.alive) break;
     }

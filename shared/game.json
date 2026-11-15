@@ -76,6 +76,7 @@
     "koopa": { "w": 16, "h": 20, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#28cc28","score": 400 },
     "koopa_red": { "w": 16, "h": 20, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#cc2828","score": 400 },
     "piranha": { "w": 16, "h": 24, "speed": 12, "gravity": 0, "maxFall": 0, "color": "#00ac48","score": 400 },
+    "fire_venus_trap": { "w": 16, "h": 24, "speed": 12, "gravity": 0, "maxFall": 0, "color": "#FF4500", "score": 600 },
     "hammer_bro": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#696969","score": 500 },
     "koopa_para": { "w": 16, "h": 20, "speed": 8,  "gravity": 4, "maxFall": 64, "color": "#28cc28","score": 400 },
     "koopa_para_red": { "w": 16, "h": 20, "speed": 6,  "gravity": 0, "maxFall": 0, "color": "#28cc28","score": 400 },

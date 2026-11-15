@@ -775,7 +775,6 @@ export class PiranhaPlant extends Enemy {
     return false;
   }
 
-  /** Back into the pipe at once, e.g. when the player comes out of it. */
   hide(): void {
     this.phase = 'hidden';
     this.timer = 0;
@@ -838,6 +837,92 @@ export class PiranhaPlant extends Enemy {
     return Math.abs(playerCentre - plantCentre) < PIRANHA.safeRadiusPx * SUB;
   }
 }
+
+export interface VenusFireball{
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  alive: boolean;
+}
+
+export class VenusFireTrap extends PiranhaPlant {
+  readonly fireballs: VenusFireball[] = [];
+  private hasShot = false;
+
+  static readonly FIREBALL_SIZE = 8;
+  static readonly FIREBALL_SPEED_X = 20; 
+  static readonly FIREBALL_SPEED_Y = 12;
+
+  constructor(id: number, type = "fire_venus_trap", x: number, y: number) {
+    super(id, type, x, y);
+  }
+
+
+  decide(map: TileMap, player?: Body): Buttons {
+    const buttons = super.decide(map, player);
+    if (this.phase === 'up') {
+      if (!this.hasShot && this.timer >= Math.floor(PIRANHA.upFrames / 2) && player) {
+        this.shootFireball(player);
+        this.hasShot = true;
+      }
+
+    } else if (this.phase === 'hidden' || this.phase === 'rising') {
+      this.hasShot = false;
+    }
+    return buttons;
+  }
+
+  update(buttons: Buttons, map: TileMap, player?: Body): void {
+    super.update(buttons, map);
+    this.updateFireballs(map);
+  }
+
+  private shootFireball(player: Body): void {
+    const sourceX = this.x + (this.w * SUB) / 2;
+    const sourceY = this.topY + 4 * SUB;
+    const targetX = player.x + (player.w * SUB) / 2;
+    const targetY = player.y + (player.h * SUB) / 2;
+    // Only 4 diagonal directions: up-left, down-left, up-right, down-right.
+    const sx = targetX >= sourceX ? 1 : -1;
+    const sy = targetY >= sourceY ? 1 : -1;
+    const vx = sx * VenusFireTrap.FIREBALL_SPEED_X;
+    const vy = sy * VenusFireTrap.FIREBALL_SPEED_Y;
+
+    this.fireballs.push({
+      x: sourceX - (VenusFireTrap.FIREBALL_SIZE * SUB) / 2,
+      y: sourceY,
+      vx,
+      vy,
+      alive: true,
+    });
+  }
+
+
+  private updateFireballs(map: TileMap): void {
+    const size = VenusFireTrap.FIREBALL_SIZE * SUB;
+
+    for (const fb of this.fireballs) {
+      if (!fb.alive) continue;
+      fb.x += fb.vx;
+      fb.y += fb.vy;
+
+      if (
+        fb.x + size < 0 ||
+        fb.x > map.width * TILE_SUB ||
+        fb.y + size < 0 ||
+        fb.y > (map.height + 1) * TILE_SUB
+      ) {
+        fb.alive = false;
+      }
+    }
+
+    for (let i = this.fireballs.length - 1; i >= 0; i--) {
+      if (!this.fireballs[i].alive) this.fireballs.splice(i, 1);
+    }
+  }
+}
+
 
 
 export interface HammerProjectile {
@@ -1016,7 +1101,6 @@ export function createEnemy(id: number, type: string, x: number, y: number, coun
       case 'paragoomba_red':
         return new ParaGoombaRed(id, type, x, y);
       case 'mini_goomba':
-      case 'micro_goomba':
         return new MiniGoomba(id, x, y);
       case 'bullet_bill':
         return new BulletBill(id, x, y);
@@ -1036,6 +1120,9 @@ export function createEnemy(id: number, type: string, x: number, y: number, coun
         return new PiranhaPlant(id, type, x, y);
       case 'hammer_bro':
         return new HammerBro(id, type, x, y);
+      case 'fire_venus_trap':
+      case 'venus_fire_trap':
+        return new VenusFireTrap(id, type, x, y);
       default:
         return new Enemy(id, type, x, y);
     }
