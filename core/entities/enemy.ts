@@ -932,6 +932,7 @@ export interface HammerProjectile {
   vy: number;
   rotation: number;
   alive: boolean;
+  dir?: numberl
 }
 
 export type HammerBroState = 'idle' | 'moving' | 'jumping' | 'falling' | 'throwing';
@@ -1048,7 +1049,7 @@ export class HammerBro extends Enemy {
     }
   }
 
-  private throwHammer(): void {
+  protected throwHammer(): void {
     this.hammers.push({
       x: this.x + (this.dir > 0 ? this.w * SUB : -HammerBro.HAMMER_WIDTH),
       y: this.y + (this.h * SUB) / 4,
@@ -1059,7 +1060,7 @@ export class HammerBro extends Enemy {
     });
   }
 
-  private updateHammers(map: TileMap): void {
+  protected updateHammers(map: TileMap): void {
     for (const hammer of this.hammers) {
       if (!hammer.alive) continue;
 
@@ -1086,6 +1087,35 @@ export class HammerBro extends Enemy {
   }
 }
 
+export class BoomerangBro extends HammerBro {
+  private static readonly SPEED = 48;
+  private static readonly TURN = 1;
+
+  protected throwHammer(): void {
+    this.hammers.push({
+      x: this.x + (this.dir > 0 ? this.w * SUB : -HammerBro.HAMMER_WIDTH),
+      y: this.y,
+      vx: this.dir * BoomerangBro.SPEED,
+      vy: 0,
+      rotation: 0,
+      alive: true,
+      dir: this.dir,
+    });
+  }
+
+  protected updateHammers(map: TileMap): void {
+    for (const b of this.hammers) {
+      if (!b.alive) continue;
+      const dir = b.dir ?? 1;
+      b.vx = Math.max(-BoomerangBro.SPEED, Math.min(BoomerangBro.SPEED, b.vx - dir * BoomerangBro.TURN));
+      b.x += b.vx;
+      b.rotation += Math.PI / 8;
+      const back = Math.sign(b.vx) === -dir && (dir > 0 ? b.x <= this.x : b.x >= this.x);
+      if (back || b.x + HammerBro.HAMMER_WIDTH < 0 || b.x > map.width * TILE_SUB) b.alive = false;
+    }
+    for (let i = this.hammers.length - 1; i >= 0; i--) if (!this.hammers[i].alive) this.hammers.splice(i, 1);
+  }
+}
 
 export function createEnemy(id: number, type: string, x: number, y: number, count = 1): Enemy {
     switch (type){
