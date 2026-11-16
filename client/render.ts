@@ -1253,7 +1253,7 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera
   const isPoweredUp = form !== "small";
   const drawSize = isPoweredUp ? 32 : TILE;
   const x = Math.round(player.x / SUB - cam.x - (drawSize - player.w) / 2);
-  const y = Math.round(player.y / SUB - cam.y);
+  const y = Math.round(player.bottom / SUB - cam.y - drawSize); // feet stay on the ground when the hitbox is shorter than the sprite (crouching)
 
   if (form === "tanooki" && !isSpriteReady(tanookiSpriteSheet)) {
     box(ctx, player, cam, COLORS.player);
@@ -1281,7 +1281,9 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera
   let frame: SpriteFrame;
 const spinTimer = (player as any).spinTimer || 0;
 
-  if (spinTimer > 0 && form === "tanooki") {
+  if (player.crouching && largeFrames === MARIO_BIG_FRAMES) {
+    frame = largeFrames[6]; // ducking pose
+  } else if (spinTimer > 0 && form === "tanooki") {
     const spinIndex = Math.floor((16 - spinTimer) / 4);
     frame = largeFrames[4 + spinIndex];
   } 
