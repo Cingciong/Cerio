@@ -1,5 +1,6 @@
 
 import { BLOCKS, bumpOffset, SCREEN_H, SCREEN_W, SUB, TILE, Tile, TILES, ENEMIES, type Body, type Enemy, type GameState, type SegmentSpan, BulletBill, BulletBillCannon, BuzzyBeetle, Goomba, HammerBro, KoopaEnemy, MiniGoomba, ParaGoomba, ParaGoombaBrown, ParaGoombaRed, PiranhaPlant, Spiny, VenusFireTrap, type Platform } from "../core/index.ts";
+import { gameAt } from "../core/world/level.ts";
 import {
  BULLET_BILL,
  BULLET_BILL_CANNON,
@@ -36,6 +37,33 @@ import {
   TEMP_BULLET_BILL_CANNON,
   TILE_SPRITES,
   POWERUP_SPRITES,
+  SMB3_BIG_BLOCK_FRAME,
+  SMB3_BOWSER_FRAMES,
+  SMB3_BULLET_BILL,
+  SMB3_BULLET_BILL_CANNON,
+  SMB3_BUZZY_CAVE_SHELL_FRAMES,
+  SMB3_BUZZY_CAVE_WALK_FRAMES,
+  SMB3_BUZZY_SHELL_FRAMES,
+  SMB3_BUZZY_WALK_FRAMES,
+  SMB3_CHEEP_CHEEP_FRAMES,
+  SMB3_COIN_FRAMES,
+  SMB3_FIREBALL_FRAMES,
+  SMB3_GOOMBA_FRAMES,
+  SMB3_GOOMBA_SQUASHED_FRAMES,
+  SMB3_HAMMER_BRO_FRAMES,
+  SMB3_HAMMER_FRAMES,
+  SMB3_KOOPA_FRAMES,
+  SMB3_LAVA_FRAMES,
+  SMB3_MARIO_FIRE_FRAMES,
+  SMB3_MARIO_FROG_FRAMES,
+  SMB3_MARIO_HAMMER_FRAMES,
+  SMB3_MARIO_SMALL_FRAMES,
+  SMB3_MARIO_SUPER_FRAMES,
+  SMB3_MINI_GOOMBA_FRAMES,
+  SMB3_NOTE_FRAMES,
+  SMB3_PARATROOPA_FRAMES,
+  SMB3_SPINY_FRAMES,
+  SMB3_TILE_SPRITES,
   type SpriteFrame,
 } from "./spriteFrames.ts";
 import { coinPops } from "./effects.ts";
@@ -63,6 +91,22 @@ const buzzySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Buzzy Beet
 const wingsSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/wings.png");
 const podobooSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Podoboo.png");
 const bowserSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Bowser.png");
+const smb3SuperMarioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/SuperMarioSMB3.png");
+const smb3FireMarioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/FireMarioSMB3.png");
+const smb3HammerMarioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/HammerMarioSMB3.png");
+const smb3FrogMarioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/FrogMarioSMB3.png");
+const smb3MiniMarioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/MiniMarioSMB3.png");
+const smb3GoombaSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/GoombaSMB3.png");
+const smb3KoopaSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/KoopaTroopa_PiranhaSMB3.png");
+const smb3ParaTroopaSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/ParaTroopaSMB3.png");
+const smb3HammerBroSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/HammerBroSMB3.png");
+const smb3BuzzySpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/BuzzyBeetleSMB3.png");
+const smb3SpinyCheepSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Spiny_CheepSMB3.png");
+const smb3BowserSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/BowserSMB3.png");
+const smb3BulletBillSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/BulletBillSMB3.png");
+const smb3HammerSpriteSheet = loadSpriteSheet("./sprites/Mario1/Misc/HammerSMB3.png");
+const smb3TilesetSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/TilesetSMB3.png");
+const smb3BackgroundSpriteSheet = loadSpriteSheet("./sprites/Mario1/Tilesets/BackgroundSMB3.png");
 const tintedTileCache = new Map<string, HTMLCanvasElement>();
 
 const COLORS = {
@@ -104,17 +148,24 @@ export interface Camera {
   y: number;
 }
 
+function smb3At(state: GameState, worldX: number): boolean {
+  return gameAt(state.level, state.area, worldX / TILE) === "smb3";
+}
+
 export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera, info: string): void {
   ctx.imageSmoothingEnabled = false;
   const caveTheme = state.area === "cave" || state.level.type === "caves";
   ctx.fillStyle = caveTheme ? COLORS.caveBackground : COLORS.sky;
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
 
-  if (state.area === "overworld" && !caveTheme && isSpriteReady(overworldSpriteSheet)) {
-    drawOverworldBackdrop(ctx, state, cam);
+  if (state.area === "overworld" && !caveTheme) {
+    if (isSpriteReady(overworldSpriteSheet)) {
+      drawOverworldBackdrop(ctx, state, cam);
+    }
+    drawSmb3BackdropSegments(ctx, state, cam);
   }
 
-  if (state.pipe) drawPlayer(ctx, state, cam); 
+  if (state.pipe) drawPlayer(ctx, state, cam);
 
   const { map } = state;
   const first = Math.floor(cam.x / TILE);
@@ -126,7 +177,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       const x = tx * TILE - cam.x;
       const y = ty * TILE - cam.y - bumpOffset(state, tx, ty);
       
-      drawTile(ctx, tileId, x, y, state.frame, map, tx, ty, caveTheme);
+      drawTile(ctx, tileId, x, y, state.frame, map, tx, ty, caveTheme, smb3At(state, tx * TILE + TILE / 2));
     }
   }
   drawTreetops(ctx, map, cam, caveTheme);
@@ -148,7 +199,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
         if (!fb.alive) continue;
         const x = Math.round(fb.x / SUB - cam.x);
         const y = Math.round(fb.y / SUB - cam.y);
-        if (isSpriteReady(podobooSpriteSheet)) {
+        if (smb3At(state, fb.x / SUB) && isSpriteReady(smb3FireMarioSpriteSheet)) {
+          const smb3Frame = SMB3_FIREBALL_FRAMES[Math.floor(state.frame / 4) % SMB3_FIREBALL_FRAMES.length];
+          ctx.drawImage(smb3FireMarioSpriteSheet, smb3Frame.x, smb3Frame.y, smb3Frame.width, smb3Frame.height, x, y, size, size);
+        } else if (isSpriteReady(podobooSpriteSheet)) {
           ctx.drawImage(podobooSpriteSheet, fireFrame.x, fireFrame.y, fireFrame.width, fireFrame.height, x, y, size, size);
         } else {
           const r = size / 2;
@@ -167,16 +221,21 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     if (e instanceof PiranhaPlant) {
       if (e.phase === "hidden") continue;
       const isFire = e instanceof VenusFireTrap || e.type.includes("fire");
-      if (isSpriteReady(enemySpriteSheet)) {
-        const frame = PIRANHA_PLANT_FRAMES[Math.floor(state.frame / 8) % PIRANHA_PLANT_FRAMES.length];
-        drawSpriteFrame(ctx, enemySpriteSheet, e, cam, frame, false, 1, isFire);
+      const smb3 = smb3At(state, e.x / SUB);
+      const plantSheet = smb3 ? smb3KoopaSpriteSheet : enemySpriteSheet;
+      const plantFrame = smb3
+        ? SMB3_KOOPA_FRAMES[16 + Math.floor(state.frame / 8) % 2]
+        : PIRANHA_PLANT_FRAMES[Math.floor(state.frame / 8) % PIRANHA_PLANT_FRAMES.length];
+      if (isSpriteReady(plantSheet)) {
+        drawSpriteFrame(ctx, plantSheet, e, cam, plantFrame, false, 1, !smb3 && isFire);
       } else {
         box(ctx, e, cam, ENEMY_COLORS[e.type] || COLORS.enemy);
       }
       continue;
     }
 
-    drawEnemy(ctx, e, cam, state.frame);
+    const smb3 = smb3At(state, e.x / SUB);
+    drawEnemy(ctx, e, cam, state.frame, smb3, caveTheme);
 
     if (e instanceof HammerBro) {
       for (const hammer of e.hammers) {
@@ -189,13 +248,18 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
         ctx.save();
         ctx.translate(x + width / 2, y + height / 2);
         ctx.rotate(hammer.rotation);
-        if (isSpriteReady(enemySpriteSheet)) {
+        const smb3Hammer = smb3At(state, hammer.x / SUB);
+        const hammerSheet = smb3Hammer ? smb3HammerSpriteSheet : enemySpriteSheet;
+        if (isSpriteReady(hammerSheet)) {
+          const hammerFrame = smb3Hammer
+            ? SMB3_HAMMER_FRAMES[Math.floor(state.frame / 4) % SMB3_HAMMER_FRAMES.length]
+            : HAMMER_PROJECTILE;
           ctx.drawImage(
-            enemySpriteSheet,
-            HAMMER_PROJECTILE.x,
-            HAMMER_PROJECTILE.y,
-            HAMMER_PROJECTILE.width,
-            HAMMER_PROJECTILE.height,
+            hammerSheet,
+            hammerFrame.x,
+            hammerFrame.y,
+            hammerFrame.width,
+            hammerFrame.height,
             -width / 2,
             -height / 2,
             width,
@@ -212,7 +276,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
 
 
 
-  drawPipesInFront(ctx, map, cam);
+  drawPipesInFront(ctx, state, cam);
 
   ctx.fillStyle = TILE_COLORS[Tile.brick];
   for (const d of state.debris) {
@@ -231,7 +295,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     if (pop.area !== state.area) continue;
     const x = Math.round(pop.x - cam.x);
     const y = Math.round(pop.y - cam.y);
-    if (isSpriteReady(itemSpriteSheet)) {
+    if (smb3At(state, pop.x)) {
+      const frame = SMB3_COIN_FRAMES[Math.floor(pop.frames / 3) % SMB3_COIN_FRAMES.length];
+      drawSmb3Coin(ctx, smb3TilesetSpriteSheet, frame, x, y);
+    } else if (isSpriteReady(itemSpriteSheet)) {
       const frame = COIN_FRAMES[Math.floor(pop.frames / 3) % COIN_FRAMES.length]; // spins faster than a static coin
       ctx.drawImage(itemSpriteSheet, frame.x, frame.y, frame.width, frame.height, x, y, TILE, TILE);
     } else {
@@ -257,7 +324,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
         if (ring.collected[i]) return;
         const x = Math.round(c.x / SUB - cam.x);
         const y = Math.round(c.y / SUB - cam.y);
-        if (isSpriteReady(itemSpriteSheet)) {
+        if (smb3At(state, c.x / SUB) && isSpriteReady(smb3TilesetSpriteSheet)) {
+          const frame = SMB3_COIN_FRAMES[Math.floor(state.frame / 8) % SMB3_COIN_FRAMES.length];
+          drawSmb3Coin(ctx, smb3TilesetSpriteSheet, frame, x, y, "rgba(220, 0, 0, 0.82)");
+        } else if (isSpriteReady(itemSpriteSheet)) {
           const frame = COIN_FRAMES[Math.floor(state.frame / 8) % COIN_FRAMES.length];
           drawSpriteSheetFrame(ctx, itemSpriteSheet, frame, x, y, TILE, TILE, "rgba(220, 0, 0, 0.82)");
         } else {
@@ -302,7 +372,10 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(state.frame * 0.4 * p.dir); // spinning
-      if (isSpriteReady(powerupSpriteSheet)) {
+      if (smb3At(state, p.x / SUB) && isSpriteReady(smb3HammerSpriteSheet)) {
+        const hammerFrame = SMB3_HAMMER_FRAMES[Math.floor(state.frame / 4) % SMB3_HAMMER_FRAMES.length];
+        ctx.drawImage(smb3HammerSpriteSheet, hammerFrame.x, hammerFrame.y, hammerFrame.width, hammerFrame.height, -p.w / 2, -p.h / 2, p.w, p.h);
+      } else if (isSpriteReady(powerupSpriteSheet)) {
         ctx.drawImage(powerupSpriteSheet, f.x, f.y, f.width, f.height, -f.width / 2, -f.height / 2, f.width, f.height);
       } else {
         ctx.fillStyle = "#696969";
@@ -310,14 +383,27 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
       }
       ctx.restore();
     } else {
-      const fireFrame = PODOBOO_FRAMES[0];
-      if (isSpriteReady(podobooSpriteSheet)) {
+      const fireFrame = SMB3_FIREBALL_FRAMES[Math.floor(state.frame / 4) % SMB3_FIREBALL_FRAMES.length];
+      if (smb3At(state, p.x / SUB) && isSpriteReady(smb3FireMarioSpriteSheet)) {
         ctx.drawImage(
-          podobooSpriteSheet,
+          smb3FireMarioSpriteSheet,
           fireFrame.x,
           fireFrame.y,
           fireFrame.width,
           fireFrame.height,
+          Math.round(p.x / SUB - cam.x),
+          Math.round(p.y / SUB - cam.y),
+          p.w,
+          p.h,
+        );
+      } else if (isSpriteReady(podobooSpriteSheet)) {
+        const oldFireFrame = PODOBOO_FRAMES[0];
+        ctx.drawImage(
+          podobooSpriteSheet,
+          oldFireFrame.x,
+          oldFireFrame.y,
+          oldFireFrame.width,
+          oldFireFrame.height,
           Math.round(p.x / SUB - cam.x),
           Math.round(p.y / SUB - cam.y),
           p.w,
@@ -336,7 +422,7 @@ export function render(ctx: CanvasRenderingContext2D, state: GameState, cam: Cam
     const isBlinking = state.player.invulnerableTimer > 0 && Math.floor(state.frame / 4) % 2 === 0;
     
     if (!isBlinking) {
-      drawPlayer(ctx, state, cam); 
+      drawPlayer(ctx, state, cam);
     }
   }
   const seg = segmentDebug(ctx, state, cam);
@@ -389,12 +475,20 @@ function drawTile(
   tx: number,
   ty: number,
   caveTint: boolean,
+  smb3: boolean,
 ): void {
   const tint = caveTint && !isPipeTile(tileId);
+  const tileSheet = smb3 ? smb3TilesetSpriteSheet : overworldSpriteSheet;
 
-  if (tileId === Tile.coin && isSpriteReady(itemSpriteSheet)) {
-    const frame = COIN_FRAMES[Math.floor(frameNumber / 8) % COIN_FRAMES.length];
-    ctx.drawImage(itemSpriteSheet, frame.x, frame.y, frame.width, frame.height, x, y, TILE, TILE);
+  if (tileId === Tile.coin && isSpriteReady(smb3 ? smb3TilesetSpriteSheet : itemSpriteSheet)) {
+    const frames = smb3 ? SMB3_COIN_FRAMES : COIN_FRAMES;
+    const image = smb3 ? smb3TilesetSpriteSheet : itemSpriteSheet;
+    const frame = frames[Math.floor(frameNumber / 8) % frames.length];
+    if (smb3) {
+      drawSmb3Coin(ctx, image, frame, x, y);
+      return;
+    }
+    ctx.drawImage(image, frame.x, frame.y, frame.width, frame.height, x, y, TILE, TILE);
     return;
   }
 
@@ -426,17 +520,32 @@ function drawTile(
   if ((tileId === Tile.hidden_1up || tileId === Tile.hidden_coin)) return;
 
   if (tileId === Tile.wood) {
-    drawWoodTile(ctx, map, tx, ty, x, y);
+    const woodFrame = smb3 ? SMB3_TILE_SPRITES[Tile.wood] : undefined;
+    if (woodFrame && isSpriteReady(smb3TilesetSpriteSheet)) {
+      drawSpriteSheetFrame(ctx, smb3TilesetSpriteSheet, woodFrame, x, y, TILE, TILE, false);
+    } else {
+      drawWoodTile(ctx, map, tx, ty, x, y);
+    }
     tintCaveTile(ctx, x, y, tint);
     return;
   }
 
   if (tileId === Tile.big_block) {
-    drawBigBlockTile(ctx, x, y);
+    if (smb3 && isSpriteReady(smb3TilesetSpriteSheet)) {
+      drawSpriteSheetFrame(ctx, smb3TilesetSpriteSheet, SMB3_BIG_BLOCK_FRAME, x, y, TILE, TILE, false);
+    } else {
+      drawBigBlockTile(ctx, x, y);
+    }
     tintCaveTile(ctx, x, y, tint);
     return;
   }
 
+  if (tileId === Tile.note && smb3 && isSpriteReady(smb3TilesetSpriteSheet)) {
+    const frame = SMB3_NOTE_FRAMES[0];
+    drawSpriteSheetFrame(ctx, smb3TilesetSpriteSheet, frame, x, y, TILE, TILE, false);
+    tintCaveTile(ctx, x, y, tint);
+    return;
+  }
   if (tileId === Tile.note && isSpriteReady(noteBlockSprite)) {
     ctx.drawImage(noteBlockSprite, 0, 0, noteBlockSprite.naturalWidth, noteBlockSprite.naturalHeight, x, y, TILE, TILE);
     tintCaveTile(ctx, x, y, tint);
@@ -444,19 +553,25 @@ function drawTile(
   }
 
   if (tileId === Tile.lava) {
-    drawLavaTile(ctx, x, y, frameNumber);
+    if (smb3 && isSpriteReady(smb3TilesetSpriteSheet)) {
+      const frame = SMB3_LAVA_FRAMES[Math.floor(frameNumber / 8 + tx) % SMB3_LAVA_FRAMES.length];
+      drawSpriteSheetFrame(ctx, smb3TilesetSpriteSheet, frame, x, y, TILE, TILE, false);
+    } else {
+      drawLavaTile(ctx, x, y, frameNumber);
+    }
     return;
   }
 
   const pipe = pipeSprite(map, tx, ty, tileId);
   if (pipe && isSpriteReady(overworldSpriteSheet)) {
-    drawPipeSprite(ctx, pipe.frame, x, y, pipe.flipY);
+    drawPipeSprite(ctx, overworldSpriteSheet, pipe.frame, x, y, pipe.flipY);
     return;
   }
 
-  const frame = tileId === Tile.brick_1up ? TILE_SPRITES[Tile.brick] : TILE_SPRITES[tileId];
-  if (frame && isSpriteReady(overworldSpriteSheet)) {
-    drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, tint);
+  const sprites = smb3 ? SMB3_TILE_SPRITES : TILE_SPRITES;
+  const frame = tileId === Tile.brick_1up ? sprites[Tile.brick] : sprites[tileId];
+  if (frame && isSpriteReady(tileSheet)) {
+    drawSpriteSheetFrame(ctx, tileSheet, frame, x, y, TILE, TILE, tint);
     return;
   }
 
@@ -477,7 +592,6 @@ function pipeSprite(map: GameState["map"], tx: number, ty: number, tileId: numbe
 
   const rightHalf = isPipeAt(map, tx - 1, ty);
   const isBody = tileId === Tile.pipe_left_body || tileId === Tile.pipe_right_body;
-
   if (isBody) {
     return {
       frame: rightHalf ? TILE_SPRITES[Tile.pipe_right_body]! : TILE_SPRITES[Tile.pipe_left_body]!,
@@ -492,24 +606,26 @@ function pipeSprite(map: GameState["map"], tx: number, ty: number, tileId: numbe
 
 function drawPipeSprite(
   ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
   frame: SpriteFrame,
   x: number,
   y: number,
   flipY: boolean,
 ): void {
   if (!flipY) {
-    drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, x, y, TILE, TILE, false);
+    drawSpriteSheetFrame(ctx, image, frame, x, y, TILE, TILE, false);
     return;
   }
 
   ctx.save();
   ctx.translate(x, y + TILE);
   ctx.scale(1, -1);
-  drawSpriteSheetFrame(ctx, overworldSpriteSheet, frame, 0, 0, TILE, TILE, false);
+  drawSpriteSheetFrame(ctx, image, frame, 0, 0, TILE, TILE, false);
   ctx.restore();
 }
 
-function drawPipesInFront(ctx: CanvasRenderingContext2D, map: GameState["map"], cam: Camera): void {
+function drawPipesInFront(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): void {
+  const { map } = state;
   if (!isSpriteReady(overworldSpriteSheet)) return;
 
   const first = Math.floor(cam.x / TILE);
@@ -523,7 +639,7 @@ function drawPipesInFront(ctx: CanvasRenderingContext2D, map: GameState["map"], 
       if (!sprite) continue;
       const x = tx * TILE - cam.x;
       const y = ty * TILE - cam.y;
-      drawPipeSprite(ctx, sprite.frame, x, y, sprite.flipY);
+      drawPipeSprite(ctx, overworldSpriteSheet, sprite.frame, x, y, sprite.flipY);
     }
   }
 }
@@ -563,6 +679,28 @@ function drawSpriteSheetFrame(
     tintedTileCache.set(key, tinted);
   }
   ctx.drawImage(tinted, x, y);
+}
+
+function drawSmb3Coin(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  frame: SpriteFrame,
+  x: number,
+  y: number,
+  tint: boolean | string = false,
+): void {
+  const height = TILE - 2;
+  const width = Math.round(height * frame.width / frame.height);
+  drawSpriteSheetFrame(
+    ctx,
+    image,
+    frame,
+    x + Math.round((TILE - width) / 2),
+    y + 1,
+    width,
+    height,
+    tint,
+  );
 }
 
 function drawBridgeTiles(ctx: CanvasRenderingContext2D, map: GameState["map"], cam: Camera): void {
@@ -897,6 +1035,37 @@ function drawOverworldBackdrop(ctx: CanvasRenderingContext2D, state: GameState, 
   }
 }
 
+function drawSmb3Backdrop(ctx: CanvasRenderingContext2D, cam: Camera): void {
+  const scale = SCREEN_H / smb3BackgroundSpriteSheet.naturalHeight;
+  const width = smb3BackgroundSpriteSheet.naturalWidth * scale;
+  const offset = -((cam.x * 0.35) % width);
+  for (let x = offset - width; x < SCREEN_W; x += width) {
+    ctx.drawImage(smb3BackgroundSpriteSheet, x, 0, width, SCREEN_H);
+  }
+}
+
+function drawSmb3BackdropSegments(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): void {
+  if (!isSpriteReady(smb3BackgroundSpriteSheet)) return;
+  const segments = state.level.areas[state.area]?.segments ?? [];
+  if (segments.length === 0) {
+    if (smb3At(state, cam.x + SCREEN_W / 2)) drawSmb3Backdrop(ctx, cam);
+    return;
+  }
+
+  for (const segment of segments) {
+    if (gameAt(state.level, state.area, segment.x) !== "smb3") continue;
+    const left = Math.max(0, Math.round(segment.x * TILE - cam.x));
+    const right = Math.min(SCREEN_W, Math.round((segment.x + segment.w) * TILE - cam.x));
+    if (left >= right) continue;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(left, 0, right - left, SCREEN_H);
+    ctx.clip();
+    drawSmb3Backdrop(ctx, cam);
+    ctx.restore();
+  }
+}
+
 function findGroundPlacement(
   map: GameState["map"],
   preferredX: number,
@@ -967,13 +1136,26 @@ function positionHash(value: number): number {
   return (hash ^ (hash >>> 16)) >>> 0;
 }
 
-function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, frameNumber: number): void {
+function drawEnemy(
+  ctx: CanvasRenderingContext2D,
+  enemy: Enemy,
+  cam: Camera,
+  frameNumber: number,
+  smb3: boolean,
+  caveTheme: boolean,
+): void {
   const frameIndex = Math.floor(frameNumber / 8);
   const moving = enemy.onGround && enemy.vx !== 0;
 
-  if (enemy.type === "bowser" && isSpriteReady(bowserSpriteSheet)) {
-    const frame = BOWSER_WALK_FRAMES[moving ? frameIndex % BOWSER_WALK_FRAMES.length : 0];
-    drawSpriteFrame(ctx, bowserSpriteSheet, enemy, cam, frame, enemy.dir > 0);
+  if (enemy.type === "bowser") {
+    const image = smb3 ? smb3BowserSpriteSheet : bowserSpriteSheet;
+    const frames = smb3 ? SMB3_BOWSER_FRAMES : BOWSER_WALK_FRAMES;
+    if (isSpriteReady(image)) {
+      const frame = frames[moving ? frameIndex % frames.length : 0];
+      drawSpriteFrame(ctx, image, enemy, cam, frame, enemy.dir > 0);
+    } else {
+      box(ctx, enemy, cam, ENEMY_COLORS[enemy.type] || COLORS.enemy);
+    }
     return;
   }
 
@@ -999,6 +1181,18 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
     return;
   }
 
+  if (enemy instanceof BuzzyBeetle && smb3 && isSpriteReady(smb3BuzzySpriteSheet)) {
+    const shell = enemy.actionState === "shell_idle" || enemy.actionState === "shell_sliding";
+    const walkFrames = caveTheme ? SMB3_BUZZY_CAVE_WALK_FRAMES : SMB3_BUZZY_WALK_FRAMES;
+    const shellFrames = caveTheme ? SMB3_BUZZY_CAVE_SHELL_FRAMES : SMB3_BUZZY_SHELL_FRAMES;
+    const frames = shell ? shellFrames : walkFrames;
+    const frame = shell
+      ? frames[enemy.actionState === "shell_sliding" ? frameIndex % frames.length : 0]
+      : frames[moving ? frameIndex % frames.length : 0];
+    drawSpriteFrame(ctx, smb3BuzzySpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    return;
+  }
+
   if (enemy.type === "buzzy_beetle" && isSpriteReady(buzzySpriteSheet)) {
     const shell = enemy.actionState === "shell_idle" || enemy.actionState === "shell_sliding";
     const frames = shell ? BUZZY_SHELL_FRAMES : BUZZY_WALK_FRAMES;
@@ -1008,7 +1202,10 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   if (enemy instanceof MiniGoomba) {
-    if (isSpriteReady(miniGoombaSpriteSheet)) {
+    if (smb3 && isSpriteReady(smb3GoombaSpriteSheet)) {
+      const frame = SMB3_MINI_GOOMBA_FRAMES[Math.floor(frameNumber / 8) % SMB3_MINI_GOOMBA_FRAMES.length];
+      drawSpriteFrame(ctx, smb3GoombaSpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    } else if (isSpriteReady(miniGoombaSpriteSheet)) {
       const frame = MINI_GOOMBA_FRAMES[Math.floor(frameNumber / 8) % MINI_GOOMBA_FRAMES.length];
       drawMiniGoomba(ctx, enemy, cam, frame);
     } else {
@@ -1018,18 +1215,32 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   if (enemy instanceof ParaGoomba) {
-    drawParaGoomba(ctx, enemy, cam, frameNumber);
+    if (smb3 && isSpriteReady(smb3GoombaSpriteSheet)) {
+      const red = enemy instanceof ParaGoombaRed || enemy.type.includes("red");
+      const frames = enemy.hasWings
+        ? red ? [SMB3_GOOMBA_FRAMES[7], SMB3_GOOMBA_FRAMES[8]] : [SMB3_GOOMBA_FRAMES[0], SMB3_GOOMBA_FRAMES[1]]
+        : [SMB3_GOOMBA_FRAMES[2], SMB3_GOOMBA_FRAMES[3]];
+      const frame = frames[moving ? frameIndex % frames.length : 0];
+      const visual = enemy.hasWings
+        ? { x: enemy.x - 4 * SUB, y: enemy.y - 5 * SUB, w: 24, h: 24 }
+        : enemy;
+      drawSpriteFrame(ctx, smb3GoombaSpriteSheet, visual, cam, frame, enemy.dir > 0);
+    } else {
+      drawParaGoomba(ctx, enemy, cam, frameNumber);
+    }
     return;
   }
 
   if (enemy instanceof BulletBillCannon) {
-    if (isSpriteReady(bulletBillSpriteSheet)) {
+    const image = smb3 ? smb3BulletBillSpriteSheet : bulletBillSpriteSheet;
+    const frame = smb3 ? SMB3_BULLET_BILL_CANNON : BULLET_BILL_CANNON;
+    if (isSpriteReady(image)) {
       drawSpriteFrame(
         ctx,
-        bulletBillSpriteSheet,
+        image,
         { x: enemy.x + 2 * SUB, y: enemy.y + 0.5 * SUB, w: 12, h: 15 },
         cam,
-        BULLET_BILL_CANNON,
+        frame,
         false,
       );
     } else if (isSpriteReady(temporarySpriteSheet)) {
@@ -1041,13 +1252,15 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
   }
 
   if (enemy instanceof BulletBill) {
-    if (isSpriteReady(bulletBillSpriteSheet)) {
+    const image = smb3 ? smb3BulletBillSpriteSheet : bulletBillSpriteSheet;
+    const frame = smb3 ? SMB3_BULLET_BILL : BULLET_BILL;
+    if (isSpriteReady(image)) {
       drawSpriteFrame(
         ctx,
-        bulletBillSpriteSheet,
+        image,
         { x: enemy.x, y: enemy.y + 3 * SUB, w: 16, h: 10 },
         cam,
-        BULLET_BILL,
+        frame,
         enemy.dir > 0,
       );
     } else if (isSpriteReady(temporarySpriteSheet)) {
@@ -1075,9 +1288,34 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
     return;
   }
 
+  if (enemy.type === "cheep_cheep" && smb3 && isSpriteReady(smb3SpinyCheepSpriteSheet)) {
+    const redFrames = SMB3_CHEEP_CHEEP_FRAMES.slice(2);
+    const frame = redFrames[moving ? frameIndex % redFrames.length : 0];
+    drawSpriteFrame(ctx, smb3SpinyCheepSpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    return;
+  }
+
+  if (enemy instanceof Spiny && smb3 && isSpriteReady(smb3SpinyCheepSpriteSheet)) {
+    const frame = SMB3_SPINY_FRAMES[moving ? frameIndex % SMB3_SPINY_FRAMES.length : 0];
+    drawSpriteFrame(ctx, smb3SpinyCheepSpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    return;
+  }
+
   if (enemy instanceof Spiny && isSpriteReady(enemySpriteSheet)) {
     const frame = SPINY_FRAMES[moving ? frameIndex % SPINY_FRAMES.length : 0];
     drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir > 0);
+    return;
+  }
+
+  if (enemy instanceof HammerBro && smb3 && isSpriteReady(smb3HammerBroSpriteSheet)) {
+    const frame = enemy.state === "throwing"
+      ? SMB3_HAMMER_BRO_FRAMES[
+          2 + Math.floor((HammerBro.THROW_ANIMATION_DURATION - enemy.throwAnimationTimer) / 4) % 2
+        ]
+      : enemy.state === "moving"
+        ? SMB3_HAMMER_BRO_FRAMES[frameIndex % 2]
+        : SMB3_HAMMER_BRO_FRAMES[0];
+    drawSpriteFrame(ctx, smb3HammerBroSpriteSheet, enemy, cam, frame, enemy.dir > 0, 1.1);
     return;
   }
 
@@ -1092,6 +1330,34 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
         ? HAMMER_BRO_FRAMES[frameIndex % 2]
         : HAMMER_BRO_FRAMES[0];
     drawSpriteFrame(ctx, enemySpriteSheet, enemy, cam, frame, enemy.dir > 0, 1.1);
+    return;
+  }
+
+  if (enemy instanceof Goomba && smb3 && isSpriteReady(smb3GoombaSpriteSheet)) {
+    const red = enemy.type.includes("red");
+    if (enemy.squashTimer > 0) {
+      const squash = SMB3_GOOMBA_SQUASHED_FRAMES[red ? 1 : 0];
+      drawSpriteFrame(ctx, smb3GoombaSpriteSheet, {
+        x: enemy.x,
+        y: enemy.y + 8 * SUB,
+        w: enemy.w,
+        h: 8,
+      }, cam, squash, false);
+      return;
+    }
+    const start = red ? 9 : 2;
+    const frames = [SMB3_GOOMBA_FRAMES[start], SMB3_GOOMBA_FRAMES[start + 1]];
+    const frame = frames[moving ? frameIndex % frames.length : 0];
+    for (let i = 0; i < enemy.stackCount; i++) {
+      drawSpriteFrame(
+        ctx,
+        smb3GoombaSpriteSheet,
+        { x: enemy.x, y: enemy.y + i * enemy.cfg.h * SUB, w: enemy.w, h: enemy.cfg.h },
+        cam,
+        frame,
+        enemy.dir < 0,
+      );
+    }
     return;
   }
 
@@ -1111,6 +1377,34 @@ function drawEnemy(ctx: CanvasRenderingContext2D, enemy: Enemy, cam: Camera, fra
         enemy.dir < 0,
       );
     }
+    return;
+  }
+
+  if (
+    enemy instanceof KoopaEnemy &&
+    (enemy.type === "koopa" || enemy.type === "koopa_red" || enemy.type === "koopa_para" || enemy.type === "koopa_para_red") &&
+    smb3 &&
+    isSpriteReady(smb3KoopaSpriteSheet)
+  ) {
+    const red = enemy.type === "koopa_red" || enemy.type === "koopa_para_red";
+    const base = red ? 8 : 0;
+    if ("hasWings" in enemy && enemy.hasWings === true && isSpriteReady(smb3ParaTroopaSpriteSheet)) {
+      const firstWingFrame = red ? 0 : 2;
+      const frame = SMB3_PARATROOPA_FRAMES[firstWingFrame + (frameIndex % 2)];
+      const visual = { x: enemy.x - 4 * SUB, y: enemy.y - 5 * SUB, w: 24, h: 24 };
+      drawSpriteFrame(ctx, smb3ParaTroopaSpriteSheet, visual, cam, frame, enemy.dir < 0);
+      return;
+    }
+    const shell = enemy.actionState !== "default";
+    const shellOffset = shell
+      ? 2 + (enemy.actionState === "shell_sliding" ? frameIndex % 6 : 0)
+      : (moving ? frameIndex % 2 : 0);
+    const frame = SMB3_KOOPA_FRAMES[base + shellOffset];
+    const visualW = 16;
+    const visualH = shell ? 16 : 24;
+    const renderX = enemy.x - ((visualW - enemy.w) / 2) * SUB;
+    const renderY = enemy.bottom - visualH * SUB;
+    drawSpriteFrame(ctx, smb3KoopaSpriteSheet, { x: renderX, y: renderY, w: visualW, h: visualH }, cam, frame, enemy.dir > 0);
     return;
   }
 
@@ -1249,11 +1543,101 @@ function drawSpriteFrame(
 
 function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera): void {
   const { player } = state;
+  const smb3 = smb3At(state, player.x / SUB + player.w / 2);
   const form = player.form; // under a star: the form from before it
   const isPoweredUp = form !== "small";
   const drawSize = isPoweredUp ? 32 : TILE;
   const x = Math.round(player.x / SUB - cam.x - (drawSize - player.w) / 2);
   const y = Math.round(player.y / SUB - cam.y);
+
+  if (smb3 && form !== "tanooki") {
+    let image: HTMLImageElement;
+    let frames: SpriteFrame[];
+    let idleIndex: number;
+    let walkStart: number;
+    let walkCount: number;
+    let jumpIndex: number;
+    let skidIndex: number;
+
+    switch (form) {
+      case "small":
+        image = smb3MiniMarioSpriteSheet;
+        frames = SMB3_MARIO_SMALL_FRAMES;
+        idleIndex = 0;
+        walkStart = 0;
+        walkCount = 2;
+        skidIndex = 3;
+        jumpIndex = 3;
+        break;
+      case "fire":
+        image = smb3FireMarioSpriteSheet;
+        frames = SMB3_MARIO_FIRE_FRAMES;
+        idleIndex = 1;
+        walkStart = 1;
+        walkCount = 3;
+        skidIndex = 4;
+        jumpIndex = 7;
+        break;
+      case "hammer_suit":
+        image = smb3HammerMarioSpriteSheet;
+        frames = SMB3_MARIO_HAMMER_FRAMES;
+        idleIndex = 3;
+        walkStart = 3;
+        walkCount = 3;
+        skidIndex = 6;
+        jumpIndex = 9;
+        break;
+      case "frog":
+        image = smb3FrogMarioSpriteSheet;
+        frames = SMB3_MARIO_FROG_FRAMES;
+        idleIndex = 3;
+        walkStart = 3;
+        walkCount = 3;
+        skidIndex = 3;
+        jumpIndex = 5;
+        break;
+      default:
+        image = smb3SuperMarioSpriteSheet;
+        frames = SMB3_MARIO_SUPER_FRAMES;
+        idleIndex = 2;
+        walkStart = 2;
+        walkCount = 3;
+        skidIndex = 5;
+        jumpIndex = 6;
+    }
+
+    if (isSpriteReady(image)) {
+      const walking = player.onGround && player.vx !== 0;
+      let frame = frames[idleIndex];
+      if (form === "hammer_suit" && player.wantsShoot) {
+        frame = frames[7 + Math.floor(state.frame / 4) % 2];
+      } else if (!player.onGround) {
+        frame = frames[jumpIndex];
+      } else if (player.onGround && player.vx * player.facing < 0) {
+        frame = frames[skidIndex];
+      } else if (walking) {
+        frame = frames[walkStart + Math.floor(state.frame / 7) % walkCount];
+      }
+
+      if (state.pipe) {
+        const frontFrame = form === "frog" ? 1 : form === "small" ? 8 : 0;
+        frame = frames[frontFrame];
+      }
+
+      const drawWidth = Math.round(drawSize * frame.width / frame.height);
+      const drawX = Math.round(player.x / SUB - cam.x + player.w / 2 - drawWidth / 2);
+      ctx.save();
+      if (player.facing < 0) {
+        ctx.translate(drawX + drawWidth, y);
+        ctx.scale(-1, 1);
+      } else {
+        ctx.translate(drawX, y);
+      }
+      ctx.drawImage(image, frame.x, frame.y, frame.width, frame.height, 0, 0, drawWidth, drawSize);
+      ctx.restore();
+      return;
+    }
+  }
 
   if (form === "tanooki" && !isSpriteReady(tanookiSpriteSheet)) {
     box(ctx, player, cam, COLORS.player);
@@ -1281,14 +1665,14 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera
   let frame: SpriteFrame;
 const spinTimer = (player as any).spinTimer || 0;
 
-  if (spinTimer > 0 && form === "tanooki") {
+  if (!player.onGround && form === "tanooki") {
+    frame = largeFrames[3];
+  } else if (spinTimer > 0 && form === "tanooki") {
     const spinIndex = Math.floor((16 - spinTimer) / 4);
     frame = largeFrames[4 + spinIndex];
   } 
   else if (!player.onGround) {
-    if (form === "tanooki") {
-      frame = largeFrames[1];
-    } else if (isPoweredUp) {
+    if (isPoweredUp) {
       frame = form === "fire" ? largeFrames[largeFrames.length - 1] : largeFrames[5];
     } else {
       frame = MARIO_JUMP;
