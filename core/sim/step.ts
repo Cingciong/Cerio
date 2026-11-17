@@ -390,7 +390,7 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
           if (overlaps) {
             fb.alive = false;
           
-          if (player.powerState !== 'star') {
+          if (player.powerState !== 'star' && !player.fireproof) {
             damagePlayer(state)
           }
           break;

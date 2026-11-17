@@ -3,7 +3,8 @@
 import { Body, type Collision } from "./body.ts";
 import { Button, has, type Buttons } from "../config/buttons.ts";
 import { PLAYER } from "../config/config.ts";
-import type { TileMap } from "../world/tiles.ts";
+import { SUB } from "../config/constants.ts";
+import { isSolid, toTile, type TileMap } from "../world/tiles.ts";
 
 export type PowerState = 'small' | 'big' | 'fire' | 'hammer_suit' | 'star' | 'leaf' | 'tanooki' | 'frog';
 
@@ -17,7 +18,8 @@ export class Player extends Body {
   invulnerableTimer = 0;
   starTimer = 0; // frames of star power left
   powerBeforeStar: PowerState = 'small'; // form restored when the star runs out
-  wantsShoot = false; 
+  wantsShoot = false;  
+  crouching = false;
 
   constructor(x: number, y: number) {
     super(x, y, PLAYER.w, PLAYER.h);
@@ -27,8 +29,10 @@ export class Player extends Body {
     this.prevButtons = this.buttons;
     this.buttons = buttons;
 
+    this.updateCrouch(buttons, map);
+
     const attackPressed = has(buttons, Button.attack) && !has(this.prevButtons, Button.attack); 
-    this.wantsShoot = attackPressed && ['fire', 'hammer_suit', 'leaf', 'tanooki'].includes(this.form);
+    this.wantsShoot = attackPressed && !this.crouching && ['fire', 'hammer_suit', 'leaf', 'tanooki'].includes(this.form);
 
     if (this.invulnerableTimer > 0){
       this.invulnerableTimer--;
@@ -42,7 +46,7 @@ export class Player extends Body {
       }
     }
 
-    const targetHeight = (this.form === 'small') ? PLAYER.h : 32;
+    const targetHeight = (this.form === 'small' || this.crouching) ? PLAYER.h : 32;
 
     if(this.h !== targetHeight){
       const diff = targetHeight - this.h;
@@ -64,6 +68,11 @@ export class Player extends Body {
     this.vy = Math.min(this.vy + currentGravity, currentMaxFall);
 
     return this.move(map);
+  }
+
+  
+  get fireproof(): boolean {
+    return this.crouching && this.form === 'hammer_suit';
   }
 
   /** The form Mario has under a star: the one he had before it. */
@@ -89,8 +98,35 @@ export class Player extends Body {
     }
   }
 
+  
+  private updateCrouch(buttons: Buttons, map: TileMap): void {
+    const canCrouch = this.form === 'hammer_suit';
+    const wantsDown = has(buttons, Button.down);
+
+    if (this.crouching) {
+      const keepDucking = canCrouch && wantsDown && this.onGround;
+      if (!keepDucking && this.hasHeadroom(map)) this.crouching = false;
+    } else if (canCrouch && wantsDown && this.onGround) {
+      this.crouching = true;
+    }
+  }
+
+  
+  private hasHeadroom(map: TileMap): boolean {
+    const standingTop = this.bottom - 32 * SUB;
+    for (let tx = toTile(this.x); tx <= toTile(this.right - 1); tx++) {
+      for (let ty = toTile(standingTop); ty <= toTile(this.y - 1); ty++) {
+        if (isSolid(map, tx, ty)) return false;
+      }
+    }
+    return true;
+  }
+
   private horizontal(buttons: Buttons): void {
-    const dir = (has(buttons, Button.right) ? 1 : 0) - (has(buttons, Button.left) ? 1 : 0);
+    // Ducked on the ground: no walking and no turning, Mario just slows down.
+    const dir = this.crouching && this.onGround
+      ? 0
+      : (has(buttons, Button.right) ? 1 : 0) - (has(buttons, Button.left) ? 1 : 0);
     if (dir !== 0) this.facing = dir < 0 ? -1 : 1;
     const max = has(buttons, Button.run) ? PLAYER.runMax : PLAYER.walkMax;
 
