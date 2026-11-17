@@ -29,12 +29,14 @@ export interface LevelFile extends AreaFile {
   name: string;
   player?: { x: number; y: number };
   type?: string;
+  game?: "smb1" | "smb3";
 }
 
 /** Generated level: overworld, optional cave and the pipes between them. */
 export interface AreasFile {
   name: string;
   type?: string;
+  game?: "smb1" | "smb3";
   player: { x: number; y: number };
   overworld: AreaFile;
   cave?: AreaFile;
@@ -94,6 +96,7 @@ export interface Area {
 export interface Level extends Area {
   name: string;
   type: string;
+  game?: "smb1" | "smb3";
   areas: Record<string, Area>; // "overworld" (same as map/enemies/segments above) and optionally "cave"
   pipes: PipeLink[];
   playerStart: Spawn;
@@ -110,11 +113,30 @@ export function loadLevel(file: LevelFile | AreasFile): Level {
   return {
     name: file.name,
     type: file.type ?? "normal",
+    game: file.name.toLowerCase().includes("smb3") ? "smb3" : file.game,
     ...overworld,
     areas,
     pipes: f.pipes ?? [],
     playerStart: { x: f.player.x * TILE_SUB, y: f.player.y * TILE_SUB },
   };
+}
+
+export function gameAt(level: Pick<Level, "game" | "areas">, areaName: string, tileX: number): Level["game"] {
+  const segments = level.areas[areaName]?.segments ?? [];
+  const segmentIndex = segments.findIndex(
+    (span) => tileX >= span.x && tileX < span.x + span.w,
+  );
+  let segment = segments[segmentIndex];
+  if (
+    segmentIndex === 0 &&
+    segment?.name.toLowerCase().endsWith("_start") &&
+    !segment.name.toLowerCase().includes("smb3") &&
+    segments[1]
+  ) {
+    segment = segments[1];
+  }
+  if (segment) return segment.name.toLowerCase().includes("smb3") ? "smb3" : "smb1";
+  return level.game;
 }
 
 function loadArea(file: AreaFile, name: string): Area {
