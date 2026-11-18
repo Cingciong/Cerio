@@ -932,7 +932,7 @@ export interface HammerProjectile {
   vy: number;
   rotation: number;
   alive: boolean;
-  dir?: numberl
+  dir?: number;
 }
 
 export type HammerBroState = 'idle' | 'moving' | 'jumping' | 'falling' | 'throwing';
@@ -1153,6 +1153,8 @@ export function createEnemy(id: number, type: string, x: number, y: number, coun
       case 'fire_venus_trap':
       case 'venus_fire_trap':
         return new VenusFireTrap(id, type, x, y);
+      case 'boomerang_bro':
+        return new BoomerangBro(id, type, x, y);
       default:
         return new Enemy(id, type, x, y);
     }

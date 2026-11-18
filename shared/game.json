@@ -86,7 +86,8 @@
     "buzzy_beetle": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#fcfc00","score": 400 },
     "spiny": { "w": 16, "h": 16, "speed": 8,  "gravity": 6, "maxFall": 64, "color": "#ff0000","score": 1000 },
     "bullet_bill": { "w": 16, "h": 16, "speed": 24, "gravity": 0, "maxFall": 0, "color": "#000000","score": 1000 },
-    "bullet_bill_cannon": { "w": 16, "h": 16, "speed": 0, "gravity": 0, "maxFall": 0, "color": "#333333","score": 1000 }
+    "bullet_bill_cannon": { "w": 16, "h": 16, "speed": 0, "gravity": 0, "maxFall": 0, "color": "#333333","score": 1000 },
+    "boomerang_bro": { "w": 16, "h": 24, "speed": 8, "gravity": 6, "maxFall": 64, "color": "#2E8B57", "score": 1000 }
   },
 
   "items": {

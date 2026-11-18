@@ -12,7 +12,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 GAME = json.loads((ROOT / "shared" / "game.json").read_text(encoding="utf8"))
 
-W, H, MAX_ENEMIES, N_SCALARS, SLOTS = 32, 15, 16, 15, 32
+W, H, MAX_ENEMIES, N_SCALARS, SLOTS = 32, 15, 16, 15, 64
 ENEMY_FLOATS = 5
 REPEAT = 4  # frames per decision, must match worker.ts
 

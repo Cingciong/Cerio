@@ -12,7 +12,7 @@ import type { PowerState } from "../entities/player.ts";
 import type { GameState } from "../sim/state.ts";
 import { tileAt, toTile } from "../world/tiles.ts";
 
-export const OBS = { w: 32, h: 15, behind: 8, maxEnemies: 16, scalars: 15, enemyFloats: 5, slots: 32 } as const;
+export const OBS = { w: 32, h: 15, behind: 8, maxEnemies: 16, scalars: 15, enemyFloats: 5, slots: 64 } as const;
 
 const CELLS = OBS.w * OBS.h;
 const SCALARS_AT = CELLS * 2 + OBS.maxEnemies;
