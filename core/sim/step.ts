@@ -3,7 +3,7 @@ import { Button, type Buttons } from "../config/buttons.ts";
 import { SUB, TILE_SUB } from "../config/constants.ts";
 import { PLAYER, PROJECTILES, RULES } from "../config/config.ts";
 import type { GameState } from "./state.ts";
-import { Enemy, BulletBillCannon, Goomba, HammerBro, MiniGoomba, ParaGoombaBrown, VenusFireTrap } from "../entities/enemy.ts";
+import { Enemy, BulletBillCannon, Goomba, HammerBro, KoopaParaTroopa, MiniGoomba, ParaGoombaBrown, VenusFireTrap } from "../entities/enemy.ts";
 import { isDeadly, isGoal, isSolid, Tile, tileAt, toTile, type TileMap } from "../world/tiles.ts";
 import type { Body } from "../entities/body.ts";
 import { Item, type ItemType, type SlotItem } from "../entities/powerup.ts";
@@ -423,9 +423,15 @@ export function step(state: GameState, buttons: Buttons, enemyButtons: EnemyButt
     ) continue;
     const fromAbove = stompCandidates.has(enemy);
     if (fromAbove && enemy.stompable) {
+      const wasWingedKoopa = enemy instanceof KoopaParaTroopa && enemy.hasWings;
       const shouldBounce = enemy.onStomp(player.x);
       rewardEnemyKill(state, enemy);
       if (shouldBounce) {
+        if (wasWingedKoopa) {
+          player.y = enemy.y - player.h * SUB;
+          player.onGround = false;
+          player.hit.ground = false;
+        }
         player.vy = -PLAYER.stompBounce;
       }
     } else {
