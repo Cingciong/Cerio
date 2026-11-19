@@ -31,6 +31,7 @@ import {
   OVERWORLD_SMALL_HILL,
   PIRANHA_PLANT_FRAMES,
   PARATROOPA_WING,
+  PARATROOPA_WING_FRAMES,
   PODOBOO_FRAMES,
   SPINY_FRAMES,
   TEMP_BULLET_BILL,
@@ -1435,6 +1436,7 @@ function drawEnemy(
     );
 
     if ("hasWings" in enemy && enemy.hasWings === true && isSpriteReady(wingsSpriteSheet)) {
+      const wingFrame = PARATROOPA_WING_FRAMES[frameIndex % PARATROOPA_WING_FRAMES.length];
       const wingWidth = 15;
       const wingOffsetX = 3;
       const mirroredWingOffsetX = enemy.w - wingOffsetX - wingWidth;
@@ -1445,10 +1447,10 @@ function drawEnemy(
           x: enemy.x + (enemy.dir > 0 ? mirroredWingOffsetX : wingOffsetX) * SUB,
           y: enemy.y + 1 * SUB,
           w: wingWidth,
-          h: 15,
+          h: wingFrame.height,
         },
         cam,
-        PARATROOPA_WING,
+        wingFrame.frame,
         enemy.dir > 0,
       );
     }

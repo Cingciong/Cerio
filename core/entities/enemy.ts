@@ -169,7 +169,10 @@ export class KoopaEnemy extends Enemy {
       this.vx = this.dir * this.cfg.speed;
     }
     const appliedGravity = this.cfg.gravity > 0 ? this.cfg.gravity : 15; 
-    this.vy = Math.min(this.vy + appliedGravity, this.cfg.maxFall);
+    const maxFall = "hasWings" in this && this.hasWings === false
+      ? Math.max(this.cfg.maxFall, ENEMIES.koopa.maxFall)
+      : this.cfg.maxFall;
+    this.vy = Math.min(this.vy + appliedGravity, maxFall);
 
     const previousDir = this.dir;
 

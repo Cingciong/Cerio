@@ -91,6 +91,10 @@ export const BUZZY_SHELL_FRAMES: SpriteFrame[] = [
   { x: 62, y: 38, width: 18, height: 14 },
 ];
 export const PARATROOPA_WING: SpriteFrame = { x: 0, y: 0, width: 22, height: 22 };
+export const PARATROOPA_WING_FRAMES = [
+  { frame: PARATROOPA_WING, height: 15 },
+  { frame: PARATROOPA_WING, height: 12 },
+];
 export const PODOBOO_FRAMES: SpriteFrame[] = [
   { x: 0, y: 0, width: 16, height: 16 },
   { x: 2, y: 18, width: 12, height: 12 },
