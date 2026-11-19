@@ -57,6 +57,7 @@ import {
   SMB3_LAVA_FRAMES,
   SMB3_MARIO_FIRE_FRAMES,
   SMB3_MARIO_FROG_FRAMES,
+  SMB3_MARIO_HAMMER_CROUCH,
   SMB3_MARIO_HAMMER_FRAMES,
   SMB3_MARIO_SMALL_FRAMES,
   SMB3_MARIO_SUPER_FRAMES,
@@ -95,6 +96,7 @@ const bowserSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/Bowser.pn
 const smb3SuperMarioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/SuperMarioSMB3.png");
 const smb3FireMarioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/FireMarioSMB3.png");
 const smb3HammerMarioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/HammerMarioSMB3.png");
+const smb3HammerMarioCrouchSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/HammerMarioSMB3_Crouch.png");
 const smb3FrogMarioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/FrogMarioSMB3.png");
 const smb3MiniMarioSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/MiniMarioSMB3.png");
 const smb3GoombaSpriteSheet = loadSpriteSheet("./sprites/Mario1/Characters/GoombaSMB3.png");
@@ -1553,6 +1555,24 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState, cam: Camera
   const y = Math.round(player.bottom / SUB - cam.y - drawSize); // feet stay on the ground when the hitbox is shorter than the sprite (crouching)
 
   if (smb3 && form !== "tanooki") {
+    if (form === "hammer_suit" && player.crouching && !state.pipe && isSpriteReady(smb3HammerMarioCrouchSpriteSheet)) {
+      const f = SMB3_MARIO_HAMMER_CROUCH;
+      const crouchH = player.h; // hitbox height while ducking
+      const crouchW = Math.round(crouchH * f.width / f.height);
+      const crouchX = Math.round(player.x / SUB - cam.x + player.w / 2 - crouchW / 2);
+      const crouchY = Math.round(player.bottom / SUB - cam.y - crouchH);
+      ctx.save();
+      if (player.facing < 0) {
+        ctx.translate(crouchX + crouchW, crouchY);
+        ctx.scale(-1, 1);
+      } else {
+        ctx.translate(crouchX, crouchY);
+      }
+      ctx.drawImage(smb3HammerMarioCrouchSpriteSheet, f.x, f.y, f.width, f.height, 0, 0, crouchW, crouchH);
+      ctx.restore();
+      return;
+    }
+
     let image: HTMLImageElement;
     let frames: SpriteFrame[];
     let idleIndex: number;

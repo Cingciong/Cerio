@@ -228,6 +228,9 @@ export const SMB3_MARIO_HAMMER_FRAMES: SpriteFrame[] = [
   { x: 1017, y: 31, width: 76, height: 107 },
 ];
 
+/** Ducking Hammer Mario (black shell), own 17x16 file: HammerMarioSMB3_Crouch.png. */
+export const SMB3_MARIO_HAMMER_CROUCH: SpriteFrame = { x: 0, y: 0, width: 17, height: 16 };
+
 export const SMB3_MARIO_FROG_FRAMES: SpriteFrame[] = [
   { x: 19, y: 72, width: 64, height: 64 },
   { x: 95, y: 56, width: 64, height: 80 },
