@@ -11,8 +11,11 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from frame import GameFrame, ServerReply
 from rl import RLTrainer
+from rl_enemy_train import EnemyServerTrainer
 
 app = FastAPI()
+
+ENEMY_RL_ENABLED = True
 
 
 @app.get("/health")
@@ -30,15 +33,17 @@ async def ws(socket: WebSocket) -> None:
     await socket.accept()
     print("client connected", flush=True)
 
-    trainer = RLTrainer()
+    enemy_trainer = (
+        EnemyServerTrainer(num_actions=5, weights_path="enemy_q_weights.pth", load_if_exists=True)
+        if ENEMY_RL_ENABLED
+        else None
+    )
     try:
         while True:
             frame = GameFrame.from_dict(await socket.receive_json())
-            if frame.frame % 60 == 0:
-                p = frame.player
-                alive = sum(e.alive for e in frame.enemies)
-                print(f"frame {frame.frame}: player ({p.x:.1f}, {p.y:.1f}) v=({p.vx:.2f}, {p.vy:.2f}) {p.pressed}, enemies alive {alive}", flush=True)
-            reply = trainer.decide(frame)
+            enemy_buttons = enemy_trainer.step(frame)
+            reply = ServerReply(frame=frame.frame, player=None, enemies=enemy_buttons)
             await socket.send_json(reply.to_dict())
     except WebSocketDisconnect:
+        enemy_trainer.save()
         print("client disconnected", flush=True)

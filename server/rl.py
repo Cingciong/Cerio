@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+from torch.distributions import Categorical
 from frame import GameFrame, ServerReply, EnemyFrame
 from game_config import Buttons
 import os
@@ -21,36 +22,53 @@ class EnemyQNetwork(nn.Module):
         return self.net(x)
 
 
-class SimpleQNetwork(nn.Module):
+class ActorCriticNetwork(nn.Module):
     def __init__(self, num_actions=5):
         super().__init__()
-        
+
         self.tile_emb = nn.Embedding(num_embeddings=32, embedding_dim=4)
         self.ent_emb = nn.Embedding(num_embeddings=32, embedding_dim=3)
-        
+
         self.conv1 = nn.Conv2d(in_channels=7, out_channels=8, kernel_size=3, stride=2, padding=1)
         self.conv2 = nn.Conv2d(in_channels=8, out_channels=8, kernel_size=3, stride=2, padding=1)
-        
-        self.enemy_linear = nn.Linear(in_features=8, out_features=8)
-        
-        fc_input_dim = 256 + 8 + 15
-        
-        self.fc1 = nn.Linear(fc_input_dim, 32)
-        self.fc2 = nn.Linear(32, 16)
-        self.fc_out = nn.Linear(16, num_actions)
 
-    def forward(self, state_dict):
-        tiles = state_dict['tiles']
-        ents = state_dict['ents']
-        etype = state_dict['etype']
-        en = state_dict['en']
-        sc = state_dict['sc']
+        self.enemy_linear = nn.Linear(in_features=8, out_features=8)
+
+        fc_input_dim = 256 + 8 + 15
+
+        self.fc1 = nn.Linear(fc_input_dim, 64)
+        self.fc2 = nn.Linear(64, 32)
+        self.policy_head = nn.Linear(32, num_actions)
+        self.value_head = nn.Linear(32, 1)
+
+        self._init_weights()
+
+    def _init_weights(self):
+        nn.init.normal_(self.tile_emb.weight, mean=0.0, std=0.2)
+        nn.init.normal_(self.ent_emb.weight, mean=0.0, std=0.2)
+
+        for module in [self.conv1, self.conv2, self.enemy_linear, self.fc1, self.fc2]:
+            nn.init.kaiming_normal_(module.weight, mode="fan_in", nonlinearity="relu")
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+
+        nn.init.orthogonal_(self.policy_head.weight, gain=0.01)
+        nn.init.zeros_(self.policy_head.bias)
+
+        nn.init.orthogonal_(self.value_head.weight, gain=1.0)
+        nn.init.zeros_(self.value_head.bias)
+
+    def _encode(self, state_dict):
+        tiles = state_dict["tiles"]
+        ents = state_dict["ents"]
+        etype = state_dict["etype"]
+        en = state_dict["en"]
+        sc = state_dict["sc"]
 
         t_emb = self.tile_emb(tiles)
         e_emb = self.ent_emb(ents)
-        
+
         view = torch.cat([t_emb, e_emb], dim=-1).permute(0, 3, 1, 2)
-        
         c1 = F.relu(self.conv1(view))
         c2 = F.relu(self.conv2(c1))
         flat_view = c2.flatten(start_dim=1)
@@ -58,37 +76,68 @@ class SimpleQNetwork(nn.Module):
         etype_emb = self.ent_emb(etype)
         enemy_feat = torch.cat([en, etype_emb], dim=-1)
         enemy_hidden = F.relu(self.enemy_linear(enemy_feat))
-        
+
         mask = (etype > 0).unsqueeze(-1).float()
         enemies_pooled = (enemy_hidden * mask).amax(dim=1)
 
         x = torch.cat([flat_view, enemies_pooled, sc], dim=1)
-        
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        return self.fc_out(x)
+        return F.relu(self.fc2(x))
+
+    def forward(self, state_dict):
+        hidden = self._encode(state_dict)
+        logits = self.policy_head(hidden)
+        value = self.value_head(hidden).squeeze(-1)
+        return logits, value
+
+    def act(self, state_dict, deterministic=False):
+        logits, value = self.forward(state_dict)
+        if deterministic:
+            action = torch.argmax(logits, dim=-1)
+            return action.item(), None, value.detach()
+
+        dist = Categorical(logits=logits)
+        action = dist.sample()
+        log_prob = dist.log_prob(action)
+        return action.item(), log_prob.detach(), value.detach()
+
+    def evaluate_actions(self, state_dict, actions):
+        logits, values = self.forward(state_dict)
+        dist = Categorical(logits=logits)
+        log_probs = dist.log_prob(actions)
+        entropy = dist.entropy()
+        return log_probs, values, entropy
 
 class EnemyRLModel:
-    def __init__(self):
-        self.q_network = EnemyQNetwork(3, 3)
+    def __init__(self, num_actions=5, weights_path="enemy_q_weights.pth", load_if_exists=False):
+        self.num_actions = num_actions
+        self.weights_path = weights_path
+        self.q_network = EnemyQNetwork(5, num_actions)
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=0.005)
         self.criterion = nn.MSELoss()
-        
+
         self.gamma = 0.99
         self.epsilon = 1.0
         self.epsilon_min = 0.1
         self.epsilon_decay = 0.999
-        
+
         self.memory = deque(maxlen=20000)
         self.batch_size = 64
-        
+
         self.last_state = {}
         self.last_action = {}
+
+        if load_if_exists and weights_path and os.path.exists(weights_path):
+            self.q_network.load_state_dict(torch.load(weights_path, map_location="cpu"))
 
     def extract_state(self, enemy: EnemyFrame, player_x: float, player_y: float):
         dx = (player_x - enemy.x) / 100.0
         dy = (player_y - enemy.y) / 100.0
-        return torch.tensor([dx, dy, enemy.vx / 10.0], dtype=torch.float32)
+        on_ground = 1.0 if enemy.onGround else 0.0
+        return torch.tensor(
+            [dx, dy, enemy.vx / 10.0, enemy.vy / 10.0, on_ground],
+            dtype=torch.float32,
+        )
 
     def get_action(self, enemy: EnemyFrame, frame: GameFrame, reward: float) -> int:
         enemy_id = enemy.id
@@ -99,23 +148,23 @@ class EnemyRLModel:
                 self.last_state[enemy_id],
                 self.last_action[enemy_id],
                 reward,
-                current_state
+                current_state,
             ))
-        
+
         if len(self.memory) >= self.batch_size:
             batch = random.sample(self.memory, self.batch_size)
             states = torch.stack([x[0] for x in batch])
-            actions = torch.tensor([x[1] for x in batch])
+            actions = torch.tensor([x[1] for x in batch], dtype=torch.long)
             rewards = torch.tensor([x[2] for x in batch], dtype=torch.float32)
             next_states = torch.stack([x[3] for x in batch])
-            
+
             q_values = self.q_network(states)
             q_value_taken = q_values[range(self.batch_size), actions]
-            
+
             with torch.no_grad():
                 max_q_next = torch.max(self.q_network(next_states), dim=1)[0]
             target_q = rewards + self.gamma * max_q_next
-            
+
             loss = self.criterion(q_value_taken, target_q)
             self.optimizer.zero_grad()
             loss.backward()
@@ -125,7 +174,7 @@ class EnemyRLModel:
             self.epsilon *= self.epsilon_decay
 
         if random.random() < self.epsilon:
-            action_idx = random.randint(0, 2)
+            action_idx = random.randint(0, self.num_actions - 1)
         else:
             with torch.no_grad():
                 action_idx = torch.argmax(self.q_network(current_state)).item()
@@ -133,177 +182,147 @@ class EnemyRLModel:
         self.last_state[enemy_id] = current_state
         self.last_action[enemy_id] = action_idx
 
-        if action_idx == 1: return Buttons.press("left")
-        elif action_idx == 2: return Buttons.press("right")
+        has_jump = "jump" in Buttons.masks
+
+        if action_idx == 1:
+            return Buttons.press("left")
+        elif action_idx == 2:
+            return Buttons.press("right")
+        elif action_idx == 3 and has_jump and enemy.onGround:
+            return Buttons.press("jump")
+        elif action_idx == 4 and has_jump and enemy.onGround:
+            dir_btn = "left" if frame.player.x < enemy.x else "right"
+            return Buttons.press(dir_btn, "jump")
         return 0
 
 
 class PlayerRLModel:
-    def __init__(self):
-        self.q_network = SimpleQNetwork(num_actions=5)
+    def __init__(
+        self,
+        num_actions=5,
+        lr=3e-4,
+        gamma=0.99,
+        gae_lambda=0.95,
+        clip_eps=0.2,
+        ppo_epochs=4,
+        batch_size=64,
+        value_coef=0.5,
+        entropy_coef=0.02,
+        weights_path="ppo_model_weights.pth",
+        load_if_exists=False,
+    ):
+        self.num_actions = num_actions
+        self.policy = ActorCriticNetwork(num_actions=num_actions)
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
 
-        self.target_network = SimpleQNetwork(num_actions=5)
-        self.target_network.load_state_dict(self.q_network.state_dict())
-        self.target_network.eval()
-        self.target_update_freq = 1000
-        self.steps_done = 0
+        self.gamma = gamma
+        self.gae_lambda = gae_lambda
+        self.clip_eps = clip_eps
+        self.ppo_epochs = ppo_epochs
+        self.batch_size = batch_size
+        self.value_coef = value_coef
+        self.entropy_coef = entropy_coef
+        self.weights_path = weights_path
 
-        self.optimizer = optim.Adam(self.q_network.parameters(), lr=0.0005)
-        self.criterion = nn.SmoothL1Loss()
-        
-        self.gamma = 0.95
-        self.epsilon = 1.0
-        self.epsilon_min = 0.05
-        self.epsilon_decay = 0.999
-        
-        self.memory = deque(maxlen=2000)
-        self.batch_size = 32
-        
-        self.last_state = None
-        self.last_action = None
-        
-        if os.path.exists("rl_model_weights.pth"):
-            self.q_network.load_state_dict(torch.load("rl_model_weights.pth"))
-            self.q_network.eval()
-            self.epsilon = 0.05
+        if load_if_exists and weights_path and os.path.exists(weights_path):
+            self.policy.load_state_dict(torch.load(weights_path, map_location="cpu"))
 
-    def extract_state(self, frame: GameFrame):
-        W, H, BEHIND = 32, 15, 8
-        TILE = 16.0 
-        
-        tiles = torch.zeros((H, W), dtype=torch.long)
-        ents = torch.zeros((H, W), dtype=torch.long)
-        etype = torch.zeros(16, dtype=torch.long)
-        en = torch.zeros((16, 5), dtype=torch.float32)
-        sc = torch.zeros(15, dtype=torch.float32)
+        self.clear_rollout()
 
-        p = frame.player
-        cx = p.x + p.w / 2.0
-        cy = p.y + p.h / 2.0
-        left_tile = int(cx // TILE) - BEHIND
+    def clear_rollout(self):
+        self.states = []
+        self.actions = []
+        self.log_probs = []
+        self.rewards = []
+        self.dones = []
+        self.values = []
 
-        for ty in range(H):
-            for tx in range(W):
-                world_tx = left_tile + tx
-                rel_x = world_tx - frame.view.left
-                rel_y = ty - frame.view.top
-                
-                if 0 <= rel_x < frame.view.width and 0 <= rel_y < frame.view.height:
-                    tiles[ty, tx] = 1 if frame.view.solid(rel_x, rel_y) else 0
+    def add_step(self, state, action, log_prob, reward, done, value):
+        self.states.append({k: v.detach().cpu() for k, v in state.items()})
+        self.actions.append(int(action))
+        self.log_probs.append(float(log_prob.item()))
+        self.rewards.append(float(reward))
+        self.dones.append(bool(done))
+        self.values.append(float(value.item()))
 
-        def put_entity(ex, ey, ew, eh, e_id):
-            ecx = ex + ew / 2.0
-            ecy = ey + eh / 2.0
-            gx = int(ecx // TILE) - left_tile
-            gy = int(ecy // TILE)
-            
-            if gx < 0 or gx >= W:
-                return False, ecx, ecy
-            if 0 <= gy < H:
-                ents[gy, gx] = e_id
-            return True, ecx, ecy
+    def update(self, last_value=0.0):
+        if len(self.rewards) == 0:
+            return 0.0
 
-        slot = 0
-        alive_enemies = [e for e in frame.enemies if e.alive]
-        for e in alive_enemies:
-            e_id = (sum(ord(c) for c in e.type) % 31) + 1 
-            
-            put_success, ecx, ecy = put_entity(e.x, e.y, e.w, e.h, e_id)
-            if not put_success or slot >= 16:
-                continue 
-                
-            etype[slot] = e_id
-            en[slot, 0] = (ecx - cx) / TILE / 16.0
-            en[slot, 1] = (ecy - cy) / TILE / 8.0
-            en[slot, 2] = e.vx / 4.0 
-            en[slot, 3] = e.vy / 4.0
-            en[slot, 4] = 0.0 
-            
-            slot += 1
+        rewards = self.rewards
+        dones = self.dones
+        values = self.values + [float(last_value)]
 
-        def frac(val):
-            return ((val % TILE) + TILE) % TILE / TILE
+        advantages = [0.0] * len(rewards)
+        gae = 0.0
+        for t in reversed(range(len(rewards))):
+            non_terminal = 0.0 if dones[t] else 1.0
+            delta = rewards[t] + self.gamma * values[t + 1] * non_terminal - values[t]
+            gae = delta + self.gamma * self.gae_lambda * non_terminal * gae
+            advantages[t] = gae
 
-        sc[0] = p.vx / 4.0  
-        sc[1] = p.vy / 4.0
-        sc[2] = 1.0 if p.onGround else 0.0
-        sc[3] = frac(cx)
-        sc[4] = frac(cy)
-        sc[5] = 1.0 
+        returns = [advantages[t] + self.values[t] for t in range(len(rewards))]
 
-        return {
-            'tiles': tiles,
-            'ents': ents,
-            'etype': etype,
-            'en': en,
-            'sc': sc
+        states_batch = {
+            k: torch.stack([s[k] for s in self.states])
+            for k in self.states[0].keys()
         }
+        actions_tensor = torch.tensor(self.actions, dtype=torch.long)
+        old_log_probs_tensor = torch.tensor(self.log_probs, dtype=torch.float32)
+        advantages_tensor = torch.tensor(advantages, dtype=torch.float32)
+        returns_tensor = torch.tensor(returns, dtype=torch.float32)
 
-    def _train_step(self):
-        batch = random.sample(self.memory, self.batch_size)
-        
-        states = {k: torch.stack([x[0][k] for x in batch]) for k in batch[0][0].keys()}
-        next_states = {k: torch.stack([x[3][k] for x in batch]) for k in batch[0][3].keys()}
-        
-        actions = torch.tensor([x[1] for x in batch], dtype=torch.long)
-        rewards = torch.tensor([x[2] for x in batch], dtype=torch.float32)
-        dones = torch.tensor([x[4] for x in batch], dtype=torch.float32)
-        
-        q_values = self.q_network(states)
-        q_value_taken = q_values[range(self.batch_size), actions]
-        
-        with torch.no_grad():
-            max_q_next = torch.max(self.target_network(next_states), dim=1)[0]
-        
-        target_q = rewards + self.gamma * max_q_next * (1 - dones)
-        
-        loss = self.criterion(q_value_taken, target_q)
-        self.optimizer.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.q_network.parameters(), max_norm=1.0)
-        self.optimizer.step()
-        
-        self.steps_done += 1
-        if self.steps_done % self.target_update_freq == 0:
-            self.target_network.load_state_dict(self.q_network.state_dict())
+        if advantages_tensor.numel() > 1:
+            advantages_tensor = (advantages_tensor - advantages_tensor.mean()) / (
+                advantages_tensor.std() + 1e-8
+            )
 
-    def get_action(self, frame: GameFrame, reward: float, done: bool) -> int:
-        current_state = self.extract_state(frame)
+        total_steps = len(self.actions)
+        total_loss_val = 0.0
+        num_updates = 0
 
-        if self.last_state is not None:
-            self.memory.append((
-                self.last_state,
-                self.last_action,
-                reward,
-                current_state,
-                done
-            ))
-        
-        if len(self.memory) >= self.batch_size:
-            self._train_step()
+        self.policy.train()
+        for _ in range(self.ppo_epochs):
+            indices = torch.randperm(total_steps)
+            for start in range(0, total_steps, self.batch_size):
+                idx = indices[start : start + self.batch_size]
+                mb_states = {k: v[idx] for k, v in states_batch.items()}
+                mb_actions = actions_tensor[idx]
+                mb_old_log_probs = old_log_probs_tensor[idx]
+                mb_advantages = advantages_tensor[idx]
+                mb_returns = returns_tensor[idx]
 
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+                new_log_probs, new_values, entropy = self.policy.evaluate_actions(
+                    mb_states, mb_actions
+                )
 
-        if random.random() < self.epsilon:
-            action_idx = random.randint(0, 4)
-        else:
-            with torch.no_grad():
-                state_batch = {k: v.unsqueeze(0) for k, v in current_state.items()}
-                action_idx = torch.argmax(self.q_network(state_batch)).item()
+                ratio = torch.exp(new_log_probs - mb_old_log_probs)
+                surr1 = ratio * mb_advantages
+                surr2 = (
+                    torch.clamp(ratio, 1.0 - self.clip_eps, 1.0 + self.clip_eps)
+                    * mb_advantages
+                )
 
-        if done:
-            self.last_state = None
-            self.last_action = None
-        else:
-            self.last_state = current_state
-            self.last_action = action_idx
-        
-        if action_idx == 1: return Buttons.press("right")
-        elif action_idx == 2: return Buttons.press("right", "run")
-        elif action_idx == 3: return Buttons.press("right", "jump")
-        elif action_idx == 4: return Buttons.press("right", "run", "jump")
-        return 0
+                policy_loss = -torch.min(surr1, surr2).mean()
+                value_loss = F.mse_loss(new_values, mb_returns)
+                entropy_loss = -entropy.mean()
+
+                loss = (
+                    policy_loss
+                    + self.value_coef * value_loss
+                    + self.entropy_coef * entropy_loss
+                )
+
+                self.optimizer.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.policy.parameters(), max_norm=0.5)
+                self.optimizer.step()
+
+                total_loss_val += loss.item()
+                num_updates += 1
+
+        self.clear_rollout()
+        return total_loss_val / max(num_updates, 1)
 
 class RLTrainer:
     def __init__(self):
